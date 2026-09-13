@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { IconUpload } from "@/components/icons";
 import MesureForm from "@/components/MesureForm";
+import PageHeader from "@/components/PageHeader";
 
 export default function ScanPage() {
   const [fichiers, setFichiers] = useState([]);
@@ -27,10 +28,11 @@ export default function ScanPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-8 sm:px-10 sm:py-10">
-      <h1 className="font-display text-2xl font-bold">Nouveau scan</h1>
-      <p className="mt-1 text-sm text-foreground-muted">
-        Dépose un ou plusieurs rapports Visbody (PDF). Les valeurs sont enregistrées automatiquement — tu peux les corriger juste après si besoin.
-      </p>
+      <PageHeader
+        kicker="Importer un rapport"
+        title="Nouveau scan"
+        subtitle="Dépose un ou plusieurs rapports Visbody (PDF). Les valeurs sont enregistrées automatiquement — tu peux les corriger juste après si besoin."
+      />
 
       <label className="mt-6 flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-border-soft bg-background-soft/30 px-6 py-10 text-center transition hover:border-accent/60">
         <IconUpload width={28} height={28} className="text-accent" />

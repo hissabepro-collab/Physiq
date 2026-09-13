@@ -6,6 +6,7 @@ import StatCard from "@/components/StatCard";
 import RangBadge from "@/components/RangBadge";
 import RadarStats from "@/components/RadarStats";
 import { GlareCard } from "@/components/ui/GlareCard";
+import PageHeader from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -69,21 +70,22 @@ export default async function AccueilPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-8 sm:px-10 sm:py-10">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold">Salut {prenom} 👋</h1>
-          <p className="mt-1 text-sm text-foreground-muted">
+    <div className="relative mx-auto max-w-5xl px-5 py-8 sm:px-10 sm:py-10">
+      <PageHeader
+        kicker="Tableau de bord"
+        title={`Salut ${prenom} 👋`}
+        subtitle={
+          <>
             Dernier scan {jours === 0 ? "aujourd'hui" : jours === 1 ? "hier" : `il y a ${jours} jours`}
             {jours > 10 && (
               <span className="ml-2 rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-xs font-semibold text-amber-300">
                 pense à ton prochain scan
               </span>
             )}
-          </p>
-        </div>
-        {rang && <RangBadge rang={rang} />}
-      </div>
+          </>
+        }
+        action={rang && <RangBadge rang={rang} />}
+      />
 
       <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard

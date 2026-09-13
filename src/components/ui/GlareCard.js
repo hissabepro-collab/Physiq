@@ -55,7 +55,7 @@ export const GlareCard = React.forwardRef(
           perspective: 1000,
         }}
         className={cn(
-          "relative group isolate overflow-hidden rounded-2xl border border-border-soft bg-background-soft/40 transition-shadow duration-500",
+          "relative group isolate overflow-hidden rounded-2xl border border-border-soft bg-background-soft/40 backdrop-blur-md transition-shadow duration-500",
           "hover:border-accent/40 hover:shadow-[0_0_40px_-15px_rgba(77,232,255,0.5)]",
           className
         )}

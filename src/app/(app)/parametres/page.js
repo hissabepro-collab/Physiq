@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { IconLogout } from "@/components/icons";
+import PageHeader from "@/components/PageHeader";
 
 export default function ParametresPage() {
   const router = useRouter();
@@ -44,7 +45,7 @@ export default function ParametresPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-8 sm:px-10 sm:py-10">
-      <h1 className="font-display text-2xl font-bold">Paramètres</h1>
+      <PageHeader kicker="Ton compte" title="Paramètres" />
 
       <section className="mt-6 rounded-2xl border border-border-soft bg-background-soft/40 p-5">
         <h2 className="font-display text-sm font-semibold">Mot de passe</h2>

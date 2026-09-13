@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { IconTrendDown } from "@/components/icons";
+import PageHeader from "@/components/PageHeader";
 
 const METRIQUES = [
   { key: "poidsKg", label: "Poids", unite: "kg", senseInverse: true },
@@ -60,8 +61,7 @@ export default function ComparerClient({ mesures, photosParMesure }) {
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-8 sm:px-10 sm:py-10">
-      <h1 className="font-display text-2xl font-bold">Comparer</h1>
-      <p className="mt-1 text-sm text-foreground-muted">Choisis deux dates, ou utilise un raccourci rapide.</p>
+      <PageHeader kicker="Avant / après" title="Comparer" subtitle="Choisis deux dates, ou utilise un raccourci rapide." />
 
       <div className="mt-4 flex flex-wrap gap-2">
         <button onClick={() => appliquerPreset(7)} className="rounded-full border border-border-soft px-3 py-1.5 text-xs font-semibold text-foreground-muted hover:border-accent/60 hover:text-foreground">

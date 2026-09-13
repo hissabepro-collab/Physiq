@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import StarRating from "@/components/StarRating";
+import PageHeader from "@/components/PageHeader";
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
@@ -51,10 +52,11 @@ export default function JournalClient({ entreesInitiales, mesures }) {
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-8 sm:px-10 sm:py-10">
-      <h1 className="font-display text-2xl font-bold">Journal</h1>
-      <p className="mt-1 text-sm text-foreground-muted">
-        Un bilan de semaine, ton sommeil, une photo de progression — pas besoin d'attendre un scan.
-      </p>
+      <PageHeader
+        kicker="Ton ressenti"
+        title="Journal"
+        subtitle="Un bilan de semaine, ton sommeil, une photo de progression — pas besoin d'attendre un scan."
+      />
 
       <form onSubmit={ajouter} className="mt-6 rounded-2xl border border-border-soft bg-background-soft/30 p-4">
         <div className="flex items-center justify-between gap-3">

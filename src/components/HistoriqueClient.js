@@ -4,6 +4,7 @@ import { useState } from "react";
 import EvolutionChart from "@/components/EvolutionChart";
 import MesureForm from "@/components/MesureForm";
 import SegmentBars from "@/components/SegmentBars";
+import PageHeader from "@/components/PageHeader";
 import { IconChart, IconJournal } from "@/components/icons";
 
 const METRIQUES = [
@@ -38,8 +39,10 @@ export default function HistoriqueClient({ mesuresInitiales }) {
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8 sm:px-10 sm:py-10">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-2xl font-bold">Historique</h1>
+      <PageHeader
+        kicker="Suivi dans le temps"
+        title="Historique"
+        action={
         <div className="flex rounded-lg border border-border-soft p-1">
           <button
             onClick={() => setVue("courbe")}
@@ -58,7 +61,8 @@ export default function HistoriqueClient({ mesuresInitiales }) {
             <IconJournal width={14} height={14} /> Liste
           </button>
         </div>
-      </div>
+        }
+      />
 
       {vue === "courbe" ? (
         <div className="mt-6 rounded-2xl border border-border-soft bg-background-soft/40 p-5 sm:p-7">

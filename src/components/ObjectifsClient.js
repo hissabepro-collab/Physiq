@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { GlareCard } from "@/components/ui/GlareCard";
+import PageHeader from "@/components/PageHeader";
 
 const METRIQUES = [
   { key: "poidsKg", label: "Poids", unite: "kg" },
@@ -98,10 +99,11 @@ export default function ObjectifsClient({ objectifsInitiaux, mesures }) {
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-8 sm:px-10 sm:py-10">
-      <h1 className="font-display text-2xl font-bold">Objectifs</h1>
-      <p className="mt-1 text-sm text-foreground-muted">
-        Fixe une valeur cible par métrique. La progression est calculée depuis ton tout premier scan.
-      </p>
+      <PageHeader
+        kicker="Ta progression"
+        title="Objectifs"
+        subtitle="Fixe une valeur cible par métrique. La progression est calculée depuis ton tout premier scan."
+      />
 
       <form onSubmit={ajouter} className="mt-6 flex flex-wrap items-end gap-3 rounded-2xl border border-border-soft bg-background-soft/30 p-4">
         <label className="block">

@@ -1,5 +1,6 @@
 import { Space_Grotesk, Manrope } from "next/font/google";
 import RegisterSW from "@/components/RegisterSW";
+import ImmersiveBackground from "@/components/ImmersiveBackground";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -39,7 +40,8 @@ export default function RootLayout({ children }) {
       lang="fr"
       className={`${spaceGrotesk.variable} ${manrope.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
+      <body className="min-h-full flex flex-col font-sans text-foreground">
+        <ImmersiveBackground />
         {children}
         <RegisterSW />
       </body>

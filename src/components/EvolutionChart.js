@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 // Graphique d'évolution générique (SVG), piloté par de vraies données.
 // `series` : [{ label, color, dashed?, points: [{ date: Date, value: number }] }]
 
@@ -22,6 +24,8 @@ function buildPath(points, xScale, yScale) {
 }
 
 export default function EvolutionChart({ series, formatMonth = defaultFormatMonth }) {
+  const [survol, setSurvol] = useState(null); // { x, y, label, color, value, date }
+
   const allPoints = series.flatMap((s) => s.points);
   if (allPoints.length === 0) {
     return (
@@ -52,9 +56,20 @@ export default function EvolutionChart({ series, formatMonth = defaultFormatMont
 
   const monthTicks = buildMonthTicks(new Date(minDate), new Date(maxDate));
 
+  const tooltipW = 96;
+  const tooltipX = survol ? Math.min(Math.max(survol.x - tooltipW / 2, 2), W - tooltipW - 2) : 0;
+  const tooltipAbove = survol ? survol.y > 46 : true;
+  const tooltipY = survol ? (tooltipAbove ? survol.y - 46 : survol.y + 14) : 0;
+
   return (
     <div>
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H - 20} className="overflow-visible">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        width="100%"
+        height={H - 20}
+        className="overflow-visible"
+        onMouseLeave={() => setSurvol(null)}
+      >
         <line x1={0} y1={PAD_TOP} x2={W} y2={PAD_TOP} stroke="currentColor" strokeOpacity={0.06} />
         <line
           x1={0}
@@ -75,19 +90,71 @@ export default function EvolutionChart({ series, formatMonth = defaultFormatMont
             strokeWidth={s.dashed ? 2.5 : 3.5}
             strokeDasharray={s.dashed ? "1 7" : undefined}
             strokeLinecap="round"
+            style={{ filter: `drop-shadow(0 0 4px ${s.color}66)` }}
           />
         ))}
 
+        {survol && (
+          <line
+            x1={survol.x}
+            y1={PAD_TOP}
+            x2={survol.x}
+            y2={H - PAD_BOTTOM}
+            stroke={survol.color}
+            strokeOpacity={0.35}
+            strokeDasharray="3 4"
+          />
+        )}
+
         {series.map((s) =>
-          s.points.map((p, i) => (
-            <circle
-              key={`${s.label}-${i}`}
-              cx={xScale(p.date)}
-              cy={yScale(p.value)}
-              r={i === s.points.length - 1 ? 5 : 3}
-              fill={s.color}
+          s.points.map((p, i) => {
+            const x = xScale(p.date);
+            const y = yScale(p.value);
+            const estSurvole = survol && survol.label === s.label && survol.i === i;
+            return (
+              <g key={`${s.label}-${i}`}>
+                {/* zone de détection plus large, invisible, pour un survol confortable au doigt/souris */}
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={14}
+                  fill="transparent"
+                  onMouseEnter={() => setSurvol({ x, y, label: s.label, color: s.color, value: p.value, date: p.date, i })}
+                  onTouchStart={() => setSurvol({ x, y, label: s.label, color: s.color, value: p.value, date: p.date, i })}
+                  style={{ cursor: "pointer" }}
+                />
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={estSurvole ? 6.5 : i === s.points.length - 1 ? 5 : 3}
+                  fill={s.color}
+                  style={estSurvole ? { filter: `drop-shadow(0 0 6px ${s.color})` } : undefined}
+                  pointerEvents="none"
+                />
+              </g>
+            );
+          })
+        )}
+
+        {survol && (
+          <g pointerEvents="none">
+            <rect
+              x={tooltipX}
+              y={tooltipY}
+              width={tooltipW}
+              height={38}
+              rx={8}
+              fill="rgba(6,20,26,0.92)"
+              stroke={survol.color}
+              strokeOpacity={0.6}
             />
-          ))
+            <text x={tooltipX + tooltipW / 2} y={tooltipY + 15} textAnchor="middle" style={{ fontSize: 9.5, fontWeight: 600, fill: "var(--foreground-muted)" }}>
+              {survol.date.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
+            </text>
+            <text x={tooltipX + tooltipW / 2} y={tooltipY + 29} textAnchor="middle" style={{ fontSize: 13, fontWeight: 700, fill: survol.color }}>
+              {formatValeur(survol.value)}
+            </text>
+          </g>
         )}
       </svg>
       <div className="mt-1 flex justify-between text-[11px] font-medium text-foreground-muted">
@@ -99,15 +166,19 @@ export default function EvolutionChart({ series, formatMonth = defaultFormatMont
       <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
         {series.map((s) =>
           s.points.map((p, i) => (
-            <div
+            <button
+              type="button"
               key={`${s.label}-chip-${i}`}
-              className="flex shrink-0 flex-col items-center rounded-lg border border-border-soft bg-black/15 px-2.5 py-1.5"
+              onMouseEnter={() => setSurvol({ x: xScale(p.date), y: yScale(p.value), label: s.label, color: s.color, value: p.value, date: p.date, i })}
+              onMouseLeave={() => setSurvol(null)}
+              className="flex shrink-0 flex-col items-center rounded-lg border border-border-soft bg-black/15 px-2.5 py-1.5 transition hover:border-current"
+              style={{ color: s.color }}
             >
-              <span className="text-[9.5px] font-semibold uppercase tracking-wide" style={{ color: s.color }}>
+              <span className="text-[9.5px] font-semibold uppercase tracking-wide">
                 {p.date.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
               </span>
-              <span className="text-[12.5px] font-bold">{formatValeur(p.value)}</span>
-            </div>
+              <span className="text-[12.5px] font-bold text-foreground">{formatValeur(p.value)}</span>
+            </button>
           ))
         )}
       </div>

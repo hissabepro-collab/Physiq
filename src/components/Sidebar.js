@@ -29,7 +29,7 @@ function NavIcon({ href, label, Icon, actif }) {
       title={label}
       className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition ${
         actif
-          ? "bg-accent-soft text-accent border border-accent/50"
+          ? "bg-accent-soft text-accent border border-accent/50 shadow-[0_0_18px_-4px_rgba(77,232,255,0.6)]"
           : "text-foreground-muted hover:text-foreground"
       }`}
     >
