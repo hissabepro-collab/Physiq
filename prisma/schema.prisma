@@ -76,6 +76,7 @@ model JournalEntry {
   texte         String?
   photoUrl      String?
   sommeilHeures Float? // moyenne hebdomadaire d'heures de sommeil
+  noteEtoiles   Int? // ressenti de la semaine, 1 à 5 étoiles
 
   mesureId String?
   mesure   Mesure? @relation(fields: [mesureId], references: [id], onDelete: SetNull)

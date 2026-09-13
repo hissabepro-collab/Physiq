@@ -3,6 +3,7 @@
 import { useState } from "react";
 import EvolutionChart from "@/components/EvolutionChart";
 import MesureForm from "@/components/MesureForm";
+import SegmentBars from "@/components/SegmentBars";
 import { IconChart, IconJournal } from "@/components/icons";
 
 const METRIQUES = [
@@ -98,6 +99,14 @@ export default function HistoriqueClient({ mesuresInitiales }) {
               {editionId === m.id && (
                 <div className="mt-4 border-t border-border-soft pt-4">
                   <MesureForm mesure={m} onSaved={handleSaved} onDeleted={handleDeleted} />
+                  {m.segments && (
+                    <div className="mt-5 border-t border-border-soft pt-4">
+                      <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-foreground-muted">
+                        Répartition par segment
+                      </div>
+                      <SegmentBars segments={m.segments} />
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -95,8 +95,28 @@ export default function EvolutionChart({ series, formatMonth = defaultFormatMont
           <span key={i}>{formatMonth(d)}</span>
         ))}
       </div>
+
+      <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+        {series.map((s) =>
+          s.points.map((p, i) => (
+            <div
+              key={`${s.label}-chip-${i}`}
+              className="flex shrink-0 flex-col items-center rounded-lg border border-border-soft bg-black/15 px-2.5 py-1.5"
+            >
+              <span className="text-[9.5px] font-semibold uppercase tracking-wide" style={{ color: s.color }}>
+                {p.date.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
+              </span>
+              <span className="text-[12.5px] font-bold">{formatValeur(p.value)}</span>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
+}
+
+function formatValeur(v) {
+  return v.toLocaleString("fr-FR", { maximumFractionDigits: 1 });
 }
 
 function buildMonthTicks(min, max) {

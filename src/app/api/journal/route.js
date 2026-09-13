@@ -20,6 +20,7 @@ export async function POST(request) {
   const formData = await request.formData();
   const texte = formData.get("texte") || null;
   const sommeilHeures = formData.get("sommeilHeures") ? Number(formData.get("sommeilHeures")) : null;
+  const noteEtoiles = formData.get("noteEtoiles") ? Number(formData.get("noteEtoiles")) : null;
   const mesureId = formData.get("mesureId") || null;
   const photo = formData.get("photo");
 
@@ -34,7 +35,7 @@ export async function POST(request) {
   }
 
   const entree = await prisma.journalEntry.create({
-    data: { texte, sommeilHeures, mesureId: mesureId || null, photoUrl },
+    data: { texte, sommeilHeures, noteEtoiles, mesureId: mesureId || null, photoUrl },
   });
 
   return NextResponse.json({ entree });

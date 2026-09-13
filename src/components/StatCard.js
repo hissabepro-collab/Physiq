@@ -1,17 +1,39 @@
 import { IconTrendDown } from "@/components/icons";
+import { GlareCard } from "@/components/ui/GlareCard";
 
 function formatNombre(n) {
   if (n == null) return "—";
   return n.toLocaleString("fr-FR", { maximumFractionDigits: 1 });
 }
 
-export default function StatCard({ label, value, unite, precedente, senseInverse = false }) {
+function Sparkline({ valeurs, color }) {
+  const propres = valeurs.filter((v) => v != null);
+  if (propres.length < 2) return null;
+  const min = Math.min(...propres);
+  const max = Math.max(...propres);
+  const span = max - min || 1;
+  const w = 100;
+  const h = 26;
+  const pts = propres.map((v, i) => {
+    const x = (i / (propres.length - 1)) * w;
+    const y = h - ((v - min) / span) * h;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h} className="mt-2.5" preserveAspectRatio="none">
+      <polyline points={pts.join(" ")} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export default function StatCard({ label, value, unite, precedente, senseInverse = false, historique = [] }) {
   const delta = value != null && precedente != null ? value - precedente : null;
   const positif = delta != null && (senseInverse ? delta < 0 : delta > 0);
   const negatif = delta != null && (senseInverse ? delta > 0 : delta < 0);
+  const couleurSpark = historique.length > 1 && !senseInverse ? "#4de8ff" : "#f0a38f";
 
   return (
-    <div className="rounded-2xl border border-border-soft bg-background-soft/40 p-4 sm:p-5">
+    <GlareCard className="p-4 sm:p-5" tiltIntensity={6}>
       <div className="text-[11px] font-semibold uppercase tracking-wide text-foreground-muted">
         {label}
       </div>
@@ -34,6 +56,7 @@ export default function StatCard({ label, value, unite, precedente, senseInverse
           {formatNombre(delta)}
         </div>
       )}
-    </div>
+      <Sparkline valeurs={historique} color={couleurSpark} />
+    </GlareCard>
   );
 }

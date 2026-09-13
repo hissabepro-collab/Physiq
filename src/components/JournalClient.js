@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import StarRating from "@/components/StarRating";
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
@@ -10,17 +11,19 @@ export default function JournalClient({ entreesInitiales, mesures }) {
   const [entrees, setEntrees] = useState(entreesInitiales);
   const [texte, setTexte] = useState("");
   const [sommeilHeures, setSommeilHeures] = useState("");
+  const [noteEtoiles, setNoteEtoiles] = useState(null);
   const [mesureId, setMesureId] = useState("");
   const [photo, setPhoto] = useState(null);
   const [envoi, setEnvoi] = useState(false);
 
   async function ajouter(e) {
     e.preventDefault();
-    if (!texte && !sommeilHeures && !photo) return;
+    if (!texte && !sommeilHeures && !photo && !noteEtoiles) return;
     setEnvoi(true);
     const formData = new FormData();
     if (texte) formData.append("texte", texte);
     if (sommeilHeures) formData.append("sommeilHeures", sommeilHeures);
+    if (noteEtoiles) formData.append("noteEtoiles", noteEtoiles);
     if (mesureId) formData.append("mesureId", mesureId);
     if (photo) formData.append("photo", photo);
 
@@ -31,6 +34,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
         setEntrees((e) => [entree, ...e]);
         setTexte("");
         setSommeilHeures("");
+        setNoteEtoiles(null);
         setMesureId("");
         setPhoto(null);
       }
@@ -49,16 +53,21 @@ export default function JournalClient({ entreesInitiales, mesures }) {
     <div className="mx-auto max-w-2xl px-5 py-8 sm:px-10 sm:py-10">
       <h1 className="font-display text-2xl font-bold">Journal</h1>
       <p className="mt-1 text-sm text-foreground-muted">
-        Une note, ton sommeil de la semaine, une photo de progression — pas besoin d'attendre un scan.
+        Un bilan de semaine, ton sommeil, une photo de progression — pas besoin d'attendre un scan.
       </p>
 
       <form onSubmit={ajouter} className="mt-6 rounded-2xl border border-border-soft bg-background-soft/30 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-[11px] font-medium text-foreground-muted">Ressenti de la semaine</span>
+          <StarRating value={noteEtoiles} onChange={setNoteEtoiles} />
+        </div>
+
         <textarea
           value={texte}
           onChange={(e) => setTexte(e.target.value)}
-          placeholder="Comment s'est passée ta séance ?"
+          placeholder="Comment se sont passées tes séances cette semaine ?"
           rows={3}
-          className="w-full resize-none rounded-lg border border-border-soft bg-black/20 px-3 py-2 text-sm outline-none focus:border-accent"
+          className="mt-3 w-full resize-none rounded-lg border border-border-soft bg-black/20 px-3 py-2 text-sm outline-none focus:border-accent"
         />
         <div className="mt-3 flex flex-wrap items-end gap-3">
           <label className="block">
@@ -112,6 +121,11 @@ export default function JournalClient({ entreesInitiales, mesures }) {
                 Supprimer
               </button>
             </div>
+            {e.noteEtoiles != null && (
+              <div className="mt-2">
+                <StarRating value={e.noteEtoiles} readOnly />
+              </div>
+            )}
             {e.texte && <p className="mt-2 text-sm">{e.texte}</p>}
             {e.sommeilHeures != null && (
               <p className="mt-1 text-xs text-foreground-muted">Sommeil : {e.sommeilHeures} h/semaine</p>

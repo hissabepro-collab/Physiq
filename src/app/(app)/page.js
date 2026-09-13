@@ -1,14 +1,21 @@
 import { prisma } from "@/lib/db";
 import { calculerRang } from "@/lib/rang";
+import { calculerAxesProfil } from "@/lib/profilStats";
 import EvolutionChart from "@/components/EvolutionChart";
 import StatCard from "@/components/StatCard";
 import RangBadge from "@/components/RangBadge";
+import RadarStats from "@/components/RadarStats";
+import { GlareCard } from "@/components/ui/GlareCard";
 
 export const dynamic = "force-dynamic";
 
 function joursDepuis(date) {
   const debutJour = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
   return Math.round((debutJour(new Date()) - debutJour(date)) / (1000 * 60 * 60 * 24));
+}
+
+function serieValeurs(mesures, champ) {
+  return mesures.map((m) => m[champ]).filter((v) => v != null);
 }
 
 export default async function AccueilPage() {
@@ -39,9 +46,10 @@ export default async function AccueilPage() {
   }
 
   const rang = calculerRang(derniere.scoreVisbody);
+  const axesProfil = calculerAxesProfil(mesures);
   const jours = joursDepuis(derniere.dateScan);
 
-  const recentes = mesures.slice(-12);
+  const recentes = mesures.slice(-8);
   const chartSeries = [
     {
       label: "Masse musculaire",
@@ -84,6 +92,7 @@ export default async function AccueilPage() {
           unite="kg"
           precedente={precedente?.poidsKg}
           senseInverse
+          historique={serieValeurs(recentes, "poidsKg")}
         />
         <StatCard
           label="Masse grasse"
@@ -91,32 +100,53 @@ export default async function AccueilPage() {
           unite="%"
           precedente={precedente?.bfpPct}
           senseInverse
+          historique={serieValeurs(recentes, "bfpPct")}
         />
         <StatCard
           label="Masse musculaire"
           value={derniere.masseMusculaireKg}
           unite="kg"
           precedente={precedente?.masseMusculaireKg}
+          historique={serieValeurs(recentes, "masseMusculaireKg")}
         />
-        <StatCard label="IMC" value={derniere.imc} unite="" precedente={precedente?.imc} senseInverse />
+        <StatCard
+          label="IMC"
+          value={derniere.imc}
+          unite=""
+          precedente={precedente?.imc}
+          senseInverse
+          historique={serieValeurs(recentes, "imc")}
+        />
       </div>
 
-      <div className="mt-6 rounded-2xl border border-border-soft bg-background-soft/40 p-5 sm:p-7">
-        <div className="flex items-baseline justify-between">
-          <h2 className="font-display text-base font-semibold">Évolution</h2>
-          <span className="text-xs text-foreground-muted">{mesures.length} scans enregistrés</span>
-        </div>
-        <div className="mt-4">
-          <EvolutionChart series={chartSeries} />
-        </div>
-        <div className="mt-3 flex gap-5 text-xs font-medium text-foreground-muted">
-          <span className="flex items-center gap-1.5">
-            <span className="h-[3px] w-3 rounded bg-[#4de8ff]" /> Masse musculaire
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-[3px] w-3 rounded bg-[#f0a38f]" /> Masse grasse
-          </span>
-        </div>
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
+        <GlareCard className="p-5 sm:p-7" tiltIntensity={3}>
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-display text-base font-semibold">Évolution</h2>
+            <span className="text-xs text-foreground-muted">{mesures.length} scans enregistrés</span>
+          </div>
+          <div className="mt-4">
+            <EvolutionChart series={chartSeries} />
+          </div>
+          <div className="mt-3 flex gap-5 text-xs font-medium text-foreground-muted">
+            <span className="flex items-center gap-1.5">
+              <span className="h-[3px] w-3 rounded bg-[#4de8ff]" /> Masse musculaire
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-[3px] w-3 rounded bg-[#f0a38f]" /> Masse grasse
+            </span>
+          </div>
+        </GlareCard>
+
+        {axesProfil && (
+          <GlareCard className="p-5 sm:p-6" tiltIntensity={4}>
+            <h2 className="font-display text-base font-semibold">Profil</h2>
+            <p className="text-xs text-foreground-muted">Basé sur ton dernier scan</p>
+            <div className="mt-2">
+              <RadarStats axes={axesProfil} />
+            </div>
+          </GlareCard>
+        )}
       </div>
     </div>
   );

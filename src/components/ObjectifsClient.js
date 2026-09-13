@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { GlareCard } from "@/components/ui/GlareCard";
 
 const METRIQUES = [
   { key: "poidsKg", label: "Poids", unite: "kg" },
@@ -55,7 +56,7 @@ function CarteObjectif({ objectif, mesures, onDeleted }) {
   }
 
   return (
-    <div className="flex items-center gap-4 rounded-2xl border border-border-soft bg-background-soft/40 p-4">
+    <GlareCard className="flex items-center gap-4 p-4" tiltIntensity={5}>
       <ProgressRing percent={percent} />
       <div className="flex-1">
         <div className="text-sm font-semibold">{meta.label}</div>
@@ -67,7 +68,7 @@ function CarteObjectif({ objectif, mesures, onDeleted }) {
       <button onClick={supprimer} className="self-start text-xs text-foreground-muted hover:text-red-400">
         Supprimer
       </button>
-    </div>
+    </GlareCard>
   );
 }
 
