@@ -36,6 +36,13 @@ yarn-error.log*
 # vercel
 .vercel
 
+# base de données locale et données personnelles — ne jamais committer
+/prisma/dev.db
+/prisma/dev.db-journal
+/data/
+/public/uploads/
+*.visbody-report.pdf
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

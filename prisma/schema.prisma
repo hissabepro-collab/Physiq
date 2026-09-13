@@ -1,0 +1,95 @@
+// Schéma de la base de données Physiq.
+// En développement local : SQLite (fichier prisma/dev.db, jamais commité).
+// En production (Vercel) : basculer `provider` sur "postgresql" et pointer
+// DATABASE_URL vers une base Neon/Supabase gratuite, puis relancer les migrations.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Une ligne par passage sur la machine Visbody.
+model Mesure {
+  id       String   @id @default(cuid())
+  dateScan DateTime
+
+  // Score global fourni par Visbody (sur 100) — sert de base au rang.
+  scoreVisbody Int?
+
+  // Champs principaux affichés partout (dashboard, historique, comparaison).
+  poidsKg           Float?
+  masseGrasseKg     Float? // "Body Fat Mass" / "MGC"
+  bfpPct            Float? // "BFP" / "TGC" — % de masse grasse
+  masseMusculaireKg Float? // "Muscle Mass" / "Masse musculaire"
+  smmKg             Float? // "SMM" / "MMS" — masse musculaire squelettique
+
+  masseMaigreKg          Float? // "Lean Body Mass" / "MMC"
+  eauTotaleKg            Float?
+  eauIntracellulaireKg   Float? // ICW
+  eauExtracellulaireKg   Float? // ECW
+  ratioEcwTbw            Float? // absent sur les scans les plus anciens
+
+  imc                    Float?
+  rth                    Float? // ratio taille-hanches (WHR)
+  metabolismeBaseKcal    Float?
+  ageMetabolique         Int?
+  niveauGraisseViscerale Float?
+
+  selsInorganiquesKg Float?
+  proteineKg         Float?
+
+  // Valeurs "idéal / gold standard" fournies par le rapport (utiles pour les objectifs).
+  poidsIdealKg        Float?
+  masseGrasseIdealeKg Float?
+
+  // Détail par segment (bras/tronc/jambes), secondaire — pas affiché par défaut.
+  segments Json?
+
+  // Métadonnées d'extraction, utiles pour déboguer le parseur PDF bilingue.
+  languePdf      String? // "en" | "fr"
+  sourceFichier  String? // nom du PDF d'origine
+  extractionAuto Boolean @default(true) // false si des valeurs ont été corrigées manuellement
+
+  journal   JournalEntry[]
+  createdAt DateTime       @default(now())
+
+  @@index([dateScan])
+}
+
+// Objectifs personnels (poids, % masse grasse, etc.).
+model Objectif {
+  id          String    @id @default(cuid())
+  metrique    String // "poidsKg" | "masseGrasseKg" | "masseMusculaireKg" | ...
+  valeurCible Float
+  dateCible   DateTime?
+  actif       Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+}
+
+// Notes de séance, sommeil, photos de progression.
+model JournalEntry {
+  id            String   @id @default(cuid())
+  date          DateTime @default(now())
+  texte         String?
+  photoUrl      String?
+  sommeilHeures Float? // moyenne hebdomadaire d'heures de sommeil
+
+  mesureId String?
+  mesure   Mesure? @relation(fields: [mesureId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+}
+
+// Profil unique (site mono-utilisateur) : identité, mot de passe, préférences.
+model Profil {
+  id             Int       @id @default(1)
+  prenom         String    @default("Issa")
+  tailleCm       Float?
+  sexe           String?
+  dateNaissance  DateTime?
+  motDePasseHash String?
+}
