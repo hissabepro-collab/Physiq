@@ -1,14 +1,13 @@
 // Schéma de la base de données Physiq.
-// En développement local : SQLite (fichier prisma/dev.db, jamais commité).
-// En production (Vercel) : basculer `provider` sur "postgresql" et pointer
-// DATABASE_URL vers une base Neon/Supabase gratuite, puis relancer les migrations.
+// Base Postgres gratuite (Neon), utilisée aussi bien en développement local
+// qu'en production sur Vercel — même base, une seule source de vérité.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
