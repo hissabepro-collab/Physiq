@@ -22,7 +22,21 @@ export async function POST(request) {
   const sommeilHeures = formData.get("sommeilHeures") ? Number(formData.get("sommeilHeures")) : null;
   const noteEtoiles = formData.get("noteEtoiles") ? Number(formData.get("noteEtoiles")) : null;
   const mesureId = formData.get("mesureId") || null;
+  const semaineIso = formData.get("semaineIso") || null;
   const photo = formData.get("photo");
+
+  const listeJours = (champ) => {
+    const brut = formData.get(champ);
+    if (!brut) return null;
+    try {
+      const parsed = JSON.parse(brut);
+      return Array.isArray(parsed) ? parsed.filter((n) => Number.isInteger(n) && n >= 0 && n <= 6) : null;
+    } catch {
+      return null;
+    }
+  };
+  const joursEntraines = listeJours("joursEntraines");
+  const joursDiete = listeJours("joursDiete");
 
   let photoUrl = null;
   if (photo && typeof photo === "object" && photo.size > 0) {
@@ -34,9 +48,26 @@ export async function POST(request) {
     photoUrl = `/api/uploads/${nomFichier}`;
   }
 
-  const entree = await prisma.journalEntry.create({
-    data: { texte, sommeilHeures, noteEtoiles, mesureId: mesureId || null, photoUrl },
-  });
+  const donnees = {
+    texte,
+    sommeilHeures,
+    noteEtoiles,
+    semaineIso,
+    joursEntraines,
+    joursDiete,
+    mesureId: mesureId || null,
+  };
+  // Une photo absente ne doit pas effacer celle déjà enregistrée.
+  if (photoUrl) donnees.photoUrl = photoUrl;
+
+  // Un seul bilan par semaine : on complète celui qui existe déjà.
+  const existante = semaineIso
+    ? await prisma.journalEntry.findFirst({ where: { semaineIso } })
+    : null;
+
+  const entree = existante
+    ? await prisma.journalEntry.update({ where: { id: existante.id }, data: donnees })
+    : await prisma.journalEntry.create({ data: { ...donnees, photoUrl } });
 
   return NextResponse.json({ entree });
 }

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import StarRating from "@/components/StarRating";
 import PageHeader from "@/components/PageHeader";
+import GrilleSemaine from "@/components/GrilleSemaine";
+import { cleSemaine, libelleSemaine, semainePrecedente } from "@/lib/semaines";
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
@@ -10,18 +12,36 @@ function formatDate(date) {
 
 export default function JournalClient({ entreesInitiales, mesures }) {
   const [entrees, setEntrees] = useState(entreesInitiales);
+  const [semaine, setSemaine] = useState(() => cleSemaine(new Date()));
   const [texte, setTexte] = useState("");
   const [sommeilHeures, setSommeilHeures] = useState("");
   const [noteEtoiles, setNoteEtoiles] = useState(null);
+  const [seances, setSeances] = useState([]);
+  const [diete, setDiete] = useState([]);
   const [mesureId, setMesureId] = useState("");
   const [photo, setPhoto] = useState(null);
   const [envoi, setEnvoi] = useState(false);
 
+  // Si un bilan existe déjà pour la semaine choisie, on le reprend pour le
+  // compléter au lieu d'en créer un deuxième.
+  function chargerSemaine(cle) {
+    setSemaine(cle);
+    const existante = entrees.find((e) => e.semaineIso === cle);
+    setSeances(existante?.joursEntraines ?? []);
+    setDiete(existante?.joursDiete ?? []);
+    setSommeilHeures(existante?.sommeilHeures != null ? String(existante.sommeilHeures) : "");
+    setNoteEtoiles(existante?.noteEtoiles ?? null);
+    setTexte(existante?.texte ?? "");
+  }
+
   async function ajouter(e) {
     e.preventDefault();
-    if (!texte && !sommeilHeures && !photo && !noteEtoiles) return;
+    if (!texte && !sommeilHeures && !photo && !noteEtoiles && seances.length === 0 && diete.length === 0) return;
     setEnvoi(true);
     const formData = new FormData();
+    formData.append("semaineIso", semaine);
+    formData.append("joursEntraines", JSON.stringify(seances));
+    formData.append("joursDiete", JSON.stringify(diete));
     if (texte) formData.append("texte", texte);
     if (sommeilHeures) formData.append("sommeilHeures", sommeilHeures);
     if (noteEtoiles) formData.append("noteEtoiles", noteEtoiles);
@@ -32,10 +52,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
       const res = await fetch("/api/journal", { method: "POST", body: formData });
       if (res.ok) {
         const { entree } = await res.json();
-        setEntrees((e) => [entree, ...e]);
-        setTexte("");
-        setSommeilHeures("");
-        setNoteEtoiles(null);
+        setEntrees((liste) => [entree, ...liste.filter((x) => x.id !== entree.id)]);
         setMesureId("");
         setPhoto(null);
       }
@@ -59,9 +76,31 @@ export default function JournalClient({ entreesInitiales, mesures }) {
       />
 
       <form onSubmit={ajouter} className="mt-6 rounded-2xl border border-border-soft bg-background-soft/30 p-4">
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-[11px] font-medium text-foreground-muted">Ressenti de la semaine</span>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => chargerSemaine(semainePrecedente(semaine))}
+              className="rounded-lg border border-border-soft px-2 py-1 text-xs text-foreground-muted hover:border-accent/60 hover:text-foreground"
+            >
+              ←
+            </button>
+            <span className="font-display text-sm font-bold">{libelleSemaine(semaine)}</span>
+            {semaine !== cleSemaine(new Date()) && (
+              <button
+                type="button"
+                onClick={() => chargerSemaine(cleSemaine(new Date()))}
+                className="text-[11px] font-semibold text-accent"
+              >
+                revenir à cette semaine
+              </button>
+            )}
+          </div>
           <StarRating value={noteEtoiles} onChange={setNoteEtoiles} />
+        </div>
+
+        <div className="mt-4">
+          <GrilleSemaine seances={seances} diete={diete} onChangeSeances={setSeances} onChangeDiete={setDiete} />
         </div>
 
         <textarea
@@ -73,7 +112,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
         />
         <div className="mt-3 flex flex-wrap items-end gap-3">
           <label className="block">
-            <span className="text-[11px] font-medium text-foreground-muted">Sommeil moyen (h/semaine)</span>
+            <span className="text-[11px] font-medium text-foreground-muted">Sommeil moyen (h/nuit)</span>
             <input
               type="number"
               step="0.5"
@@ -110,7 +149,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
           disabled={envoi}
           className="mt-4 rounded-lg border border-accent bg-accent-soft px-4 py-2 text-sm font-semibold disabled:opacity-40"
         >
-          {envoi ? "Ajout..." : "Ajouter l'entrée"}
+          {envoi ? "Enregistrement..." : "Enregistrer le bilan de la semaine"}
         </button>
       </form>
 
@@ -118,7 +157,20 @@ export default function JournalClient({ entreesInitiales, mesures }) {
         {entrees.map((e) => (
           <div key={e.id} className="rounded-2xl border border-border-soft bg-background-soft/40 p-4">
             <div className="flex items-start justify-between">
-              <span className="text-xs font-semibold text-foreground-muted">{formatDate(e.date)}</span>
+              <div>
+                <span className="text-xs font-semibold text-foreground-muted">
+                  {e.semaineIso ? `Semaine ${libelleSemaine(e.semaineIso)}` : formatDate(e.date)}
+                </span>
+                {e.semaineIso && (
+                  <button
+                    type="button"
+                    onClick={() => chargerSemaine(e.semaineIso)}
+                    className="ml-2 text-[11px] font-semibold text-accent"
+                  >
+                    modifier
+                  </button>
+                )}
+              </div>
               <button onClick={() => supprimer(e.id)} className="text-xs text-foreground-muted hover:text-red-400">
                 Supprimer
               </button>
@@ -128,9 +180,14 @@ export default function JournalClient({ entreesInitiales, mesures }) {
                 <StarRating value={e.noteEtoiles} readOnly />
               </div>
             )}
-            {e.texte && <p className="mt-2 text-sm">{e.texte}</p>}
+            {(e.joursEntraines?.length > 0 || e.joursDiete?.length > 0) && (
+              <div className="mt-3">
+                <GrilleSemaine seances={e.joursEntraines ?? []} diete={e.joursDiete ?? []} lectureSeule />
+              </div>
+            )}
+            {e.texte && <p className="mt-3 text-sm">{e.texte}</p>}
             {e.sommeilHeures != null && (
-              <p className="mt-1 text-xs text-foreground-muted">Sommeil : {e.sommeilHeures} h/semaine</p>
+              <p className="mt-1 text-xs text-foreground-muted">Sommeil : {e.sommeilHeures} h/nuit en moyenne</p>
             )}
             {e.photoUrl && (
               // eslint-disable-next-line @next/next/no-img-element

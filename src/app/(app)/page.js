@@ -5,6 +5,8 @@ import EvolutionChart from "@/components/EvolutionChart";
 import StatCard from "@/components/StatCard";
 import ProfilCard from "@/components/ProfilCard";
 import HeroScan from "@/components/HeroScan";
+import SemaineCard from "@/components/SemaineCard";
+import { bilanSemaine, calculerSerie, cleSemaine, libelleSemaine, OBJECTIFS_DEFAUT } from "@/lib/semaines";
 import { GlareCard } from "@/components/ui/GlareCard";
 import PageHeader from "@/components/PageHeader";
 
@@ -20,10 +22,16 @@ function serieValeurs(mesures, champ) {
 }
 
 export default async function AccueilPage() {
-  const [mesures, profil] = await Promise.all([
+  const [mesures, profil, entreesJournal] = await Promise.all([
     prisma.mesure.findMany({ orderBy: { dateScan: "asc" } }),
     prisma.profil.findUnique({ where: { id: 1 } }),
+    prisma.journalEntry.findMany({ where: { semaineIso: { not: null } } }),
   ]);
+
+  const parSemaine = Object.fromEntries(entreesJournal.map((e) => [e.semaineIso, e]));
+  const semaineActuelle = cleSemaine(new Date());
+  const bilan = bilanSemaine(parSemaine[semaineActuelle], OBJECTIFS_DEFAUT);
+  const serie = calculerSerie(parSemaine, OBJECTIFS_DEFAUT, semaineActuelle);
 
   const derniere = mesures.at(-1);
   const precedente = mesures.at(-2);
@@ -121,6 +129,15 @@ export default async function AccueilPage() {
           precedente={precedente?.imc}
           senseInverse
           historique={serieValeurs(recentes, "imc")}
+        />
+      </div>
+
+      <div className="mt-6">
+        <SemaineCard
+          libelle={libelleSemaine(semaineActuelle)}
+          bilan={bilan}
+          serie={serie}
+          renseignee={Boolean(parSemaine[semaineActuelle])}
         />
       </div>
 

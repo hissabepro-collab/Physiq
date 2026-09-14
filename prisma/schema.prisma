@@ -80,8 +80,15 @@ model JournalEntry {
   date          DateTime @default(now())
   texte         String?
   photoUrl      String?
-  sommeilHeures Float? // moyenne hebdomadaire d'heures de sommeil
+  sommeilHeures Float? // moyenne d'heures de sommeil par nuit sur la semaine
   noteEtoiles   Int? // ressenti de la semaine, 1 à 5 étoiles
+
+  // Bilan hebdomadaire : semaine ISO couverte ("2026-W37"), jours où une
+  // séance a eu lieu et jours où l'alimentation a été tenue
+  // (indices 0=lundi … 6=dimanche).
+  semaineIso     String?
+  joursEntraines Json?
+  joursDiete     Json?
 
   mesureId String?
   mesure   Mesure? @relation(fields: [mesureId], references: [id], onDelete: SetNull)
