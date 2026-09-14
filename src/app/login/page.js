@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import DotGridField from "@/components/ui/DotGridField";
 
 function LoginForm() {
   const router = useRouter();
@@ -33,10 +34,11 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center px-6">
+    <div className="relative flex flex-1 items-center justify-center overflow-hidden px-6">
+      <DotGridField />
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm rounded-2xl border border-border-soft bg-background-soft/60 p-8 backdrop-blur"
+        className="relative z-10 w-full max-w-sm rounded-2xl border border-border-soft bg-background-soft/70 p-8 shadow-[0_0_60px_-20px_rgba(77,232,255,0.5)] backdrop-blur-md"
       >
         <div className="mb-6 flex items-center gap-3">
           <div className="relative h-6 w-6 rounded-full border border-accent">

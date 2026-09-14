@@ -14,7 +14,9 @@ export default function ParticleField() {
   const canvasRef = useRef(null);
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Si le système demande de limiter les animations, on dessine quand même
+    // le décor — mais figé, sans boucle d'animation.
+    const mouvementReduit = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -215,7 +217,7 @@ export default function ParticleField() {
         ctx.fill();
       }
 
-      animation = requestAnimationFrame(dessiner);
+      if (!mouvementReduit) animation = requestAnimationFrame(dessiner);
     }
 
     function deplacerPointeur(e) {
@@ -230,12 +232,24 @@ export default function ParticleField() {
 
     // Inutile de consommer de la batterie quand l'onglet n'est pas visible.
     function gererVisibilite() {
+      if (mouvementReduit) return;
       if (document.hidden) {
         if (animation) cancelAnimationFrame(animation);
         animation = null;
       } else if (!animation) {
         animation = requestAnimationFrame(dessiner);
       }
+    }
+
+    function redessinerFige() {
+      dimensionner();
+      dessiner(0);
+    }
+
+    if (mouvementReduit) {
+      redessinerFige();
+      window.addEventListener("resize", redessinerFige);
+      return () => window.removeEventListener("resize", redessinerFige);
     }
 
     dimensionner();
