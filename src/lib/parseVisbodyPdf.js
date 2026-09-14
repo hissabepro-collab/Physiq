@@ -98,6 +98,47 @@ function extractOverviewTable(flat) {
   };
 }
 
+/**
+ * Plages normales officielles fournies par le rapport lui-même, au format
+ * `[min~max]` juste après chaque libellé. Ce sont ces bornes (calculées par
+ * Visbody selon la taille/l'âge/le sexe) qui permettent de situer une valeur
+ * par rapport à la normale — plutôt que des bornes inventées.
+ */
+function plage(flat, labelPattern) {
+  const re = new RegExp(
+    `(?:${labelPattern})\\s*(?:kg\\/m²|kcal\\/d|kg|%)?\\s*(?:[\\d.]+\\s*)?\\[([\\d.]+)\\s*~\\s*([\\d.]+)\\]`,
+    "i"
+  );
+  const m = flat.match(re);
+  if (!m) return null;
+  const min = toNumber(m[1]);
+  const max = toNumber(m[2]);
+  return min != null && max != null ? { min, max } : null;
+}
+
+function extractPlages(flat) {
+  const plages = {
+    poidsKg: plage(flat, "Weight|Poids"),
+    smmKg: plage(flat, "SMM|MMS"),
+    masseGrasseKg: plage(flat, "Body Fat Mass|MGC"),
+    bfpPct: plage(flat, "BFP|TGC"),
+    imc: plage(flat, "BMI|IMC"),
+    rth: plage(flat, "WHR|RTH"),
+    metabolismeBaseKcal: plage(flat, "Basal Metabolism\\s*Rate|MB"),
+    niveauGraisseViscerale: plage(flat, "Visceral Fat Level|Niveau de graisse\\s*visc[ée]rale"),
+    eauIntracellulaireKg: plage(flat, "ICW|Eau intracellulaire"),
+    eauExtracellulaireKg: plage(flat, "ECW|Eau extracellulaire"),
+    masseMaigreKg: plage(flat, "Lean\\s*Body\\s*M\\s*ass|MMC"),
+    masseMusculaireKg: plage(flat, "M\\s*uscle\\s*M\\s*ass|Masse\\s*musculaire"),
+    eauTotaleKg: plage(flat, "Body Water|Eau\\s*Corporelle\\s*Totale"),
+    proteineKg: plage(flat, "Protein|Masse de prot[ée]ine"),
+    selsInorganiquesKg: plage(flat, "Inorganic Salts|Sel inorganique"),
+  };
+
+  // On ne garde que les plages réellement trouvées.
+  return Object.fromEntries(Object.entries(plages).filter(([, v]) => v != null));
+}
+
 // Table "Evaluation de l'obésité" / "Obesity Assessment" : valeurs idéales.
 function extractIdealValues(flat) {
   const weight = flat.match(
@@ -218,6 +259,7 @@ export async function parseVisbodyPdf(buffer, sourceFichier = null) {
   const overview = extractOverviewTable(flat);
   const ideal = extractIdealValues(flat);
   const ageMetabolique = extractAgeMetabolique(flat);
+  const plages = extractPlages(flat);
   const positional = extractPositionalBlock(flat);
   const scoreVisbody = extractScore(flat);
   const deltaScorePrecedent = extractDeltaScore(flat);
@@ -271,6 +313,7 @@ export async function parseVisbodyPdf(buffer, sourceFichier = null) {
     poidsIdealKg: ideal.poidsIdealKg,
     masseGrasseIdealeKg: ideal.masseGrasseIdealeKg,
     segments: positional.segments,
+    plages,
     languePdf: header.langue,
     sourceFichier,
     extractionAuto: true,

@@ -55,7 +55,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
       <PageHeader
         kicker="Ton ressenti"
         title="Journal"
-        subtitle="Un bilan de semaine, ton sommeil, une photo de progression — pas besoin d'attendre un scan."
+        subtitle="Ce que les chiffres ne disent pas : ta forme, ton sommeil, ce qui a changé dans ta semaine. C'est ce qui expliquera tes courbes dans six mois."
       />
 
       <form onSubmit={ajouter} className="mt-6 rounded-2xl border border-border-soft bg-background-soft/30 p-4">

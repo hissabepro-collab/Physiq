@@ -122,15 +122,30 @@ export default function ComparerClient({ mesures, photosParMesure }) {
           const positif = delta != null && (met.senseInverse ? delta < 0 : delta > 0);
           const negatif = delta != null && (met.senseInverse ? delta > 0 : delta < 0);
           return (
-            <div key={met.key} className="flex items-center justify-between rounded-xl border border-border-soft bg-background-soft/30 px-4 py-3">
-              <span className="text-sm font-medium text-foreground-muted">{met.label}</span>
-              <div className="flex items-center gap-3 text-sm">
-                <span>{formatNombre(a)} {met.unite}</span>
-                <span className="text-foreground-muted">→</span>
-                <span className="font-semibold">{formatNombre(b)} {met.unite}</span>
+            <div
+              key={met.key}
+              className="rounded-xl border border-border-soft bg-background-soft/30 px-4 py-3 sm:flex sm:items-center sm:justify-between"
+            >
+              <div className="flex items-center justify-between gap-2 sm:block">
+                <span className="text-sm font-medium text-foreground-muted">{met.label}</span>
                 {delta != null && Math.abs(delta) > 0.05 && (
                   <span
-                    className={`ml-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold sm:hidden ${
+                      positif ? "bg-emerald-400/10 text-emerald-300" : negatif ? "bg-red-400/10 text-red-300" : ""
+                    }`}
+                  >
+                    <IconTrendDown width={11} height={11} className={delta > 0 ? "rotate-180" : ""} />
+                    {delta > 0 ? "+" : ""}{formatNombre(delta)}
+                  </span>
+                )}
+              </div>
+              <div className="mt-2 flex items-baseline gap-2 text-base sm:mt-0 sm:gap-3 sm:text-sm">
+                <span className="text-foreground-muted">{formatNombre(a)} {met.unite}</span>
+                <span className="text-accent">→</span>
+                <span className="font-bold">{formatNombre(b)} {met.unite}</span>
+                {delta != null && Math.abs(delta) > 0.05 && (
+                  <span
+                    className={`ml-1 hidden items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold sm:inline-flex ${
                       positif ? "bg-emerald-400/10 text-emerald-300" : negatif ? "bg-red-400/10 text-red-300" : ""
                     }`}
                   >

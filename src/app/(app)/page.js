@@ -3,7 +3,7 @@ import { calculerRang } from "@/lib/rang";
 import { calculerAxesProfil } from "@/lib/profilStats";
 import EvolutionChart from "@/components/EvolutionChart";
 import StatCard from "@/components/StatCard";
-import RadarStats from "@/components/RadarStats";
+import ProfilCard from "@/components/ProfilCard";
 import HeroScan from "@/components/HeroScan";
 import { GlareCard } from "@/components/ui/GlareCard";
 import PageHeader from "@/components/PageHeader";
@@ -145,11 +145,7 @@ export default async function AccueilPage() {
 
         {axesProfil && (
           <GlareCard className="p-5 sm:p-6" tiltIntensity={4}>
-            <h2 className="font-display text-base font-semibold">Profil</h2>
-            <p className="text-xs text-foreground-muted">Basé sur ton dernier scan</p>
-            <div className="mt-2">
-              <RadarStats axes={axesProfil} />
-            </div>
+            <ProfilCard axes={axesProfil} />
           </GlareCard>
         )}
       </div>

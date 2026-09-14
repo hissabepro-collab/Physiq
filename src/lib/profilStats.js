@@ -1,43 +1,65 @@
-// Traduit les mesures réelles en 6 axes de profil (0-100), pour le radar
-// de l'accueil. Bornes volontairement génériques (pas cliniques) : elles
-// servent à donner une intuition visuelle de la progression, pas un diagnostic.
+// Profil corporel calculé à partir des PLAGES NORMALES fournies par le rapport
+// Visbody lui-même (elles dépendent de ta taille, ton âge et ton sexe).
+// Chaque axe est donc vérifiable : on affiche la valeur réelle et ses bornes.
+//
+// Convention : 0 = bord "défavorable" de la plage, 100 = bord "favorable".
+// Pour la masse grasse ou la graisse viscérale, l'échelle est inversée
+// (moins il y en a, meilleur c'est).
 
 function clamp(n, min = 0, max = 100) {
   return Math.max(min, Math.min(max, n));
 }
 
+function positionDansPlage(valeur, plage, { inverse = false } = {}) {
+  if (valeur == null || !plage || plage.max === plage.min) return null;
+  const brut = ((valeur - plage.min) / (plage.max - plage.min)) * 100;
+  return clamp(inverse ? 100 - brut : brut);
+}
+
+const AXES = [
+  { cle: "masseMusculaireKg", label: "Muscle", unite: "kg", inverse: false },
+  { cle: "bfpPct", label: "Sèche", unite: "%", inverse: true },
+  { cle: "metabolismeBaseKcal", label: "Métabolisme", unite: "kcal", inverse: false },
+  { cle: "eauTotaleKg", label: "Hydratation", unite: "kg", inverse: false },
+  { cle: "niveauGraisseViscerale", label: "Viscéral", unite: "", inverse: true },
+];
+
 export function calculerAxesProfil(mesures) {
   const derniere = mesures.at(-1);
-  if (!derniere) return null;
+  if (!derniere?.plages) return null;
 
-  const muscle = derniere.masseMusculaireKg != null ? clamp(((derniere.masseMusculaireKg - 50) / (85 - 50)) * 100) : 50;
+  const axes = [];
 
-  const seche = derniere.bfpPct != null ? clamp(((28 - derniere.bfpPct) / (28 - 10)) * 100) : 50;
-
-  const metabolisme =
-    derniere.metabolismeBaseKcal != null ? clamp(((derniere.metabolismeBaseKcal - 1500) / (2200 - 1500)) * 100) : 50;
-
-  const ratioEau = derniere.eauTotaleKg != null && derniere.poidsKg ? (derniere.eauTotaleKg / derniere.poidsKg) * 100 : null;
-  const hydratation = ratioEau != null ? clamp(((ratioEau - 45) / (65 - 45)) * 100) : 50;
-
-  let equilibre = 70;
-  const seg = derniere.segments;
-  if (seg?.maigreKg) {
-    const diffBras = Math.abs((seg.maigreKg.brasGauche ?? 0) - (seg.maigreKg.brasDroit ?? 0));
-    const diffJambe = Math.abs((seg.maigreKg.jambeGauche ?? 0) - (seg.maigreKg.jambeDroite ?? 0));
-    const diffMoyenne = (diffBras + diffJambe) / 2;
-    equilibre = clamp(100 - diffMoyenne * 80);
+  for (const axe of AXES) {
+    const plage = derniere.plages[axe.cle];
+    const valeur = derniere[axe.cle];
+    const score = positionDansPlage(valeur, plage, { inverse: axe.inverse });
+    if (score == null) continue;
+    axes.push({
+      label: axe.label,
+      valeur: score,
+      valeurReelle: valeur,
+      unite: axe.unite,
+      plage,
+      inverse: axe.inverse,
+    });
   }
 
-  const joursDepuis = Math.round((Date.now() - new Date(derniere.dateScan).getTime()) / (1000 * 60 * 60 * 24));
-  const suivi = clamp(100 - joursDepuis * 6);
+  // Symétrie gauche/droite, calculée depuis les masses maigres par segment.
+  const seg = derniere.segments?.maigreKg;
+  if (seg) {
+    const diffBras = Math.abs((seg.brasGauche ?? 0) - (seg.brasDroit ?? 0));
+    const diffJambe = Math.abs((seg.jambeGauche ?? 0) - (seg.jambeDroite ?? 0));
+    const ecartMoyen = (diffBras + diffJambe) / 2;
+    axes.push({
+      label: "Symétrie",
+      valeur: clamp(100 - ecartMoyen * 80),
+      valeurReelle: ecartMoyen,
+      unite: "kg d'écart G/D",
+      plage: null,
+      inverse: true,
+    });
+  }
 
-  return [
-    { label: "Muscle", valeur: muscle },
-    { label: "Sèche", valeur: seche },
-    { label: "Métabolisme", valeur: metabolisme },
-    { label: "Hydratation", valeur: hydratation },
-    { label: "Équilibre", valeur: equilibre },
-    { label: "Suivi", valeur: suivi },
-  ];
+  return axes.length >= 3 ? axes : null;
 }

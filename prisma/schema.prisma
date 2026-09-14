@@ -48,6 +48,11 @@ model Mesure {
   // Détail par segment (bras/tronc/jambes), secondaire — pas affiché par défaut.
   segments Json?
 
+  // Plages normales officielles du rapport ({ champ: { min, max } }) : elles
+  // dépendent de la taille/l'âge/le sexe et servent à situer chaque valeur
+  // par rapport à la normale.
+  plages Json?
+
   // Métadonnées d'extraction, utiles pour déboguer le parseur PDF bilingue.
   languePdf      String? // "en" | "fr"
   sourceFichier  String? // nom du PDF d'origine
