@@ -7,8 +7,8 @@ import { useEffect, useRef } from "react";
 // Pas de WebGL ni de dépendance — assez léger pour tourner sur téléphone.
 
 const COULEUR = "77, 232, 255";
-const DISTANCE_LIEN = 120;
-const RAYON_POINTEUR = 150;
+const DISTANCE_LIEN = 150;
+const RAYON_POINTEUR = 160;
 
 export default function ParticleField() {
   const canvasRef = useRef(null);
@@ -39,7 +39,7 @@ export default function ParticleField() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       // Moins de particules sur petit écran : fluidité avant densité.
-      const cible = Math.round(Math.min(90, Math.max(28, largeur / 16)));
+      const cible = Math.round(Math.min(150, Math.max(45, largeur / 11)));
       particules = Array.from({ length: cible }, () => creerParticule());
     }
 
@@ -56,8 +56,46 @@ export default function ParticleField() {
       };
     }
 
-    function dessiner() {
+    // Double hélice d'ADN qui tourne lentement, en arrière-plan du champ de
+    // points. Deux brins en opposition de phase, reliés par leurs barreaux.
+    function dessinerHelice(temps, xCentre, amplitude, opacite) {
+      const pas = 26;
+      const longueurOnde = 210;
+      const rotation = temps * 0.00022;
+
+      for (let y = -40; y < hauteur + 40; y += pas) {
+        const angle = (y / longueurOnde) * Math.PI * 2 + rotation;
+        const x1 = xCentre + Math.sin(angle) * amplitude;
+        const x2 = xCentre + Math.sin(angle + Math.PI) * amplitude;
+        // La profondeur simulée : le brin qui passe devant est plus net.
+        const avant = Math.cos(angle);
+
+        ctx.beginPath();
+        ctx.moveTo(x1, y);
+        ctx.lineTo(x2, y);
+        ctx.strokeStyle = `rgba(${COULEUR}, ${opacite * 0.35})`;
+        ctx.lineWidth = 0.7;
+        ctx.stroke();
+
+        for (const [x, face] of [
+          [x1, avant],
+          [x2, -avant],
+        ]) {
+          const nettete = 0.45 + (face + 1) * 0.35;
+          ctx.beginPath();
+          ctx.arc(x, y, 1.6 + face * 0.7, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${COULEUR}, ${opacite * nettete})`;
+          ctx.fill();
+        }
+      }
+    }
+
+    function dessiner(temps) {
       ctx.clearRect(0, 0, largeur, hauteur);
+
+      // Sur petit écran une seule hélice, sinon l'image devient chargée.
+      dessinerHelice(temps, largeur * 0.12, 34, 0.5);
+      if (largeur > 900) dessinerHelice(temps + 4200, largeur * 0.88, 28, 0.38);
 
       for (const p of particules) {
         p.x += p.vx;
@@ -97,8 +135,8 @@ export default function ParticleField() {
           ctx.beginPath();
           ctx.moveTo(a.x, a.y);
           ctx.lineTo(b.x, b.y);
-          ctx.strokeStyle = `rgba(${COULEUR}, ${(1 - distance / DISTANCE_LIEN) * 0.13})`;
-          ctx.lineWidth = 0.6;
+          ctx.strokeStyle = `rgba(${COULEUR}, ${(1 - distance / DISTANCE_LIEN) * 0.18})`;
+          ctx.lineWidth = 0.65;
           ctx.stroke();
         }
       }
