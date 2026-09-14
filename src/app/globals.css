@@ -22,7 +22,24 @@
   --font-display: var(--font-space-grotesk);
 }
 
+html {
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+a, button, [role="button"], select, input[type="file"] {
+  touch-action: manipulation;
+}
+
+/* Encoche / barre de gestes iPhone : la nav mobile ne doit pas passer dessous. */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }

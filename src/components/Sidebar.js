@@ -50,8 +50,8 @@ export default function Sidebar() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-20 flex h-16 items-center justify-around border-t border-border-soft bg-background-soft/90 px-2 backdrop-blur
-                 sm:static sm:h-auto sm:w-[76px] sm:flex-col sm:justify-start sm:gap-7 sm:border-t-0 sm:border-r sm:bg-background-soft/60 sm:px-0 sm:py-6"
+      className="safe-bottom fixed inset-x-0 bottom-0 z-20 flex min-h-16 items-center justify-around border-t border-border-soft bg-background-soft/90 px-2 backdrop-blur
+                 sm:static sm:min-h-0 sm:h-auto sm:w-[76px] sm:flex-col sm:justify-start sm:gap-7 sm:border-t-0 sm:border-r sm:bg-background-soft/60 sm:px-0 sm:py-6"
     >
       <Link
         href="/"

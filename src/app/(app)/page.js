@@ -3,8 +3,8 @@ import { calculerRang } from "@/lib/rang";
 import { calculerAxesProfil } from "@/lib/profilStats";
 import EvolutionChart from "@/components/EvolutionChart";
 import StatCard from "@/components/StatCard";
-import RangBadge from "@/components/RangBadge";
 import RadarStats from "@/components/RadarStats";
+import HeroScan from "@/components/HeroScan";
 import { GlareCard } from "@/components/ui/GlareCard";
 import PageHeader from "@/components/PageHeader";
 
@@ -84,10 +84,13 @@ export default async function AccueilPage() {
             )}
           </>
         }
-        action={rang && <RangBadge rang={rang} />}
       />
 
-      <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mt-6">
+        <HeroScan rang={rang} />
+      </div>
+
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard
           label="Poids"
           value={derniere.poidsKg}

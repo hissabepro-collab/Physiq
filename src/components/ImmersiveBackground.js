@@ -19,6 +19,8 @@ export default function ImmersiveBackground() {
           filter: blur(90px);
           opacity: 0.30;
           mix-blend-mode: screen;
+          will-change: transform;
+          transform: translateZ(0);
         }
         .immersive-aurora--a {
           width: 620px; height: 620px; top: -220px; left: -140px;
@@ -67,6 +69,10 @@ export default function ImmersiveBackground() {
         }
         @media (prefers-reduced-motion: reduce) {
           .immersive-aurora { animation: none; }
+        }
+        @media (max-width: 640px) {
+          .immersive-aurora { filter: blur(60px); }
+          .immersive-grain { display: none; }
         }
       `}</style>
     </div>
