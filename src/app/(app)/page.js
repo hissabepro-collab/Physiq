@@ -98,6 +98,14 @@ export default async function AccueilPage() {
         <HeroScan rang={rang} />
       </div>
 
+      <a
+        href="/parcours"
+        className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-accent/50 bg-accent-soft px-4 py-3 text-sm font-semibold transition hover:border-accent"
+      >
+        Voir mon parcours en plein écran
+        <span className="text-accent">↓</span>
+      </a>
+
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard
           label="Poids"
