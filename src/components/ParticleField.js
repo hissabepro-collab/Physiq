@@ -2,20 +2,19 @@
 
 import { useEffect, useRef } from "react";
 
-// Champ de particules en Canvas 2D : chaque point dérive à son propre rythme,
-// se relie à ses voisins proches, et s'écarte autour du curseur / du doigt.
-// Pas de WebGL ni de dépendance — assez léger pour tourner sur téléphone.
+// Fond vivant : des doubles hélices d'ADN aux brins courbes continus, qui
+// tournent lentement, et une fine poussière de particules qui dérive et
+// s'écarte au passage du curseur ou du doigt.
+// Canvas 2D, sans dépendance ni WebGL.
 
 const COULEUR = "77, 232, 255";
-const DISTANCE_LIEN = 150;
 const RAYON_POINTEUR = 160;
 
 export default function ParticleField() {
   const canvasRef = useRef(null);
 
   useEffect(() => {
-    const reduit = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduit) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -25,8 +24,21 @@ export default function ParticleField() {
     let largeur = 0;
     let hauteur = 0;
     let particules = [];
+    let helices = [];
     let animation = null;
     const pointeur = { x: -9999, y: -9999 };
+
+    function creerParticule() {
+      return {
+        x: Math.random() * largeur,
+        y: Math.random() * hauteur,
+        vx: (Math.random() - 0.5) * 0.16,
+        vy: (Math.random() - 0.5) * 0.16,
+        rayon: Math.random() * 1.3 + 0.5,
+        phase: Math.random() * Math.PI * 2,
+        vitessePhase: 0.004 + Math.random() * 0.007,
+      };
+    }
 
     function dimensionner() {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -38,107 +50,99 @@ export default function ParticleField() {
       canvas.style.height = `${hauteur}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      // Moins de particules sur petit écran : fluidité avant densité.
-      const cible = Math.round(Math.min(150, Math.max(45, largeur / 11)));
+      // Poussière discrète : elle accompagne les hélices sans les concurrencer.
+      const cible = Math.round(Math.min(70, Math.max(24, largeur / 26)));
       particules = Array.from({ length: cible }, () => creerParticule());
+
+      // Une hélice sur téléphone, deux dès qu'il y a de la place.
+      helices =
+        largeur > 900
+          ? [
+              { x: largeur * 0.13, amplitude: 46, longueurOnde: 260, vitesse: 0.00022, opacite: 0.5, decalage: 0 },
+              { x: largeur * 0.87, amplitude: 38, longueurOnde: 300, vitesse: -0.00016, opacite: 0.36, decalage: 2.1 },
+            ]
+          : [{ x: largeur * 0.82, amplitude: 34, longueurOnde: 250, vitesse: 0.0002, opacite: 0.42, decalage: 0 }];
     }
 
-    function creerParticule() {
-      return {
-        x: Math.random() * largeur,
-        y: Math.random() * hauteur,
-        vx: (Math.random() - 0.5) * 0.22,
-        vy: (Math.random() - 0.5) * 0.22,
-        rayon: Math.random() * 1.6 + 0.6,
-        // Phase propre à chaque point : la scintillation ne se synchronise pas.
-        phase: Math.random() * Math.PI * 2,
-        vitessePhase: 0.004 + Math.random() * 0.008,
-      };
-    }
+    /**
+     * Une hélice = deux brins sinusoïdaux continus en opposition de phase,
+     * reliés par des barreaux. Chaque brin est tracé par segments successifs
+     * dont l'opacité suit la profondeur : le brin qui passe devant est net,
+     * celui qui passe derrière s'efface. C'est ce dégradé le long de la
+     * courbe qui donne le relief.
+     */
+    function dessinerHelice(h, temps) {
+      const angleDe = (y) => (y / h.longueurOnde) * Math.PI * 2 + temps * h.vitesse + h.decalage;
+      const pas = 5; // finesse d'échantillonnage de la courbe
+      const debut = -60;
+      const fin = hauteur + 60;
 
-    // Double hélice d'ADN qui tourne lentement, en arrière-plan du champ de
-    // points. Deux brins en opposition de phase, reliés par leurs barreaux.
-    function dessinerHelice(temps, xCentre, amplitude, opacite) {
-      const pas = 26;
-      const longueurOnde = 210;
-      const rotation = temps * 0.00022;
+      for (const dephasage of [0, Math.PI]) {
+        let precedent = null;
+        for (let y = debut; y <= fin; y += pas) {
+          const angle = angleDe(y) + dephasage;
+          const x = h.x + Math.sin(angle) * h.amplitude;
+          const profondeur = Math.cos(angle); // -1 derrière … +1 devant
 
-      for (let y = -40; y < hauteur + 40; y += pas) {
-        const angle = (y / longueurOnde) * Math.PI * 2 + rotation;
-        const x1 = xCentre + Math.sin(angle) * amplitude;
-        const x2 = xCentre + Math.sin(angle + Math.PI) * amplitude;
-        // La profondeur simulée : le brin qui passe devant est plus net.
-        const avant = Math.cos(angle);
+          if (precedent) {
+            const netteteMoyenne = (profondeur + precedent.profondeur) / 2;
+            ctx.beginPath();
+            ctx.moveTo(precedent.x, precedent.y);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = `rgba(${COULEUR}, ${h.opacite * (0.18 + (netteteMoyenne + 1) * 0.3)})`;
+            ctx.lineWidth = 1.1 + (netteteMoyenne + 1) * 0.5;
+            ctx.lineCap = "round";
+            ctx.stroke();
+          }
+          precedent = { x, y, profondeur };
+        }
+      }
 
+      // Barreaux : seulement quand les deux brins sont suffisamment écartés,
+      // sinon ils s'empilent au moment du croisement.
+      for (let y = debut; y <= fin; y += 22) {
+        const angle = angleDe(y);
+        const ecart = Math.abs(Math.sin(angle) - Math.sin(angle + Math.PI));
+        if (ecart < 0.25) continue;
+        const x1 = h.x + Math.sin(angle) * h.amplitude;
+        const x2 = h.x + Math.sin(angle + Math.PI) * h.amplitude;
         ctx.beginPath();
         ctx.moveTo(x1, y);
         ctx.lineTo(x2, y);
-        ctx.strokeStyle = `rgba(${COULEUR}, ${opacite * 0.35})`;
-        ctx.lineWidth = 0.7;
+        ctx.strokeStyle = `rgba(${COULEUR}, ${h.opacite * 0.16 * ecart})`;
+        ctx.lineWidth = 0.8;
         ctx.stroke();
-
-        for (const [x, face] of [
-          [x1, avant],
-          [x2, -avant],
-        ]) {
-          const nettete = 0.45 + (face + 1) * 0.35;
-          ctx.beginPath();
-          ctx.arc(x, y, 1.6 + face * 0.7, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${COULEUR}, ${opacite * nettete})`;
-          ctx.fill();
-        }
       }
     }
 
     function dessiner(temps) {
       ctx.clearRect(0, 0, largeur, hauteur);
 
-      // Sur petit écran une seule hélice, sinon l'image devient chargée.
-      dessinerHelice(temps, largeur * 0.12, 34, 0.5);
-      if (largeur > 900) dessinerHelice(temps + 4200, largeur * 0.88, 28, 0.38);
+      for (const h of helices) dessinerHelice(h, temps);
 
       for (const p of particules) {
         p.x += p.vx;
         p.y += p.vy;
         p.phase += p.vitessePhase;
 
-        // Le pointeur repousse doucement les points autour de lui.
         const dx = p.x - pointeur.x;
         const dy = p.y - pointeur.y;
         const distance = Math.hypot(dx, dy);
         if (distance < RAYON_POINTEUR && distance > 0.1) {
-          const force = (1 - distance / RAYON_POINTEUR) * 0.6;
+          const force = (1 - distance / RAYON_POINTEUR) * 0.7;
           p.x += (dx / distance) * force;
           p.y += (dy / distance) * force;
         }
 
-        // Rebouclage sur les bords : le champ n'a ni début ni fin.
         if (p.x < -20) p.x = largeur + 20;
         if (p.x > largeur + 20) p.x = -20;
         if (p.y < -20) p.y = hauteur + 20;
         if (p.y > hauteur + 20) p.y = -20;
 
-        const scintillement = 0.35 + Math.sin(p.phase) * 0.25;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.rayon, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${COULEUR}, ${scintillement})`;
+        ctx.fillStyle = `rgba(${COULEUR}, ${0.3 + Math.sin(p.phase) * 0.2})`;
         ctx.fill();
-      }
-
-      // Liens entre points proches : c'est ce qui donne l'impression de réseau vivant.
-      for (let i = 0; i < particules.length; i++) {
-        for (let j = i + 1; j < particules.length; j++) {
-          const a = particules[i];
-          const b = particules[j];
-          const distance = Math.hypot(a.x - b.x, a.y - b.y);
-          if (distance > DISTANCE_LIEN) continue;
-          ctx.beginPath();
-          ctx.moveTo(a.x, a.y);
-          ctx.lineTo(b.x, b.y);
-          ctx.strokeStyle = `rgba(${COULEUR}, ${(1 - distance / DISTANCE_LIEN) * 0.18})`;
-          ctx.lineWidth = 0.65;
-          ctx.stroke();
-        }
       }
 
       animation = requestAnimationFrame(dessiner);
@@ -154,8 +158,7 @@ export default function ParticleField() {
       pointeur.y = -9999;
     }
 
-    // On met l'animation en pause hors de l'écran : inutile de consommer
-    // de la batterie quand l'onglet n'est pas visible.
+    // Inutile de consommer de la batterie quand l'onglet n'est pas visible.
     function gererVisibilite() {
       if (document.hidden) {
         if (animation) cancelAnimationFrame(animation);
