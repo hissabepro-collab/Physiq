@@ -1,6 +1,9 @@
-// Décor immersif persistant : lueurs animées, sol en perspective, grain fin.
-// Une seule instance montée dans le layout — reste fixe pendant la navigation,
-// ne rejoue pas ses animations à chaque changement de page.
+import ParticleField from "@/components/ParticleField";
+
+// Décor immersif persistant : lueurs animées, champ de particules réactif,
+// sol en perspective, grain fin. Une seule instance montée dans le layout —
+// reste fixe pendant la navigation, ne rejoue pas ses animations à chaque
+// changement de page.
 
 export default function ImmersiveBackground() {
   return (
@@ -8,6 +11,7 @@ export default function ImmersiveBackground() {
       <div className="immersive-aurora immersive-aurora--a" />
       <div className="immersive-aurora immersive-aurora--b" />
       <div className="immersive-aurora immersive-aurora--c" />
+      <ParticleField />
       <div className="immersive-grain" />
       <div className="immersive-floor" />
       <div className="immersive-vignette" />
