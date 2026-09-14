@@ -54,14 +54,67 @@ export default function ParticleField() {
       const cible = Math.round(Math.min(70, Math.max(24, largeur / 26)));
       particules = Array.from({ length: cible }, () => creerParticule());
 
-      // Une hélice sur téléphone, deux dès qu'il y a de la place.
+      // Hélices courtes, épaisses et posées en diagonale.
+      const diagonale = Math.hypot(largeur, hauteur);
       helices =
         largeur > 900
           ? [
-              { x: largeur * 0.13, amplitude: 46, longueurOnde: 260, vitesse: 0.00022, opacite: 0.5, decalage: 0 },
-              { x: largeur * 0.87, amplitude: 38, longueurOnde: 300, vitesse: -0.00016, opacite: 0.36, decalage: 2.1 },
+              {
+                cx: largeur * 0.17,
+                cy: hauteur * 0.3,
+                longueur: Math.min(380, diagonale * 0.3),
+                inclinaison: -0.55,
+                amplitude: 30,
+                longueurOnde: 96,
+                vitesse: 0.00045,
+                opacite: 0.62,
+                decalage: 0,
+              },
+              {
+                cx: largeur * 0.84,
+                cy: hauteur * 0.7,
+                longueur: Math.min(320, diagonale * 0.26),
+                inclinaison: 0.62,
+                amplitude: 26,
+                longueurOnde: 88,
+                vitesse: -0.00038,
+                opacite: 0.45,
+                decalage: 2.1,
+              },
             ]
-          : [{ x: largeur * 0.82, amplitude: 34, longueurOnde: 250, vitesse: 0.0002, opacite: 0.42, decalage: 0 }];
+          : [
+              {
+                cx: largeur * 0.76,
+                cy: hauteur * 0.24,
+                longueur: Math.min(300, hauteur * 0.3),
+                inclinaison: 0.6,
+                amplitude: 26,
+                longueurOnde: 86,
+                vitesse: 0.00042,
+                opacite: 0.55,
+                decalage: 0,
+              },
+            ];
+    }
+
+    /**
+     * Une particule est-elle dans l'emprise d'une hélice ? On repasse ses
+     * coordonnées dans le repère incliné de l'hélice : si elle tombe dans le
+     * rectangle qu'occupe la double spirale, on ne la dessine pas — les deux
+     * motifs ne se chevauchent jamais.
+     */
+    function dansEmpriseHelice(x, y) {
+      for (const h of helices) {
+        const dx = x - h.cx;
+        const dy = y - h.cy;
+        const cos = Math.cos(-h.inclinaison);
+        const sin = Math.sin(-h.inclinaison);
+        const local = { x: dx * cos - dy * sin, y: dx * sin + dy * cos };
+        if (Math.abs(local.y) <= h.longueur / 2 + 24 && Math.abs(local.x) <= h.amplitude + 30) {
+          return true;
+        }
+      }
+      return false;
     }
 
     /**
@@ -73,24 +126,52 @@ export default function ParticleField() {
      */
     function dessinerHelice(h, temps) {
       const angleDe = (y) => (y / h.longueurOnde) * Math.PI * 2 + temps * h.vitesse + h.decalage;
-      const pas = 5; // finesse d'échantillonnage de la courbe
-      const debut = -60;
-      const fin = hauteur + 60;
+      const pas = 4; // finesse d'échantillonnage de la courbe
+      const debut = -h.longueur / 2;
+      const fin = h.longueur / 2;
+
+      // On dessine l'hélice verticalement dans un repère incliné : le reste
+      // du calcul reste simple, et l'inclinaison se règle en un seul endroit.
+      ctx.save();
+      ctx.translate(h.cx, h.cy);
+      ctx.rotate(h.inclinaison);
+
+      // Fondu aux deux extrémités pour que le brin ne s'arrête pas net.
+      const attenuation = (y) => {
+        const bord = h.longueur * 0.18;
+        const distanceBord = h.longueur / 2 - Math.abs(y);
+        return Math.max(0, Math.min(1, distanceBord / bord));
+      };
+
+      // Barreaux d'abord : ils passent derrière les brins.
+      for (let y = debut; y <= fin; y += 16) {
+        const angle = angleDe(y);
+        const ecart = Math.abs(Math.sin(angle) - Math.sin(angle + Math.PI));
+        if (ecart < 0.3) continue;
+        const x1 = Math.sin(angle) * h.amplitude;
+        const x2 = Math.sin(angle + Math.PI) * h.amplitude;
+        ctx.beginPath();
+        ctx.moveTo(x1, y);
+        ctx.lineTo(x2, y);
+        ctx.strokeStyle = `rgba(${COULEUR}, ${h.opacite * 0.22 * ecart * attenuation(y)})`;
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+      }
 
       for (const dephasage of [0, Math.PI]) {
         let precedent = null;
         for (let y = debut; y <= fin; y += pas) {
           const angle = angleDe(y) + dephasage;
-          const x = h.x + Math.sin(angle) * h.amplitude;
+          const x = Math.sin(angle) * h.amplitude;
           const profondeur = Math.cos(angle); // -1 derrière … +1 devant
 
           if (precedent) {
-            const netteteMoyenne = (profondeur + precedent.profondeur) / 2;
+            const nettete = (profondeur + precedent.profondeur) / 2;
             ctx.beginPath();
             ctx.moveTo(precedent.x, precedent.y);
             ctx.lineTo(x, y);
-            ctx.strokeStyle = `rgba(${COULEUR}, ${h.opacite * (0.18 + (netteteMoyenne + 1) * 0.3)})`;
-            ctx.lineWidth = 1.1 + (netteteMoyenne + 1) * 0.5;
+            ctx.strokeStyle = `rgba(${COULEUR}, ${h.opacite * (0.22 + (nettete + 1) * 0.34) * attenuation(y)})`;
+            ctx.lineWidth = 2 + (nettete + 1) * 1.1;
             ctx.lineCap = "round";
             ctx.stroke();
           }
@@ -98,21 +179,7 @@ export default function ParticleField() {
         }
       }
 
-      // Barreaux : seulement quand les deux brins sont suffisamment écartés,
-      // sinon ils s'empilent au moment du croisement.
-      for (let y = debut; y <= fin; y += 22) {
-        const angle = angleDe(y);
-        const ecart = Math.abs(Math.sin(angle) - Math.sin(angle + Math.PI));
-        if (ecart < 0.25) continue;
-        const x1 = h.x + Math.sin(angle) * h.amplitude;
-        const x2 = h.x + Math.sin(angle + Math.PI) * h.amplitude;
-        ctx.beginPath();
-        ctx.moveTo(x1, y);
-        ctx.lineTo(x2, y);
-        ctx.strokeStyle = `rgba(${COULEUR}, ${h.opacite * 0.16 * ecart})`;
-        ctx.lineWidth = 0.8;
-        ctx.stroke();
-      }
+      ctx.restore();
     }
 
     function dessiner(temps) {
@@ -138,6 +205,9 @@ export default function ParticleField() {
         if (p.x > largeur + 20) p.x = -20;
         if (p.y < -20) p.y = hauteur + 20;
         if (p.y > hauteur + 20) p.y = -20;
+
+        // Les points laissent la place aux hélices au lieu de passer dessus.
+        if (dansEmpriseHelice(p.x, p.y)) continue;
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.rayon, 0, Math.PI * 2);
