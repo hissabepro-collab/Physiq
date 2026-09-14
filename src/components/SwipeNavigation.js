@@ -8,8 +8,8 @@ import { usePathname, useRouter } from "next/navigation";
 // correspond au sens de l'animation de transition.
 const PARCOURS = ["/", "/scan", "/historique", "/comparer", "/objectifs", "/journal", "/parametres"];
 
-const DISTANCE_MIN = 65; // px : en dessous, c'est un tap ou une hésitation
-const RATIO_HORIZONTAL = 1.6; // le geste doit être franchement horizontal
+const DISTANCE_DECLENCHEMENT = 55; // px parcourus avant de basculer
+const RATIO_HORIZONTAL = 1.4; // le geste doit rester franchement horizontal
 
 /** Un geste qui démarre dans une zone défilable horizontalement lui appartient. */
 function dansZoneDefilable(element) {
@@ -32,9 +32,19 @@ export default function SwipeNavigation() {
     const index = PARCOURS.indexOf(pathname);
     if (index === -1) return;
 
+    const precedent = PARCOURS[index - 1];
+    const suivant = PARCOURS[index + 1];
+
+    // Les écrans voisins sont préparés à l'avance : au moment du geste, la
+    // page est déjà prête et n'a pas à être demandée au serveur.
+    if (precedent) router.prefetch(precedent);
+    if (suivant) router.prefetch(suivant);
+
     let depart = null;
+    let declenche = false;
 
     function onTouchStart(e) {
+      declenche = false;
       if (e.touches.length !== 1 || dansZoneDefilable(e.target)) {
         depart = null;
         return;
@@ -42,25 +52,37 @@ export default function SwipeNavigation() {
       depart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     }
 
-    function onTouchEnd(e) {
-      if (!depart) return;
-      const fin = e.changedTouches[0];
-      const dx = fin.clientX - depart.x;
-      const dy = fin.clientY - depart.y;
+    // On bascule dès que le seuil est franchi, sans attendre que le doigt
+    // soit levé : c'est ce qui supprime la demi-seconde d'attente.
+    function onTouchMove(e) {
+      if (!depart || declenche || e.touches.length !== 1) return;
+      const dx = e.touches[0].clientX - depart.x;
+      const dy = e.touches[0].clientY - depart.y;
+
+      if (Math.abs(dx) < DISTANCE_DECLENCHEMENT) return;
+      if (Math.abs(dx) < Math.abs(dy) * RATIO_HORIZONTAL) {
+        depart = null; // geste vertical : c'est un défilement, on n'intervient pas
+        return;
+      }
+
+      const cible = dx < 0 ? suivant : precedent;
+      if (cible) {
+        declenche = true;
+        router.push(cible);
+      }
       depart = null;
+    }
 
-      if (Math.abs(dx) < DISTANCE_MIN) return;
-      if (Math.abs(dx) < Math.abs(dy) * RATIO_HORIZONTAL) return;
-
-      // Balayer vers la gauche fait avancer dans le parcours.
-      const cible = dx < 0 ? PARCOURS[index + 1] : PARCOURS[index - 1];
-      if (cible) router.push(cible);
+    function onTouchEnd() {
+      depart = null;
     }
 
     window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
     window.addEventListener("touchend", onTouchEnd, { passive: true });
     return () => {
       window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
     };
   }, [pathname, router]);
