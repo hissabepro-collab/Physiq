@@ -108,7 +108,7 @@ export default function ParcoursClient({
 
       <Link
         href="/"
-        className="fixed right-4 top-5 z-40 rounded-full border border-border-soft bg-background-soft/80 px-4 py-2 text-xs font-semibold backdrop-blur hover:border-accent/60"
+        className="fixed right-4 top-5 z-40 rounded-full border border-border-soft bg-background-soft/95 px-4 py-2 text-xs font-semibold sm:backdrop-blur hover:border-accent/60"
       >
         Quitter le parcours
       </Link>
@@ -149,7 +149,7 @@ export default function ParcoursClient({
             const delta = s.valeur != null && s.avant != null ? s.valeur - s.avant : null;
             const bon = delta != null && (s.inverse ? delta < 0 : delta > 0);
             return (
-              <div key={s.label} className="rounded-2xl border border-border-soft bg-background-soft/40 p-5 backdrop-blur-md">
+              <div key={s.label} className="rounded-2xl border border-border-soft bg-background-soft/40 p-5 sm:backdrop-blur-md">
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-foreground-muted">{s.label}</div>
                 <div className="mt-2 font-display text-3xl font-bold sm:text-4xl">
                   {format(s.valeur)}
@@ -169,7 +169,7 @@ export default function ParcoursClient({
 
       <Chapitre index={2} reduit={reduit}>
         <TitreChapitre numero={2} titre="Ton évolution" />
-        <div className="rounded-2xl border border-border-soft bg-background-soft/40 p-5 backdrop-blur-md sm:p-7">
+        <div className="rounded-2xl border border-border-soft bg-background-soft/40 p-5 sm:backdrop-blur-md sm:p-7">
           <EvolutionChart series={series} />
           <div className="mt-3 flex gap-5 text-xs font-medium text-foreground-muted">
             <span className="flex items-center gap-1.5">
@@ -185,7 +185,7 @@ export default function ParcoursClient({
       {axesProfil && (
         <Chapitre index={3} reduit={reduit}>
           <TitreChapitre numero={3} titre="Ton profil" />
-          <div className="rounded-2xl border border-border-soft bg-background-soft/40 p-5 backdrop-blur-md sm:p-7">
+          <div className="rounded-2xl border border-border-soft bg-background-soft/40 p-5 sm:backdrop-blur-md sm:p-7">
             <div className="mx-auto max-w-sm">
               <RadarStats axes={axesProfil} />
             </div>
@@ -205,7 +205,7 @@ export default function ParcoursClient({
 
       <Chapitre index={4} reduit={reduit}>
         <TitreChapitre numero={4} titre="Ta semaine" />
-        <div className="rounded-2xl border border-border-soft bg-background-soft/40 p-6 backdrop-blur-md sm:p-8">
+        <div className="rounded-2xl border border-border-soft bg-background-soft/40 p-6 sm:backdrop-blur-md sm:p-8">
           <p className="text-xs text-foreground-muted">{libelleSemaine}</p>
           {serie > 0 && (
             <p className="mt-1 font-display text-2xl font-bold text-accent" style={{ textShadow: "0 0 20px rgba(77,232,255,0.5)" }}>
@@ -259,7 +259,7 @@ export default function ParcoursClient({
             <Link
               key={l.href}
               href={l.href}
-              className="flex items-center justify-between rounded-xl border border-border-soft bg-background-soft/40 px-4 py-3.5 text-sm font-semibold backdrop-blur-md transition hover:border-accent/60"
+              className="flex items-center justify-between rounded-xl border border-border-soft bg-background-soft/40 px-4 py-3.5 text-sm font-semibold sm:backdrop-blur-md transition hover:border-accent/60"
             >
               {l.label}
               <IconArrowRight width={16} height={16} className="text-accent" />

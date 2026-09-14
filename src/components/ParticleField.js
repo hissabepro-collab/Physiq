@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 // Fond vivant : des doubles hélices d'ADN aux brins courbes continus, qui
 // tournent lentement, et une fine poussière de particules qui dérive et
@@ -12,8 +13,14 @@ const RAYON_POINTEUR = 160;
 
 export default function ParticleField() {
   const canvasRef = useRef(null);
+  const pathname = usePathname();
+
+  // L'écran de connexion a déjà son propre champ animé : deux canvas plein
+  // écran en même temps, c'est le double de travail pour rien.
+  const desactive = pathname === "/login";
 
   useEffect(() => {
+    if (desactive) return;
     // Si le système demande de limiter les animations, on dessine quand même
     // le décor — mais figé, sans boucle d'animation.
     const mouvementReduit = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -43,9 +50,12 @@ export default function ParticleField() {
     }
 
     function dimensionner() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       largeur = window.innerWidth;
       hauteur = window.innerHeight;
+      // Sur mobile on plafonne la résolution du canvas : un écran à 3x
+      // demande 9 fois plus de pixels à remplir à chaque image, pour un gain
+      // visuel nul sur un décor flou.
+      const dpr = Math.min(window.devicePixelRatio || 1, largeur < 640 ? 1.5 : 2);
       canvas.width = largeur * dpr;
       canvas.height = hauteur * dpr;
       canvas.style.width = `${largeur}px`;
@@ -53,7 +63,7 @@ export default function ParticleField() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       // Poussière discrète : elle accompagne les hélices sans les concurrencer.
-      const cible = Math.round(Math.min(70, Math.max(24, largeur / 26)));
+      const cible = Math.round(Math.min(70, Math.max(16, largeur / 34)));
       particules = Array.from({ length: cible }, () => creerParticule());
 
       // Hélices courtes, épaisses et posées en diagonale.
@@ -128,7 +138,9 @@ export default function ParticleField() {
      */
     function dessinerHelice(h, temps) {
       const angleDe = (y) => (y / h.longueurOnde) * Math.PI * 2 + temps * h.vitesse + h.decalage;
-      const pas = 4; // finesse d'échantillonnage de la courbe
+      // Chaque segment est un tracé séparé (pour faire varier l'opacité le
+      // long de la courbe) : on échantillonne plus grossièrement sur mobile.
+      const pas = largeur < 640 ? 7 : 4;
       const debut = -h.longueur / 2;
       const fin = h.longueur / 2;
 
@@ -271,7 +283,9 @@ export default function ParticleField() {
       window.removeEventListener("touchend", quitterPointeur);
       document.removeEventListener("visibilitychange", gererVisibilite);
     };
-  }, []);
+  }, [desactive]);
+
+  if (desactive) return null;
 
   return <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden="true" />;
 }

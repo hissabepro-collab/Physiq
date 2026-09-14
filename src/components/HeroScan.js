@@ -5,7 +5,7 @@ import HoloRing from "@/components/HoloRing";
 // à un effet qui ne se déclencherait qu'au survol.
 export default function HeroScan({ rang }) {
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-border-soft bg-background-soft/40 backdrop-blur-md">
+    <div className="relative overflow-hidden rounded-3xl border border-border-soft bg-background-soft/40 sm:backdrop-blur-md">
       <div className="hero-scanlines" />
       <div className="relative z-10 flex flex-col items-center gap-6 px-6 py-8 sm:flex-row sm:justify-center sm:gap-10 sm:py-10">
         <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-accent sm:hidden">

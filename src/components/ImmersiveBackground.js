@@ -75,8 +75,13 @@ export default function ImmersiveBackground() {
           .immersive-aurora { animation: none; }
         }
         @media (max-width: 640px) {
-          .immersive-aurora { filter: blur(60px); }
+          /* Le flou est l'effet le plus coûteux du décor : sur mobile on le
+             réduit fortement, on garde deux lueurs sur trois, et on retire
+             le sol en perspective et le grain. */
+          .immersive-aurora { filter: blur(40px); opacity: 0.34; }
+          .immersive-aurora--c { display: none; }
           .immersive-grain { display: none; }
+          .immersive-floor { display: none; }
         }
       `}</style>
     </div>

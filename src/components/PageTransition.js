@@ -32,11 +32,15 @@ export default function PageTransition({ children }) {
     <div className="overflow-x-clip">
       <motion.div
         key={pathname}
-        initial={{ x: `${sens * 45}%`, opacity: 0 }}
+        // Course plus courte et durée plus brève : moins de pixels déplacés à
+        // chaque image, donc un glissement franc plutôt que traînant.
+        // `willChange` prévient le navigateur pour qu'il prépare la couche.
+        style={{ willChange: "transform, opacity" }}
+        initial={{ x: `${sens * 22}%`, opacity: 0 }}
         animate={{ x: "0%", opacity: 1 }}
         transition={{
-          x: { duration: 0.36, ease: [0.32, 0.72, 0, 1] },
-          opacity: { duration: 0.25 },
+          x: { duration: 0.26, ease: [0.32, 0.72, 0, 1] },
+          opacity: { duration: 0.18 },
         }}
       >
         {children}

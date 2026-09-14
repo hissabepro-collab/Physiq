@@ -38,7 +38,7 @@ function LoginForm() {
       <DotGridField />
       <form
         onSubmit={handleSubmit}
-        className="relative z-10 w-full max-w-sm rounded-2xl border border-border-soft bg-background-soft/70 p-8 shadow-[0_0_60px_-20px_rgba(77,232,255,0.5)] backdrop-blur-md"
+        className="relative z-10 w-full max-w-sm rounded-2xl border border-border-soft bg-background-soft/70 p-8 shadow-[0_0_60px_-20px_rgba(77,232,255,0.5)] sm:backdrop-blur-md"
       >
         <div className="mb-6 flex items-center gap-3">
           <div className="relative h-6 w-6 rounded-full border border-accent">

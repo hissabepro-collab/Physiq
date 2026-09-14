@@ -34,14 +34,17 @@ export default function DotGridField({
     const pointeur = { x: -9999, y: -9999, actif: false };
 
     function construire() {
-      const dispersion = ecart * 0.55;
-      const colonnes = Math.ceil(largeur / ecart) + 1;
-      const lignes = Math.ceil(hauteur / ecart) + 1;
+      // Maille plus lâche sur mobile : chaque trait est un tracé séparé avec
+      // rotation, donc leur nombre pèse directement sur la fluidité.
+      const maille = largeur < 640 ? ecart * 1.45 : ecart;
+      const dispersion = maille * 0.55;
+      const colonnes = Math.ceil(largeur / maille) + 1;
+      const lignes = Math.ceil(hauteur / maille) + 1;
       const liste = [];
       for (let l = 0; l < lignes; l++) {
         for (let c = 0; c < colonnes; c++) {
-          const ox = c * ecart + (Math.random() - 0.5) * dispersion * 2;
-          const oy = l * ecart + (Math.random() - 0.5) * dispersion * 2;
+          const ox = c * maille + (Math.random() - 0.5) * dispersion * 2;
+          const oy = l * maille + (Math.random() - 0.5) * dispersion * 2;
           liste.push({
             ox,
             oy,
@@ -61,9 +64,9 @@ export default function DotGridField({
     }
 
     function dimensionner() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       largeur = canvas.offsetWidth;
       hauteur = canvas.offsetHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, largeur < 640 ? 1.5 : 2);
       canvas.width = largeur * dpr;
       canvas.height = hauteur * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
