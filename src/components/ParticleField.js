@@ -287,5 +287,13 @@ export default function ParticleField() {
 
   if (desactive) return null;
 
-  return <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden="true" />;
+  // Le canvas apparaît en fondu : sans cela il surgit à pleine intensité dès
+  // la première image dessinée, ce qui se voit comme un à-coup au lancement.
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 h-full w-full motion-safe:animate-[apparition_900ms_ease-out_both]"
+      aria-hidden="true"
+    />
+  );
 }

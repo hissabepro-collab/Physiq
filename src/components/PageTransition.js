@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 
@@ -22,7 +22,20 @@ export default function PageTransition({ children }) {
   const sens = position(pathname) >= position(precedent.current) ? 1 : -1;
   precedent.current = pathname;
 
-  if (prefersReducedMotion) return <>{children}</>;
+  // Au tout premier affichage (ouverture de l'app), il n'y a pas de page
+  // précédente : faire glisser le contenu latéralement donne une impression
+  // de saccade. On ne l'anime qu'à partir de la première vraie navigation.
+  const [aNavigue, setANavigue] = useState(false);
+  const premierRendu = useRef(true);
+  useEffect(() => {
+    if (premierRendu.current) {
+      premierRendu.current = false;
+      return;
+    }
+    setANavigue(true);
+  }, [pathname]);
+
+  if (prefersReducedMotion || !aNavigue) return <>{children}</>;
 
   // On n'anime QUE l'arrivée de la nouvelle page. Avec une animation de
   // sortie, Next.js remplace le contenu de l'ancienne page avant la fin de

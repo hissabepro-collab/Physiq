@@ -1,22 +1,30 @@
-// Affiché instantanément pendant que l'écran suivant interroge la base.
-// Sans lui, le balayage semble bloqué le temps de l'aller-retour réseau.
+// Affiché pendant que l'écran interroge la base.
+//
+// Volontairement très peu contrasté et SANS animation de pulsation : sur fond
+// sombre, des blocs gris clignotants qui disparaissent au bout de 200 ms
+// donnent une impression de grésillement à l'ouverture de l'app. Ici le
+// squelette reprend simplement la silhouette de la page, assez discret pour
+// que l'apparition du vrai contenu passe inaperçue.
+function Bloc({ className }) {
+  return <div className={`rounded-2xl border border-border-soft/40 bg-foreground/[0.03] ${className}`} />;
+}
+
 export default function Chargement() {
   return (
     <div className="mx-auto max-w-5xl px-5 py-8 sm:px-10 sm:py-10">
-      <div className="h-3 w-24 animate-pulse rounded bg-accent/25" />
-      <div className="mt-3 h-8 w-52 animate-pulse rounded bg-foreground/10" />
+      <Bloc className="h-3 w-24 rounded" />
+      <Bloc className="mt-3 h-8 w-52 rounded-lg" />
 
-      <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {[0, 1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="h-28 animate-pulse rounded-2xl border border-border-soft bg-background-soft/40"
-            style={{ animationDelay: `${i * 90}ms` }}
-          />
-        ))}
+      <Bloc className="mt-6 h-44 rounded-3xl" />
+
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Bloc className="h-28" />
+        <Bloc className="h-28" />
+        <Bloc className="h-28" />
+        <Bloc className="h-28" />
       </div>
 
-      <div className="mt-6 h-56 animate-pulse rounded-2xl border border-border-soft bg-background-soft/40" />
+      <Bloc className="mt-6 h-56" />
     </div>
   );
 }

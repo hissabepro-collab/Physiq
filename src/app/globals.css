@@ -44,6 +44,13 @@ a, button, [role="button"], select, input[type="file"] {
   touch-action: manipulation;
 }
 
+/* Fondu d'apparition, utilisé pour que le décor animé ne surgisse pas d'un
+   coup au lancement de l'app. */
+@keyframes apparition {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* Encoche / barre de gestes iPhone : la nav mobile ne doit pas passer dessous. */
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
