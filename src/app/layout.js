@@ -22,7 +22,11 @@ export const metadata = {
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    // "black" et non "black-translucent" : en translucide, la vue web passe
+    // sous la barre d'état, et cette zone reste non peinte pendant le
+    // démarrage — c'est un bandeau blanc en haut de l'écran au lancement.
+    // En "black", iOS réserve la barre d'état et la remplit lui-même.
+    statusBarStyle: "black",
     title: "Physiq",
   },
   icons: {

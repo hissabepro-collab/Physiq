@@ -2,7 +2,7 @@
   "name": "Physiq",
   "short_name": "Physiq",
   "description": "Suivi personnel de composition corporelle",
-  "start_url": "/",
+  "start_url": "/demarrage",
   "display": "standalone",
   "background_color": "#050a0e",
   "theme_color": "#050a0e",

@@ -8,9 +8,14 @@
 // mises en cache — tes mesures doivent toujours venir du serveur, et une page
 // protégée ne doit pas rester sur l'appareil.
 
-const CACHE = "physiq-statique-v1";
+const CACHE = "physiq-statique-v2";
 
 const PREFIXES_CACHABLES = ["/_next/static/", "/icons/", "/splash/"];
+
+// Page d'entrée de l'app installée. Elle ne contient que le logo — aucune
+// donnée personnelle — donc on peut la garder hors ligne, et c'est justement
+// ce qui permet d'afficher quelque chose avant même d'avoir joint le réseau.
+const ENTREE = "/demarrage";
 
 function estCachable(url) {
   if (url.origin !== self.location.origin) return false;
@@ -23,7 +28,9 @@ self.addEventListener("install", (event) => {
   // Le squelette de l'app est mis en cache dès l'installation : au prochain
   // lancement il s'affiche sans attendre le réseau.
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(["/manifest.json", "/icons/icon-192.png"]).catch(() => {}))
+    caches
+      .open(CACHE)
+      .then((cache) => cache.addAll([ENTREE, "/manifest.json", "/icons/icon-192.png"]).catch(() => {}))
   );
 });
 
@@ -41,6 +48,26 @@ self.addEventListener("fetch", (event) => {
   if (requete.method !== "GET") return;
 
   const url = new URL(requete.url);
+
+  // L'écran de démarrage est servi depuis le cache immédiatement, puis
+  // rafraîchi en arrière-plan : le lancement n'attend jamais le réseau, et la
+  // version suivante sera à jour.
+  if (url.origin === self.location.origin && url.pathname === ENTREE) {
+    event.respondWith(
+      caches.open(CACHE).then(async (cache) => {
+        const enCache = await cache.match(ENTREE);
+        const reseau = fetch(requete)
+          .then((reponse) => {
+            if (reponse.ok && reponse.type === "basic") cache.put(ENTREE, reponse.clone());
+            return reponse;
+          })
+          .catch(() => enCache);
+        return enCache || reseau;
+      })
+    );
+    return;
+  }
+
   if (!estCachable(url)) return; // page, données, API : toujours le réseau
 
   event.respondWith(
