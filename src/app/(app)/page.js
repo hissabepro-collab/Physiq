@@ -6,7 +6,15 @@ import StatCard from "@/components/StatCard";
 import ProfilCard from "@/components/ProfilCard";
 import HeroScan from "@/components/HeroScan";
 import SemaineCard from "@/components/SemaineCard";
-import { bilanSemaine, calculerSerie, cleSemaine, libelleSemaine, OBJECTIFS_DEFAUT } from "@/lib/semaines";
+import AssiduiteCard from "@/components/AssiduiteCard";
+import {
+  bilanCumule,
+  bilanSemaine,
+  calculerSerie,
+  cleSemaine,
+  libelleSemaine,
+  OBJECTIFS_DEFAUT,
+} from "@/lib/semaines";
 import { GlareCard } from "@/components/ui/GlareCard";
 import PageHeader from "@/components/PageHeader";
 
@@ -32,6 +40,7 @@ export default async function AccueilPage() {
   const semaineActuelle = cleSemaine(new Date());
   const bilan = bilanSemaine(parSemaine[semaineActuelle], OBJECTIFS_DEFAUT);
   const serie = calculerSerie(parSemaine, OBJECTIFS_DEFAUT, semaineActuelle);
+  const cumul = bilanCumule(parSemaine, OBJECTIFS_DEFAUT, semaineActuelle);
 
   const derniere = mesures.at(-1);
   const precedente = mesures.at(-2);
@@ -148,6 +157,12 @@ export default async function AccueilPage() {
           renseignee={Boolean(parSemaine[semaineActuelle])}
         />
       </div>
+
+      {cumul && (
+        <div className="mt-4">
+          <AssiduiteCard cumul={cumul} objectifs={OBJECTIFS_DEFAUT} />
+        </div>
+      )}
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
         <GlareCard className="p-5 sm:p-7" tiltIntensity={3}>

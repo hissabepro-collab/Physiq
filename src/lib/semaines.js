@@ -47,6 +47,13 @@ export function semainePrecedente(cle) {
   return cleSemaine(new Date(lundi.getUTCFullYear(), lundi.getUTCMonth(), lundi.getUTCDate()));
 }
 
+/** Clé de la semaine suivant une clé donnée. */
+export function semaineSuivante(cle) {
+  const lundi = lundiDeSemaine(cle);
+  lundi.setUTCDate(lundi.getUTCDate() + 7);
+  return cleSemaine(new Date(lundi.getUTCFullYear(), lundi.getUTCMonth(), lundi.getUTCDate()));
+}
+
 function nombreSeances(entree) {
   return Array.isArray(entree?.joursEntraines) ? entree.joursEntraines.length : 0;
 }
@@ -97,15 +104,76 @@ export function calculerSerie(entreesParSemaine, objectifs, cleActuelle) {
   return serie;
 }
 
-/** Les n dernières semaines (plus récente en dernier), avec leur bilan. */
-export function dernieresSemaines(entreesParSemaine, objectifs, cleActuelle, n = 12) {
+/** Les n dernières clés de semaine (plus récente en dernier). */
+function clesDesDernieresSemaines(cleActuelle, n) {
   const cles = [];
   let cle = cleActuelle;
   for (let i = 0; i < n; i++) {
     cles.unshift(cle);
     cle = semainePrecedente(cle);
   }
-  return cles.map((c) => {
+  return cles;
+}
+
+/**
+ * Bilan d'assiduité depuis la toute première semaine renseignée : "56 séances
+ * sur 67 attendues". Le dénominateur grandit donc chaque semaine, même les
+ * semaines non remplies — c'est ce qui en fait une mesure de régularité et
+ * non une simple somme.
+ *
+ * La semaine en cours est comptée au prorata des jours déjà écoulés : un
+ * mardi, on n'attend pas encore les 5 séances de la semaine.
+ *
+ * Le sommeil n'est pas cumulable (c'est une moyenne par nuit) : on en donne
+ * la moyenne des quatre dernières semaines, soit le dernier mois.
+ */
+export function bilanCumule(entreesParSemaine, objectifs, cleActuelle, aujourdHui = new Date()) {
+  const clesRenseignees = Object.keys(entreesParSemaine)
+    .filter((c) => c && c <= cleActuelle)
+    .sort();
+  if (clesRenseignees.length === 0) return null;
+
+  const joursEcoules = aujourdHui.getDay() || 7; // lundi = 1 … dimanche = 7
+
+  let seancesFaites = 0;
+  let seancesAttendues = 0;
+  let dieteTenue = 0;
+  let dieteAttendue = 0;
+  let semaines = 0;
+
+  for (let cle = clesRenseignees[0]; cle <= cleActuelle && semaines < 520; cle = semaineSuivante(cle)) {
+    const entree = entreesParSemaine[cle];
+    const prorata = cle === cleActuelle ? joursEcoules / 7 : 1;
+    seancesFaites += nombreSeances(entree);
+    seancesAttendues += Math.round(objectifs.seancesParSemaine * prorata);
+    dieteTenue += nombreJoursDiete(entree);
+    dieteAttendue += Math.round(objectifs.dieteParSemaine * prorata);
+    semaines += 1;
+  }
+
+  const heuresDuMois = clesDesDernieresSemaines(cleActuelle, 4)
+    .map((c) => entreesParSemaine[c]?.sommeilHeures)
+    .filter((h) => h != null);
+  const moyenneSommeil = heuresDuMois.length
+    ? heuresDuMois.reduce((a, b) => a + b, 0) / heuresDuMois.length
+    : null;
+
+  return {
+    semaines,
+    depuis: clesRenseignees[0],
+    seances: { fait: seancesFaites, cible: seancesAttendues },
+    diete: { fait: dieteTenue, cible: dieteAttendue },
+    sommeil: {
+      moyenne: moyenneSommeil,
+      cible: objectifs.sommeilHeures,
+      semainesMesurees: heuresDuMois.length,
+    },
+  };
+}
+
+/** Les n dernières semaines (plus récente en dernier), avec leur bilan. */
+export function dernieresSemaines(entreesParSemaine, objectifs, cleActuelle, n = 12) {
+  return clesDesDernieresSemaines(cleActuelle, n).map((c) => {
     const entree = entreesParSemaine[c];
     const bilan = bilanSemaine(entree, objectifs);
     const objectifsAtteints = [bilan.seances.atteint, bilan.diete.atteint, bilan.sommeil.atteint].filter(Boolean).length;
