@@ -16,4 +16,10 @@ export const ECRANS_DEMARRAGE = [
   { media: "(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2)", url: "/splash/ipad.png" },
   { media: "(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)", url: "/splash/ipad-pro-11.png" },
   { media: "(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)", url: "/splash/ipad-pro-129.png" },
+  // Secours pour tout appareil dont les dimensions ne figurent pas ci-dessus
+  // (modèle plus récent, orientation paysage) : sans correspondance, iOS
+  // retomberait sur un écran blanc. Déclaré en dernier pour ne pas primer sur
+  // les images exactes.
+  { media: "(orientation: portrait)", url: "/splash/secours.png" },
+  { media: "(orientation: landscape)", url: "/splash/secours-paysage.png" },
 ];

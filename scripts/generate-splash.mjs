@@ -27,6 +27,10 @@ export const APPAREILS = [
   { nom: "ipad", l: 768, h: 1024, d: 2 },
   { nom: "ipad-pro-11", l: 834, h: 1194, d: 2 },
   { nom: "ipad-pro-129", l: 1024, h: 1366, d: 2 },
+  // Images de secours, utilisées quand aucune dimension exacte ne correspond
+  // (modèle trop récent pour cette liste, ou orientation paysage).
+  { nom: "secours", l: 440, h: 956, d: 3 },
+  { nom: "secours-paysage", l: 956, h: 440, d: 3 },
 ];
 
 function svgDemarrage(largeur, hauteur) {

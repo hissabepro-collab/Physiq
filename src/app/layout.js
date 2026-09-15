@@ -44,13 +44,23 @@ export const viewport = {
   viewportFit: "cover",
 };
 
+// La couleur de fond est écrite en dur dans le document, et non seulement
+// dans la feuille de style : tant qu'un fichier CSS externe n'est pas chargé,
+// le navigateur peint du blanc par défaut. Posée ici, elle s'applique dès le
+// tout premier octet de HTML, avant toute ressource.
+const FOND = "#050a0e";
+
 export default function RootLayout({ children }) {
   return (
     <html
       lang="fr"
       className={`${spaceGrotesk.variable} ${manrope.variable} h-full antialiased`}
+      style={{ backgroundColor: FOND, colorScheme: "dark" }}
     >
-      <body className="min-h-full flex flex-col font-sans text-foreground">
+      <body
+        className="min-h-full flex flex-col font-sans text-foreground"
+        style={{ backgroundColor: FOND }}
+      >
         <ImmersiveBackground />
         {children}
         <RegisterSW />
