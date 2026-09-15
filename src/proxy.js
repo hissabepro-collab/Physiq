@@ -4,7 +4,11 @@ import { SESSION_COOKIE, isValidSessionToken } from "@/lib/auth";
 // Protège toutes les pages sauf /login et les routes techniques nécessaires
 // à son fonctionnement (l'API de connexion et les fichiers statiques).
 export const config = {
-  matcher: ["/((?!login|api/login|_next/static|_next/image|favicon.ico|manifest.json|sw.js|icons).*)"],
+  // Les écrans de démarrage et les icônes doivent rester accessibles sans
+  // session : iOS les demande avant toute connexion, et une redirection vers
+  // la page de connexion ferait réapparaître l'écran blanc au lancement.
+  // Ils ne contiennent que le logo, aucune donnée personnelle.
+  matcher: ["/((?!login|api/login|_next/static|_next/image|favicon.ico|manifest.json|sw.js|icons|splash).*)"],
 };
 
 export async function proxy(request) {

@@ -1,6 +1,7 @@
 import { Space_Grotesk, Manrope } from "next/font/google";
 import RegisterSW from "@/components/RegisterSW";
 import ImmersiveBackground from "@/components/ImmersiveBackground";
+import { ECRANS_DEMARRAGE } from "@/lib/ecransDemarrage";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -27,6 +28,14 @@ export const metadata = {
   icons: {
     icon: [{ url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" }],
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    // Écrans de démarrage iOS : sans eux, toucher l'icône affiche un écran
+    // blanc le temps que le moteur web démarre. iOS exige une image aux
+    // dimensions exactes de l'appareil, d'où une entrée par modèle.
+    other: ECRANS_DEMARRAGE.map(({ media, url }) => ({
+      rel: "apple-touch-startup-image",
+      media,
+      url,
+    })),
   },
 };
 
