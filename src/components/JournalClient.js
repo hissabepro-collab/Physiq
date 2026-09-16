@@ -4,17 +4,37 @@ import { useState } from "react";
 import StarRating from "@/components/StarRating";
 import PageHeader from "@/components/PageHeader";
 import GrilleSemaine from "@/components/GrilleSemaine";
-import { cleSemaine, libelleSemaine, semainePrecedente } from "@/lib/semaines";
+import { cleSemaine, libelleSemaine, OBJECTIFS_DEFAUT, semainePrecedente } from "@/lib/semaines";
+
+const NUITS_VIDES = ["", "", "", "", "", "", ""];
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+}
+
+/** Les 7 cases saisies (chaînes) → nombres valides uniquement. */
+function nuitsChiffrees(nuits) {
+  return nuits.map((n) => (n === "" || n == null ? null : Number(n))).map((n) => (Number.isFinite(n) ? n : null));
+}
+
+function moyenneSaisie(nuits) {
+  const valeurs = nuitsChiffrees(nuits).filter((n) => n != null);
+  if (valeurs.length === 0) return null;
+  return valeurs.reduce((a, b) => a + b, 0) / valeurs.length;
+}
+
+/** Tableau stocké en base → 7 chaînes prêtes pour les champs. */
+function nuitsDepuisEntree(entree) {
+  const brut = Array.isArray(entree?.heuresSommeil) ? entree.heuresSommeil : null;
+  if (!brut) return [...NUITS_VIDES];
+  return NUITS_VIDES.map((_, i) => (brut[i] == null ? "" : String(brut[i])));
 }
 
 export default function JournalClient({ entreesInitiales, mesures }) {
   const [entrees, setEntrees] = useState(entreesInitiales);
   const [semaine, setSemaine] = useState(() => cleSemaine(new Date()));
   const [texte, setTexte] = useState("");
-  const [sommeilHeures, setSommeilHeures] = useState("");
+  const [nuits, setNuits] = useState([...NUITS_VIDES]);
   const [noteEtoiles, setNoteEtoiles] = useState(null);
   const [seances, setSeances] = useState([]);
   const [diete, setDiete] = useState([]);
@@ -29,21 +49,23 @@ export default function JournalClient({ entreesInitiales, mesures }) {
     const existante = entrees.find((e) => e.semaineIso === cle);
     setSeances(existante?.joursEntraines ?? []);
     setDiete(existante?.joursDiete ?? []);
-    setSommeilHeures(existante?.sommeilHeures != null ? String(existante.sommeilHeures) : "");
+    setNuits(nuitsDepuisEntree(existante));
     setNoteEtoiles(existante?.noteEtoiles ?? null);
     setTexte(existante?.texte ?? "");
   }
 
+  const moyenne = moyenneSaisie(nuits);
+
   async function ajouter(e) {
     e.preventDefault();
-    if (!texte && !sommeilHeures && !photo && !noteEtoiles && seances.length === 0 && diete.length === 0) return;
+    if (!texte && moyenne == null && !photo && !noteEtoiles && seances.length === 0 && diete.length === 0) return;
     setEnvoi(true);
     const formData = new FormData();
     formData.append("semaineIso", semaine);
     formData.append("joursEntraines", JSON.stringify(seances));
     formData.append("joursDiete", JSON.stringify(diete));
+    formData.append("heuresSommeil", JSON.stringify(nuitsChiffrees(nuits)));
     if (texte) formData.append("texte", texte);
-    if (sommeilHeures) formData.append("sommeilHeures", sommeilHeures);
     if (noteEtoiles) formData.append("noteEtoiles", noteEtoiles);
     if (mesureId) formData.append("mesureId", mesureId);
     if (photo) formData.append("photo", photo);
@@ -100,7 +122,30 @@ export default function JournalClient({ entreesInitiales, mesures }) {
         </div>
 
         <div className="mt-4">
-          <GrilleSemaine seances={seances} diete={diete} onChangeSeances={setSeances} onChangeDiete={setDiete} />
+          <GrilleSemaine
+            seances={seances}
+            diete={diete}
+            nuits={nuits}
+            onChangeSeances={setSeances}
+            onChangeDiete={setDiete}
+            onChangeNuits={setNuits}
+          />
+        </div>
+
+        <div className="mt-2 flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-[11px] text-foreground-muted">
+          <span>
+            Séances <strong className="font-semibold text-foreground">{seances.length}</strong>/
+            {OBJECTIFS_DEFAUT.seancesParSemaine} · Diète{" "}
+            <strong className="font-semibold text-foreground">{diete.length}</strong>/
+            {OBJECTIFS_DEFAUT.dieteParSemaine}
+          </span>
+          <span>
+            Sommeil{" "}
+            <strong className="font-semibold text-foreground">
+              {moyenne == null ? "—" : `${moyenne.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} h`}
+            </strong>{" "}
+            en moyenne par nuit
+          </span>
         </div>
 
         <textarea
@@ -111,16 +156,6 @@ export default function JournalClient({ entreesInitiales, mesures }) {
           className="mt-3 w-full resize-none rounded-lg border border-border-soft bg-black/20 px-3 py-2 text-sm outline-none focus:border-accent"
         />
         <div className="mt-3 flex flex-wrap items-end gap-3">
-          <label className="block">
-            <span className="text-[11px] font-medium text-foreground-muted">Sommeil moyen (h/nuit)</span>
-            <input
-              type="number"
-              step="0.5"
-              value={sommeilHeures}
-              onChange={(e) => setSommeilHeures(e.target.value)}
-              className="mt-1 w-32 rounded-lg border border-border-soft bg-black/20 px-2.5 py-1.5 text-sm outline-none focus:border-accent"
-            />
-          </label>
           <label className="block">
             <span className="text-[11px] font-medium text-foreground-muted">Lier à un scan (optionnel)</span>
             <select
@@ -180,14 +215,21 @@ export default function JournalClient({ entreesInitiales, mesures }) {
                 <StarRating value={e.noteEtoiles} readOnly />
               </div>
             )}
-            {(e.joursEntraines?.length > 0 || e.joursDiete?.length > 0) && (
+            {(e.joursEntraines?.length > 0 || e.joursDiete?.length > 0 || e.sommeilHeures != null) && (
               <div className="mt-3">
-                <GrilleSemaine seances={e.joursEntraines ?? []} diete={e.joursDiete ?? []} lectureSeule />
+                <GrilleSemaine
+                  seances={e.joursEntraines ?? []}
+                  diete={e.joursDiete ?? []}
+                  nuits={nuitsDepuisEntree(e)}
+                  lectureSeule
+                />
               </div>
             )}
             {e.texte && <p className="mt-3 text-sm">{e.texte}</p>}
             {e.sommeilHeures != null && (
-              <p className="mt-1 text-xs text-foreground-muted">Sommeil : {e.sommeilHeures} h/nuit en moyenne</p>
+              <p className="mt-2 text-xs text-foreground-muted">
+                Sommeil : {e.sommeilHeures.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} h/nuit en moyenne
+              </p>
             )}
             {e.photoUrl && (
               // eslint-disable-next-line @next/next/no-img-element

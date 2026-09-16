@@ -4,7 +4,21 @@
 export const JOURS = ["L", "M", "M", "J", "V", "S", "D"];
 export const JOURS_LONGS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
-export const OBJECTIFS_DEFAUT = { seancesParSemaine: 5, sommeilHeures: 8, dieteParSemaine: 5 };
+export const OBJECTIFS_DEFAUT = { seancesParSemaine: 5, sommeilHeures: 8, dieteParSemaine: 6 };
+
+/**
+ * Moyenne d'heures par nuit d'une semaine. Le détail nuit par nuit
+ * (`heuresSommeil`, 7 cases dont certaines peuvent être vides) fait foi ; on
+ * retombe sur `sommeilHeures` pour les semaines saisies avant que la grille
+ * n'existe, où seule la moyenne avait été renseignée.
+ */
+export function moyenneNuits(entree) {
+  const nuits = Array.isArray(entree?.heuresSommeil)
+    ? entree.heuresSommeil.filter((h) => typeof h === "number" && Number.isFinite(h))
+    : [];
+  if (nuits.length > 0) return nuits.reduce((a, b) => a + b, 0) / nuits.length;
+  return entree?.sommeilHeures ?? null;
+}
 
 /** "2026-W37" pour une date donnée (norme ISO 8601, semaine commençant lundi). */
 export function cleSemaine(date) {
@@ -66,7 +80,7 @@ function nombreJoursDiete(entree) {
 export function bilanSemaine(entree, objectifs) {
   const seances = nombreSeances(entree);
   const diete = nombreJoursDiete(entree);
-  const sommeil = entree?.sommeilHeures ?? null;
+  const sommeil = moyenneNuits(entree);
   return {
     seances: { valeur: seances, cible: objectifs.seancesParSemaine, atteint: seances >= objectifs.seancesParSemaine },
     diete: { valeur: diete, cible: objectifs.dieteParSemaine, atteint: diete >= objectifs.dieteParSemaine },
@@ -152,7 +166,7 @@ export function bilanCumule(entreesParSemaine, objectifs, cleActuelle, aujourdHu
   }
 
   const heuresDuMois = clesDesDernieresSemaines(cleActuelle, 4)
-    .map((c) => entreesParSemaine[c]?.sommeilHeures)
+    .map((c) => moyenneNuits(entreesParSemaine[c]))
     .filter((h) => h != null);
   const moyenneSommeil = heuresDuMois.length
     ? heuresDuMois.reduce((a, b) => a + b, 0) / heuresDuMois.length

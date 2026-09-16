@@ -19,7 +19,6 @@ export async function GET() {
 export async function POST(request) {
   const formData = await request.formData();
   const texte = formData.get("texte") || null;
-  const sommeilHeures = formData.get("sommeilHeures") ? Number(formData.get("sommeilHeures")) : null;
   const noteEtoiles = formData.get("noteEtoiles") ? Number(formData.get("noteEtoiles")) : null;
   const mesureId = formData.get("mesureId") || null;
   const semaineIso = formData.get("semaineIso") || null;
@@ -38,6 +37,29 @@ export async function POST(request) {
   const joursEntraines = listeJours("joursEntraines");
   const joursDiete = listeJours("joursDiete");
 
+  // Sommeil : 7 cases, une par nuit (0=lundi). Une nuit non renseignée reste
+  // null et ne pèse pas sur la moyenne — dormir mal n'est pas la même chose
+  // que ne pas avoir noté.
+  const heuresSommeil = (() => {
+    const brut = formData.get("heuresSommeil");
+    if (!brut) return null;
+    try {
+      const parsed = JSON.parse(brut);
+      if (!Array.isArray(parsed)) return null;
+      return Array.from({ length: 7 }, (_, i) => {
+        const n = Number(parsed[i]);
+        return Number.isFinite(n) && n > 0 && n <= 24 ? n : null;
+      });
+    } catch {
+      return null;
+    }
+  })();
+
+  const nuitsRenseignees = (heuresSommeil ?? []).filter((n) => n != null);
+  const sommeilHeures = nuitsRenseignees.length
+    ? Math.round((nuitsRenseignees.reduce((a, b) => a + b, 0) / nuitsRenseignees.length) * 100) / 100
+    : null;
+
   let photoUrl = null;
   if (photo && typeof photo === "object" && photo.size > 0) {
     await fs.mkdir(DOSSIER_UPLOADS, { recursive: true });
@@ -50,6 +72,7 @@ export async function POST(request) {
 
   const donnees = {
     texte,
+    heuresSommeil,
     sommeilHeures,
     noteEtoiles,
     semaineIso,

@@ -80,7 +80,14 @@ model JournalEntry {
   date          DateTime @default(now())
   texte         String?
   photoUrl      String?
-  sommeilHeures Float? // moyenne d'heures de sommeil par nuit sur la semaine
+  // Détail nuit par nuit : 7 cases (0=lundi … 6=dimanche), null quand la nuit
+  // n'a pas été renseignée. C'est la donnée saisie.
+  heuresSommeil Json?
+  // Moyenne par nuit de la semaine, recalculée à partir de heuresSommeil à
+  // chaque enregistrement. Redondante, mais c'est elle que lisent le tableau
+  // de bord et l'export — et elle porte encore seule les semaines saisies
+  // avant l'arrivée de la grille.
+  sommeilHeures Float?
   noteEtoiles   Int? // ressenti de la semaine, 1 à 5 étoiles
 
   // Bilan hebdomadaire : semaine ISO couverte ("2026-W37"), jours où une
