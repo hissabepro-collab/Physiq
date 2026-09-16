@@ -1,12 +1,16 @@
-import EcranLogo from "@/components/EcranLogo";
+"use client";
 
-// Affiché pendant que l'écran interroge la base.
+import EcranLogo from "@/components/EcranLogo";
+import SqueletteChargement from "@/components/SqueletteChargement";
+import { estDemarrageTermine } from "@/lib/etatDemarrage";
+
+// Deux écrans d'attente pour deux situations différentes — voir le
+// commentaire de lib/etatDemarrage.js.
 //
-// C'est exactement l'image de démarrage de l'app, et non un squelette gris :
-// au lancement, le PNG affiché par iOS, la page /demarrage et cet écran se
-// succèdent sans qu'aucun pixel ne change. L'ancien squelette, même très peu
-// contrasté, produisait un passage gris d'une fraction de seconde — le
-// « grésillement » visible à l'ouverture.
+// Au tout premier chargement : le logo, qui prolonge l'image de démarrage
+// affichée par iOS et rend la transition invisible.
+// Ensuite : un squelette discret, pour que passer d'un onglet à l'autre reste
+// instantané à l'œil au lieu d'afficher une marque plein écran.
 export default function Chargement() {
-  return <EcranLogo />;
+  return estDemarrageTermine() ? <SqueletteChargement /> : <EcranLogo />;
 }

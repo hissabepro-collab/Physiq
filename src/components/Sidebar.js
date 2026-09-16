@@ -27,6 +27,10 @@ function NavIcon({ href, label, Icon, actif }) {
     <Link
       href={href}
       title={label}
+      // Fait passer ces onglets sur la durée de cache « statique » (5 min) au
+      // lieu de la durée « dynamique » : une page déjà visitée se rouvre sans
+      // aller-retour serveur. Voir aussi `staleTimes` dans next.config.mjs.
+      prefetch
       className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition ${
         actif
           ? "bg-accent-soft text-accent border border-accent/50 shadow-[0_0_18px_-4px_rgba(77,232,255,0.6)]"
