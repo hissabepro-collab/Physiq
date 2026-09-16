@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import StarRating from "@/components/StarRating";
 import PageHeader from "@/components/PageHeader";
 import GrilleSemaine from "@/components/GrilleSemaine";
@@ -41,10 +41,17 @@ export default function JournalClient({ entreesInitiales, mesures }) {
   const [mesureId, setMesureId] = useState("");
   const [photo, setPhoto] = useState(null);
   const [envoi, setEnvoi] = useState(false);
+  const [surbrillance, setSurbrillance] = useState(false);
+  const formulaireRef = useRef(null);
 
   // Si un bilan existe déjà pour la semaine choisie, on le reprend pour le
   // compléter au lieu d'en créer un deuxième.
-  function chargerSemaine(cle) {
+  //
+  // `remonter` sert au bouton « modifier » des entrées de la liste : le
+  // formulaire est tout en haut de la page, donc sans ce défilement on appuyait
+  // sur le bouton et rien ne semblait se passer — le bilan était bien chargé,
+  // mais hors de l'écran.
+  function chargerSemaine(cle, { remonter = false } = {}) {
     setSemaine(cle);
     const existante = entrees.find((e) => e.semaineIso === cle);
     setSeances(existante?.joursEntraines ?? []);
@@ -52,6 +59,14 @@ export default function JournalClient({ entreesInitiales, mesures }) {
     setNuits(nuitsDepuisEntree(existante));
     setNoteEtoiles(existante?.noteEtoiles ?? null);
     setTexte(existante?.texte ?? "");
+    setMesureId(existante?.mesureId ?? "");
+    setPhoto(null);
+
+    if (remonter) {
+      formulaireRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setSurbrillance(true);
+      setTimeout(() => setSurbrillance(false), 1200);
+    }
   }
 
   const moyenne = moyenneSaisie(nuits);
@@ -97,7 +112,16 @@ export default function JournalClient({ entreesInitiales, mesures }) {
         subtitle="Ce que les chiffres ne disent pas : ta forme, ton sommeil, ce qui a changé dans ta semaine. C'est ce qui expliquera tes courbes dans six mois."
       />
 
-      <form onSubmit={ajouter} className="mt-6 rounded-2xl border border-border-soft bg-background-soft/30 p-4">
+      <form
+        ref={formulaireRef}
+        onSubmit={ajouter}
+        className="mt-6 scroll-mt-4 rounded-2xl border bg-background-soft/30 p-4 transition-colors duration-300"
+        style={
+          surbrillance
+            ? { borderColor: "#4de8ff", boxShadow: "0 0 24px -8px #4de8ff" }
+            : { borderColor: "var(--border-soft)" }
+        }
+      >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <button
@@ -199,8 +223,8 @@ export default function JournalClient({ entreesInitiales, mesures }) {
                 {e.semaineIso && (
                   <button
                     type="button"
-                    onClick={() => chargerSemaine(e.semaineIso)}
-                    className="ml-2 text-[11px] font-semibold text-accent"
+                    onClick={() => chargerSemaine(e.semaineIso, { remonter: true })}
+                    className="ml-2 rounded-md border border-accent/50 px-2 py-0.5 text-[11px] font-semibold text-accent"
                   >
                     modifier
                   </button>

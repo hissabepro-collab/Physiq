@@ -4,11 +4,15 @@ import { JOURS, JOURS_LONGS } from "@/lib/semaines";
 
 function Case({ actif, onClick, couleur, titre, lectureSeule }) {
   const base = "flex h-9 w-full items-center justify-center rounded-lg border text-[11px] font-bold transition";
+  // Même recette de lueur que les jauges du tableau de bord : diffusion pleine,
+  // sans retrait. L'ancienne valeur (`0 0 14px -4px`) rognait le halo de 4 px
+  // avant même qu'il ne sorte de la case, ce qui le rendait presque invisible
+  // sur un écran de téléphone.
   const styleActif = {
     borderColor: couleur,
     background: `${couleur}22`,
     color: couleur,
-    boxShadow: `0 0 14px -4px ${couleur}`,
+    boxShadow: `0 0 10px ${couleur}`,
   };
 
   if (lectureSeule) {

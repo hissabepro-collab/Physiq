@@ -24,9 +24,15 @@ export const APPAREILS = [
   { nom: "iphone-12promax", l: 428, h: 926, d: 3 },
   { nom: "iphone-15promax", l: 430, h: 932, d: 3 },
   { nom: "iphone-16promax", l: 440, h: 956, d: 3 },
+  { nom: "iphone-air", l: 420, h: 912, d: 3 },
   { nom: "ipad", l: 768, h: 1024, d: 2 },
+  { nom: "ipad-102", l: 810, h: 1080, d: 2 },
+  { nom: "ipad-mini", l: 744, h: 1133, d: 2 },
+  { nom: "ipad-air-11", l: 820, h: 1180, d: 2 },
   { nom: "ipad-pro-11", l: 834, h: 1194, d: 2 },
+  { nom: "ipad-pro-11-m4", l: 834, h: 1210, d: 2 },
   { nom: "ipad-pro-129", l: 1024, h: 1366, d: 2 },
+  { nom: "ipad-pro-13-m4", l: 1032, h: 1376, d: 2 },
   // Images de secours, utilisées quand aucune dimension exacte ne correspond
   // (modèle trop récent pour cette liste, ou orientation paysage).
   { nom: "secours", l: 440, h: 956, d: 3 },

@@ -1,3 +1,4 @@
+import EcranLogo from "@/components/EcranLogo";
 import RedirectionAccueil from "@/components/RedirectionAccueil";
 
 // Page d'entrée de l'application installée.
@@ -19,16 +20,9 @@ export const metadata = {
 
 export default function Demarrage() {
   return (
-    <div
-      className="flex min-h-screen flex-col items-center justify-center gap-6"
-      style={{ backgroundColor: "#050a0e" }}
-    >
-      <div className="relative h-20 w-20">
-        <div className="absolute inset-0 rounded-full border border-accent/60" />
-        <div className="absolute inset-0 m-auto h-8 w-8 rounded-full bg-accent shadow-[0_0_30px_var(--accent)]" />
-      </div>
-      <div className="font-display text-sm font-bold tracking-[0.35em] text-accent">PHYSIQ</div>
+    <>
+      <EcranLogo />
       <RedirectionAccueil />
-    </div>
+    </>
   );
 }

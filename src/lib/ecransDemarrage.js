@@ -13,9 +13,15 @@ export const ECRANS_DEMARRAGE = [
   { media: "(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)", url: "/splash/iphone-12promax.png" },
   { media: "(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)", url: "/splash/iphone-15promax.png" },
   { media: "(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3)", url: "/splash/iphone-16promax.png" },
+  { media: "(device-width: 420px) and (device-height: 912px) and (-webkit-device-pixel-ratio: 3)", url: "/splash/iphone-air.png" },
   { media: "(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2)", url: "/splash/ipad.png" },
+  { media: "(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2)", url: "/splash/ipad-102.png" },
+  { media: "(device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2)", url: "/splash/ipad-mini.png" },
+  { media: "(device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2)", url: "/splash/ipad-air-11.png" },
   { media: "(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)", url: "/splash/ipad-pro-11.png" },
+  { media: "(device-width: 834px) and (device-height: 1210px) and (-webkit-device-pixel-ratio: 2)", url: "/splash/ipad-pro-11-m4.png" },
   { media: "(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)", url: "/splash/ipad-pro-129.png" },
+  { media: "(device-width: 1032px) and (device-height: 1376px) and (-webkit-device-pixel-ratio: 2)", url: "/splash/ipad-pro-13-m4.png" },
   // Secours pour tout appareil dont les dimensions ne figurent pas ci-dessus
   // (modèle plus récent, orientation paysage) : sans correspondance, iOS
   // retomberait sur un écran blanc. Déclaré en dernier pour ne pas primer sur
