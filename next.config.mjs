@@ -17,6 +17,35 @@ const nextConfig = {
     // conséquence.
     staleTimes: { dynamic: 30 },
   },
+
+  async headers() {
+    return [
+      {
+        // Le service worker sert déjà la page d'entrée depuis son cache, mais
+        // rien ne garantit qu'iOS le consulte pour la toute première requête
+        // d'un lancement : le worker doit d'abord démarrer. En attendant, le
+        // navigateur va chercher la page sur le réseau et n'a rien à afficher
+        // — c'est l'image blanche fugace qui reste.
+        //
+        // Avec ces en-têtes, iOS la sert depuis son propre cache HTTP, sans
+        // dépendre du service worker ni du réseau. `stale-while-revalidate`
+        // laisse la mise à jour se faire en arrière-plan, donc un
+        // déploiement n'attend pas l'expiration pour être pris en compte.
+        source: "/demarrage",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=600, stale-while-revalidate=86400" },
+        ],
+      },
+      {
+        // Les écrans de démarrage ne changent jamais à contenu égal, et iOS
+        // les demande avant d'afficher quoi que ce soit.
+        source: "/splash/:fichier*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=2592000" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

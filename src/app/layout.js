@@ -53,6 +53,11 @@ export const metadata = {
 export const viewport = {
   themeColor: "#050a0e",
   viewportFit: "cover",
+  // Déclaré en balise et pas seulement en style sur <html> : c'est ce qui fixe
+  // la couleur par défaut de la toile du navigateur, celle qu'il peint avant
+  // d'avoir lu la moindre feuille de style. Sans elle, cette toile est blanche
+  // — d'où l'image blanche fugace au tout premier instant du lancement.
+  colorScheme: "dark",
 };
 
 // La couleur de fond est écrite en dur dans le document, et non seulement
