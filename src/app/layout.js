@@ -29,6 +29,13 @@ export const metadata = {
     statusBarStyle: "black",
     title: "Physiq",
   },
+  // Next n'émet que `mobile-web-app-capable`, le nom standardisé. iOS, lui,
+  // conditionne encore l'affichage des écrans de démarrage à la balise
+  // préfixée `apple-` : sans elle, il ignore purement et simplement les
+  // `apple-touch-startup-image` et lance l'app sur du blanc.
+  other: {
+    "apple-mobile-web-app-capable": "yes",
+  },
   icons: {
     icon: [{ url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" }],
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],

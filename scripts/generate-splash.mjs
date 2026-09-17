@@ -54,11 +54,21 @@ await fs.mkdir(DOSSIER, { recursive: true });
 for (const a of APPAREILS) {
   const largeur = a.l * a.d;
   const hauteur = a.h * a.d;
-  // L'image est unie : une palette de deux couleurs suffit, et fait passer
-  // chaque fichier de ~75 ko à ~2 ko. iOS doit la charger avant même
-  // d'afficher quoi que ce soit, donc chaque kilo-octet compte.
+  // RVB 8 bits, sans palette — c'est important.
+  //
+  // Compressées en palette, ces images unies tombaient à 500 octets, mais
+  // sortaient en PNG indexé 1 bit : iOS refuse ce format pour les écrans de
+  // démarrage et affiche du blanc à la place, sans rien signaler. C'est ce qui
+  // a fait repasser l'écran de noir à blanc.
+  //
+  // En RVB, une image unie compresse de toute façon très bien : la
+  // compression maximale suffit, et le format reste celui qu'iOS accepte.
+  // `flatten` retire la couche de transparence héritée du SVG : une image
+  // d'écran de démarrage est toujours opaque, et le format le plus banal est
+  // aussi le plus sûr.
   await sharp(Buffer.from(svgDemarrage(largeur, hauteur)))
-    .png({ palette: true, colours: 2, compressionLevel: 9, effort: 10 })
+    .flatten({ background: FOND })
+    .png({ palette: false, compressionLevel: 9, effort: 10 })
     .toFile(path.join(DOSSIER, `${a.nom}.png`));
   console.log(`✓ ${a.nom}.png — ${largeur}×${hauteur}`);
 }
