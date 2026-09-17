@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { IconLogout } from "@/components/icons";
 import PageHeader from "@/components/PageHeader";
+import DiagnosticDemarrage from "@/components/DiagnosticDemarrage";
 
 export default function ParametresPage() {
   const router = useRouter();
@@ -87,6 +88,10 @@ export default function ParametresPage() {
           </a>
         </div>
       </section>
+
+      <div className="mt-5">
+        <DiagnosticDemarrage />
+      </div>
 
       <section className="mt-5 rounded-2xl border border-red-400/25 bg-red-400/5 p-5">
         <h2 className="font-display text-sm font-semibold text-red-300">Zone dangereuse</h2>

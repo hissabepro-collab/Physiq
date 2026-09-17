@@ -22,10 +22,43 @@ export const ECRANS_DEMARRAGE = [
   { media: "(device-width: 834px) and (device-height: 1210px) and (-webkit-device-pixel-ratio: 2)", url: "/splash/ipad-pro-11-m4.png" },
   { media: "(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)", url: "/splash/ipad-pro-129.png" },
   { media: "(device-width: 1032px) and (device-height: 1376px) and (-webkit-device-pixel-ratio: 2)", url: "/splash/ipad-pro-13-m4.png" },
-  // Secours pour tout appareil dont les dimensions ne figurent pas ci-dessus
-  // (modèle plus récent, orientation paysage) : sans correspondance, iOS
-  // retomberait sur un écran blanc. Déclaré en dernier pour ne pas primer sur
-  // les images exactes.
-  { media: "(orientation: portrait)", url: "/splash/secours.png" },
-  { media: "(orientation: landscape)", url: "/splash/secours-paysage.png" },
+  // À ajouter, le cas échéant, sous la forme :
+  // { media: "(device-width: Xpx) and (device-height: Ypx) and (-webkit-device-pixel-ratio: Z)", url: "/splash/nom.png" },
+  //
+  // Pas d'image de secours générique ici, volontairement.
+  //
+  // iOS n'affiche une image de démarrage que si elle fait exactement la taille
+  // de l'écran : une image « passe-partout » est ignorée de toute façon, et une
+  // règle large du type `(orientation: portrait)` correspond à tous les
+  // appareils, au risque de l'emporter sur l'image exacte déclarée plus haut.
+  // Elle ne peut donc que nuire.
+  //
+  // Si un appareil manque à cette liste, il affichera du blanc au lancement :
+  // le bloc « Écran de démarrage » des Paramètres donne les trois valeurs à
+  // ajouter (largeur, hauteur, densité), à reporter dans
+  // scripts/generate-splash.mjs puis ici.
 ];
+
+/**
+ * Reproduit la règle de sélection d'iOS : l'image doit correspondre EXACTEMENT
+ * aux dimensions de l'écran et à sa densité. Une seule valeur qui diffère et
+ * iOS ignore l'image, sans rien signaler, en affichant du blanc.
+ *
+ * Les deux orientations sont acceptées : iOS compare les dimensions physiques
+ * de l'écran, indépendamment de la façon dont l'appareil est tenu.
+ *
+ * Renvoie le nom du fichier, ou null si aucune image ne convient — auquel cas
+ * il faut en générer une pour cet appareil.
+ */
+export function trouverEcranDemarrage(largeur, hauteur, densite) {
+  for (const ecran of ECRANS_DEMARRAGE) {
+    const m = ecran.media.match(
+      /device-width:\s*(\d+)px.*?device-height:\s*(\d+)px.*?pixel-ratio:\s*(\d+)/
+    );
+    if (!m) continue;
+    const [, l, h, d] = m.map(Number);
+    const memeTaille = (l === largeur && h === hauteur) || (l === hauteur && h === largeur);
+    if (memeTaille && d === densite) return ecran.url.replace("/splash/", "");
+  }
+  return null;
+}

@@ -34,10 +34,6 @@ export const APPAREILS = [
   { nom: "ipad-pro-11-m4", l: 834, h: 1210, d: 2 },
   { nom: "ipad-pro-129", l: 1024, h: 1366, d: 2 },
   { nom: "ipad-pro-13-m4", l: 1032, h: 1376, d: 2 },
-  // Images de secours, utilisées quand aucune dimension exacte ne correspond
-  // (modèle trop récent pour cette liste, ou orientation paysage).
-  { nom: "secours", l: 440, h: 956, d: 3 },
-  { nom: "secours-paysage", l: 956, h: 440, d: 3 },
 ];
 
 // Uni, sans logo ni nom.
