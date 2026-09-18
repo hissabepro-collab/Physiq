@@ -17,9 +17,7 @@ export default function ParticleField() {
 
   // L'écran de connexion a déjà son propre champ animé : deux canvas plein
   // écran en même temps, c'est le double de travail pour rien.
-  // /demarrage est l'écran d'entrée de l'app installée : il doit peindre en
-  // quelques millisecondes, donc on n'y lance aucun canvas.
-  const desactive = pathname === "/login" || pathname === "/demarrage";
+  const desactive = pathname === "/login";
 
   useEffect(() => {
     if (desactive) return;

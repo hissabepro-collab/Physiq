@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "entree": "node scripts/generate-entree.mjs",
+    "prebuild": "npm run entree",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

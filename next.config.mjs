@@ -18,6 +18,20 @@ const nextConfig = {
     staleTimes: { dynamic: 30 },
   },
 
+  async redirects() {
+    return [
+      {
+        // L'ancienne page d'entrée était une page Next à cette adresse. Les
+        // raccourcis déjà posés sur un écran d'accueil pointent encore
+        // dessus : sans cette redirection, ils tomberaient sur une page
+        // introuvable jusqu'à ce que l'app soit réinstallée.
+        source: "/demarrage",
+        destination: "/demarrage.html",
+        permanent: false,
+      },
+    ];
+  },
+
   async headers() {
     return [
       {
@@ -38,7 +52,7 @@ const nextConfig = {
         // une fois sur deux selon le moment du lancement. Un jour de validité
         // supprime cette loterie, et le service worker continue de rafraîchir
         // la page en arrière-plan à chaque ouverture.
-        source: "/demarrage",
+        source: "/demarrage.html",
         headers: [
           { key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" },
         ],

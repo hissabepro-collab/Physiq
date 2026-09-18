@@ -43,14 +43,8 @@ function NavIcon({ href, label, Icon, actif }) {
 }
 
 export default function Sidebar() {
-  const brut = usePathname();
+  const pathname = usePathname();
   const router = useRouter();
-
-  // /demarrage est la page d'entrée de l'app installée : elle bascule
-  // immédiatement vers l'accueil. On la traite comme l'accueil pour que l'icône
-  // correspondante soit déjà mise en avant, sinon sa surbrillance s'allume une
-  // fraction de seconde après le lancement.
-  const pathname = brut === "/demarrage" ? "/" : brut;
 
   async function handleLogout() {
     await fetch("/api/logout", { method: "POST" });

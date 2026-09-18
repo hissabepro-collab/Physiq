@@ -9,11 +9,11 @@ export const config = {
   // la page de connexion ferait réapparaître l'écran blanc au lancement.
   // Ils ne contiennent que le logo, aucune donnée personnelle.
   //
-  // /demarrage est exclue pour la même raison : c'est la page d'entrée de
-  // l'app installée, et elle doit être servie par le réseau de diffusion sans
-  // le moindre aller-retour serveur. Elle n'affiche que le logo ; la
-  // vérification de session a lieu juste après, quand elle bascule vers "/".
-  matcher: ["/((?!login|api/login|demarrage|_next/static|_next/image|favicon.ico|manifest.json|sw.js|icons|splash).*)"],
+  // demarrage.html est exclue pour la même raison : c'est la page d'entrée de
+  // l'app installée, servie par le réseau de diffusion sans le moindre
+  // aller-retour serveur. Elle n'affiche qu'un fond sombre — aucune donnée ;
+  // la vérification de session a lieu juste après, quand elle navigue vers "/".
+  matcher: ["/((?!login|api/login|demarrage.html|_next/static|_next/image|favicon.ico|manifest.json|sw.js|icons|splash).*)"],
 };
 
 export async function proxy(request) {
