@@ -7,6 +7,10 @@
 //
 // La couleur est écrite en dur plutôt que reprise du thème : cet écran doit
 // peindre avant même que la feuille de style ne soit chargée.
+// `data-ecran` sert aux tests : il permet de distinguer avec certitude cet
+// écran d'attente légitime de tout autre contenu intermédiaire qui viendrait
+// s'afficher — un squelette, une marque, un reste de page. Un comptage
+// d'éléments ne suffit pas, le décor de fond en ajoute déjà une dizaine.
 export default function EcranSombre() {
-  return <div className="min-h-screen w-full" style={{ backgroundColor: "#050a0e" }} />;
+  return <div data-ecran="sombre" className="min-h-screen w-full" style={{ backgroundColor: "#050a0e" }} />;
 }
