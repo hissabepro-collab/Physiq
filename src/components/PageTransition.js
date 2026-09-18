@@ -27,11 +27,20 @@ export default function PageTransition({ children }) {
   // de saccade. On ne l'anime qu'à partir de la première vraie navigation.
   const [aNavigue, setANavigue] = useState(false);
   const premierRendu = useRef(true);
+  const veille = useRef(pathname);
   useEffect(() => {
+    const avant = veille.current;
+    veille.current = pathname;
+
     if (premierRendu.current) {
       premierRendu.current = false;
       return;
     }
+    // La bascule depuis la page d'entrée fait partie du lancement, pas d'une
+    // navigation : l'animer ferait glisser le tableau de bord au démarrage,
+    // exactement l'à-coup qu'on cherche à supprimer.
+    if (avant === "/demarrage") return;
+
     setANavigue(true);
   }, [pathname]);
 

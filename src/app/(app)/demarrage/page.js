@@ -9,9 +9,12 @@ import RedirectionAccueil from "@/components/RedirectionAccueil";
 // fonction serveur puis interroger une base distante — c'est cette attente
 // qui laissait un écran blanc au lancement.
 //
-// Elle ne montre rien : juste le fond sombre, immédiatement, puis elle bascule
-// vers le tableau de bord (ou l'écran de connexion, via le pare-feu). Vue de
-// l'utilisateur, l'app s'ouvre directement sur sa page.
+// Elle vit DANS le groupe (app), et c'est essentiel : elle partage donc la
+// même mise en page, barre de navigation comprise. Placée en dehors, elle
+// n'avait pas cette barre, qui surgissait ensuite d'un coup sur le fond noir —
+// un à-coup visible au lancement. Ici, la barre est là dès la première image
+// et ne bouge plus ; la mise en page reste montée pendant la bascule vers le
+// tableau de bord, seul le contenu change.
 export const dynamic = "force-static";
 
 export const metadata = {

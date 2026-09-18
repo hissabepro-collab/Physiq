@@ -31,9 +31,16 @@ const nextConfig = {
         // dépendre du service worker ni du réseau. `stale-while-revalidate`
         // laisse la mise à jour se faire en arrière-plan, donc un
         // déploiement n'attend pas l'expiration pour être pris en compte.
+        //
+        // `max-age` est volontairement long. Safari n'implémente pas
+        // `stale-while-revalidate` : avec dix minutes, il repartait
+        // revalider sur le réseau passé ce délai, et l'écran redevenait blanc
+        // une fois sur deux selon le moment du lancement. Un jour de validité
+        // supprime cette loterie, et le service worker continue de rafraîchir
+        // la page en arrière-plan à chaque ouverture.
         source: "/demarrage",
         headers: [
-          { key: "Cache-Control", value: "public, max-age=600, stale-while-revalidate=86400" },
+          { key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" },
         ],
       },
       {
