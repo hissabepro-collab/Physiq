@@ -18,16 +18,21 @@ const nextConfig = {
     staleTimes: { dynamic: 30 },
   },
 
-  async redirects() {
+  async rewrites() {
     return [
       {
-        // L'ancienne page d'entrée était une page Next à cette adresse. Les
-        // raccourcis déjà posés sur un écran d'accueil pointent encore
-        // dessus : sans cette redirection, ils tomberaient sur une page
-        // introuvable jusqu'à ce que l'app soit réinstallée.
+        // L'ancienne page d'entrée était une page Next à cette adresse, et les
+        // raccourcis déjà posés sur un écran d'accueil pointent encore dessus :
+        // iOS garde le manifeste en mémoire longtemps, même après avoir retiré
+        // et remis l'app.
+        //
+        // C'est une réécriture et non une redirection : une redirection
+        // imposerait un aller-retour réseau supplémentaire AVANT la moindre
+        // peinture, donc un écran blanc à chaque lancement pour ces
+        // raccourcis. Ici, les deux adresses servent le même fichier en une
+        // seule requête.
         source: "/demarrage",
         destination: "/demarrage.html",
-        permanent: false,
       },
     ];
   },
@@ -52,7 +57,7 @@ const nextConfig = {
         // une fois sur deux selon le moment du lancement. Un jour de validité
         // supprime cette loterie, et le service worker continue de rafraîchir
         // la page en arrière-plan à chaque ouverture.
-        source: "/demarrage.html",
+        source: "/demarrage:suffixe(\\.html)?",
         headers: [
           { key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" },
         ],

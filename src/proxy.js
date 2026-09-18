@@ -13,7 +13,7 @@ export const config = {
   // l'app installée, servie par le réseau de diffusion sans le moindre
   // aller-retour serveur. Elle n'affiche qu'un fond sombre — aucune donnée ;
   // la vérification de session a lieu juste après, quand elle navigue vers "/".
-  matcher: ["/((?!login|api/login|demarrage.html|_next/static|_next/image|favicon.ico|manifest.json|sw.js|icons|splash).*)"],
+  matcher: ["/((?!login|api/login|demarrage|_next/static|_next/image|favicon.ico|manifest.json|sw.js|icons|splash).*)"],
 };
 
 export async function proxy(request) {
