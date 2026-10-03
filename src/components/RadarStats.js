@@ -8,6 +8,15 @@ const SIZE = 220;
 const CENTER = SIZE / 2;
 const MAX_R = 82;
 
+// Marge latérale réservée aux libellés.
+//
+// Ils sont posés au-delà du dernier anneau, donc les plus longs — MÉTABOLISME,
+// SYMÉTRIE — dépassaient du cadre et se faisaient rogner par la carte, qui
+// masque ce qui déborde. `overflow: visible` sur le graphique n'y changeait
+// rien : c'est le conteneur parent qui coupe. On élargit donc la zone de
+// dessin plutôt que de compter sur le débordement.
+const MARGE = 56;
+
 function point(index, total, r) {
   const angle = (Math.PI * 2 * index) / total - Math.PI / 2;
   return { x: CENTER + r * Math.cos(angle), y: CENTER + r * Math.sin(angle) };
@@ -27,7 +36,12 @@ export default function RadarStats({ axes }) {
   const grilles = [1, 0.66, 0.33];
 
   return (
-    <svg viewBox={`0 0 ${SIZE} ${SIZE}`} width="100%" height={SIZE} className="overflow-visible">
+    <svg
+      viewBox={`${-MARGE} 0 ${SIZE + MARGE * 2} ${SIZE}`}
+      width="100%"
+      height={SIZE}
+      preserveAspectRatio="xMidYMid meet"
+    >
       {grilles.map((f) => (
         <polygon
           key={f}
