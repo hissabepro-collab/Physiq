@@ -25,17 +25,26 @@
 /* La couleur de fond doit être posée dès le premier rendu, avant tout
    JavaScript : sans elle, le navigateur affiche un écran blanc le temps que
    le décor s'initialise. */
+/* `clip` et non `hidden`, et la nuance est décisive.
+   `overflow-x: hidden` fait de l'élément un conteneur de défilement : son
+   overflow-y passe alors de `visible` à `auto`. body et main devenaient donc
+   des conteneurs défilables… sans rien à y faire défiler, puisque leur hauteur
+   suit celle de leur contenu. La molette, pointée dessus, ne pouvait rien
+   bouger, et `overscroll-behavior-y: none` l'empêchait de remonter jusqu'à la
+   page. Plus rien ne défilait à la souris.
+   `clip` rogne le débordement horizontal sans créer de conteneur : overflow-y
+   reste `visible` et la molette retrouve la page. */
 html {
   background-color: var(--background);
   color-scheme: dark;
-  overflow-x: hidden;
+  overflow-x: clip;
   scroll-behavior: smooth;
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
-  overflow-x: hidden;
+  overflow-x: clip;
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
 }
