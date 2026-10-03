@@ -75,7 +75,7 @@ function Sommeil({ moyenne, cible, semainesMesurees }) {
       <div className="mt-1 text-[11px] text-foreground-muted">
         {semainesMesurees === 0
           ? "aucune semaine renseignée"
-          : `moyenne par nuit · ${semainesMesurees} sem.`}
+          : `par nuit hors week-end · ${semainesMesurees} sem.`}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { JOURS, JOURS_LONGS } from "@/lib/semaines";
+import { JOURS, JOURS_LONGS, nuitSuivie } from "@/lib/semaines";
 
 function Case({ actif, onClick, couleur, titre, lectureSeule }) {
   const base = "flex h-9 w-full items-center justify-center rounded-lg border text-[11px] font-bold transition";
@@ -43,10 +43,23 @@ function Case({ actif, onClick, couleur, titre, lectureSeule }) {
 // Une nuit se saisit en texte et non en <input type="number"> : pas de
 // flèches minuscules à viser dans une case de 40 px, et le clavier numérique
 // s'ouvre quand même sur mobile grâce à inputMode.
-function Nuit({ valeur, onChange, titre, lectureSeule }) {
+function Nuit({ valeur, onChange, titre, lectureSeule, suivie }) {
   const base =
     "flex h-9 w-full items-center justify-center rounded-lg border text-[11px] font-bold tabular-nums";
   const couleur = "#b69cff";
+
+  // Vendredi et samedi soir ne se saisissent pas : la case reste barrée, pour
+  // qu'on voie que c'est voulu et non un oubli.
+  if (!suivie) {
+    return (
+      <div
+        className={`${base} border-dashed border-border-soft/50 text-foreground-muted/30`}
+        title="Nuit de week-end, écartée du calcul : elle est plus longue et fausserait la moyenne"
+      >
+        –
+      </div>
+    );
+  }
   const rempli = valeur !== "" && valeur != null;
   const style = rempli
     ? { borderColor: couleur, background: `${couleur}1e`, color: couleur }
@@ -156,6 +169,7 @@ export default function GrilleSemaine({
             onChange={(v) => changerNuit(i, v)}
             titre={`Heures dormies dans la nuit de ${JOURS_LONGS[i].toLowerCase()}`}
             lectureSeule={lectureSeule}
+            suivie={nuitSuivie(i)}
           />
         ))}
       </div>

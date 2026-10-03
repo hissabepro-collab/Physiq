@@ -7,14 +7,31 @@ export const JOURS_LONGS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "
 export const OBJECTIFS_DEFAUT = { seancesParSemaine: 5, sommeilHeures: 8, dieteParSemaine: 6 };
 
 /**
- * Moyenne d'heures par nuit d'une semaine. Le détail nuit par nuit
- * (`heuresSommeil`, 7 cases dont certaines peuvent être vides) fait foi ; on
- * retombe sur `sommeilHeures` pour les semaines saisies avant que la grille
- * n'existe, où seule la moyenne avait été renseignée.
+ * Nuits prises en compte pour le sommeil : lundi, mardi, mercredi, jeudi et
+ * dimanche.
+ *
+ * Les nuits de vendredi et de samedi soir en sont écartées. Elles sont
+ * systématiquement plus longues — rien n'oblige à se lever le lendemain — et
+ * tirent la moyenne vers le haut sans rien dire de la semaine. Ne restent que
+ * les cinq nuits qui précèdent une journée normale, celles sur lesquelles on
+ * peut réellement agir.
+ */
+export const NUITS_SUIVIES = [0, 1, 2, 3, 6];
+
+export function nuitSuivie(index) {
+  return NUITS_SUIVIES.includes(index);
+}
+
+/**
+ * Moyenne d'heures par nuit d'une semaine, sur les seules nuits suivies. Le
+ * détail nuit par nuit (`heuresSommeil`, 7 cases dont certaines peuvent être
+ * vides) fait foi ; on retombe sur `sommeilHeures` pour les semaines saisies
+ * avant que la grille n'existe, où seule la moyenne avait été renseignée.
  */
 export function moyenneNuits(entree) {
-  const nuits = Array.isArray(entree?.heuresSommeil)
-    ? entree.heuresSommeil.filter((h) => typeof h === "number" && Number.isFinite(h))
+  const brut = Array.isArray(entree?.heuresSommeil) ? entree.heuresSommeil : null;
+  const nuits = brut
+    ? NUITS_SUIVIES.map((i) => brut[i]).filter((h) => typeof h === "number" && Number.isFinite(h))
     : [];
   if (nuits.length > 0) return nuits.reduce((a, b) => a + b, 0) / nuits.length;
   return entree?.sommeilHeures ?? null;

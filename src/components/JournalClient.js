@@ -4,7 +4,13 @@ import { useRef, useState } from "react";
 import StarRating from "@/components/StarRating";
 import PageHeader from "@/components/PageHeader";
 import GrilleSemaine from "@/components/GrilleSemaine";
-import { cleSemaine, libelleSemaine, OBJECTIFS_DEFAUT, semainePrecedente } from "@/lib/semaines";
+import {
+  cleSemaine,
+  libelleSemaine,
+  nuitSuivie,
+  OBJECTIFS_DEFAUT,
+  semainePrecedente,
+} from "@/lib/semaines";
 
 const NUITS_VIDES = ["", "", "", "", "", "", ""];
 
@@ -12,9 +18,16 @@ function formatDate(date) {
   return new Date(date).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
 }
 
-/** Les 7 cases saisies (chaînes) → nombres valides uniquement. */
+/**
+ * Les 7 cases saisies (chaînes) → nombres valides uniquement. Les nuits de
+ * week-end sont toujours nulles : elles ne se saisissent pas et ne comptent pas.
+ */
 function nuitsChiffrees(nuits) {
-  return nuits.map((n) => (n === "" || n == null ? null : Number(n))).map((n) => (Number.isFinite(n) ? n : null));
+  return nuits.map((n, i) => {
+    if (!nuitSuivie(i)) return null;
+    const v = n === "" || n == null ? null : Number(n);
+    return Number.isFinite(v) ? v : null;
+  });
 }
 
 function moyenneSaisie(nuits) {
@@ -31,14 +44,21 @@ function nuitsDepuisEntree(entree) {
 }
 
 export default function JournalClient({ entreesInitiales, mesures }) {
+  // Le formulaire s'ouvre sur la semaine en cours, DÉJÀ REMPLIE de ce qui a
+  // été enregistré. Sans cela, il s'ouvrait vide : cocher la séance du jour
+  // puis enregistrer effaçait tous les jours précédents de la semaine, ce qui
+  // rendait impossible de remplir son bilan au fil des jours.
+  const semaineEnCours = cleSemaine(new Date());
+  const dejaSaisie = entreesInitiales.find((e) => e.semaineIso === semaineEnCours);
+
   const [entrees, setEntrees] = useState(entreesInitiales);
-  const [semaine, setSemaine] = useState(() => cleSemaine(new Date()));
-  const [texte, setTexte] = useState("");
-  const [nuits, setNuits] = useState([...NUITS_VIDES]);
-  const [noteEtoiles, setNoteEtoiles] = useState(null);
-  const [seances, setSeances] = useState([]);
-  const [diete, setDiete] = useState([]);
-  const [mesureId, setMesureId] = useState("");
+  const [semaine, setSemaine] = useState(semaineEnCours);
+  const [texte, setTexte] = useState(dejaSaisie?.texte ?? "");
+  const [nuits, setNuits] = useState(() => nuitsDepuisEntree(dejaSaisie));
+  const [noteEtoiles, setNoteEtoiles] = useState(dejaSaisie?.noteEtoiles ?? null);
+  const [seances, setSeances] = useState(dejaSaisie?.joursEntraines ?? []);
+  const [diete, setDiete] = useState(dejaSaisie?.joursDiete ?? []);
+  const [mesureId, setMesureId] = useState(dejaSaisie?.mesureId ?? "");
   const [photo, setPhoto] = useState(null);
   const [envoi, setEnvoi] = useState(false);
   const [surbrillance, setSurbrillance] = useState(false);
@@ -168,7 +188,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
             <strong className="font-semibold text-foreground">
               {moyenne == null ? "—" : `${moyenne.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} h`}
             </strong>{" "}
-            en moyenne par nuit
+            en moyenne, hors vendredi et samedi
           </span>
         </div>
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { nuitSuivie } from "@/lib/semaines";
 import fs from "fs/promises";
 import path from "path";
 
@@ -39,7 +40,9 @@ export async function POST(request) {
 
   // Sommeil : 7 cases, une par nuit (0=lundi). Une nuit non renseignée reste
   // null et ne pèse pas sur la moyenne — dormir mal n'est pas la même chose
-  // que ne pas avoir noté.
+  // que ne pas avoir noté. Les nuits de week-end sont écartées ici aussi, et
+  // pas seulement dans l'interface : une valeur envoyée pour l'une d'elles ne
+  // doit pas pouvoir se glisser dans la moyenne.
   const heuresSommeil = (() => {
     const brut = formData.get("heuresSommeil");
     if (!brut) return null;
@@ -47,6 +50,7 @@ export async function POST(request) {
       const parsed = JSON.parse(brut);
       if (!Array.isArray(parsed)) return null;
       return Array.from({ length: 7 }, (_, i) => {
+        if (!nuitSuivie(i)) return null;
         const n = Number(parsed[i]);
         return Number.isFinite(n) && n > 0 && n <= 24 ? n : null;
       });
