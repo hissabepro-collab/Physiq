@@ -147,59 +147,76 @@ function clesDesDernieresSemaines(cleActuelle, n) {
 }
 
 /**
- * Bilan d'assiduité depuis la toute première semaine renseignée : "56 séances
- * sur 67 attendues". Le dénominateur grandit donc chaque semaine, même les
- * semaines non remplies — c'est ce qui en fait une mesure de régularité et
- * non une simple somme.
+ * Bilan d'un mois civil : séances faites, jours de diète tenus, sommeil moyen.
  *
- * La semaine en cours est comptée au prorata des jours déjà écoulés : un
- * mardi, on n'attend pas encore les 5 séances de la semaine.
+ * Le calcul se fait JOUR PAR JOUR et non semaine par semaine. Une semaine ISO
+ * chevauche souvent deux mois : lui attribuer un mois entier fausserait les
+ * deux. On parcourt donc chaque date du mois, on retrouve la semaine à laquelle
+ * elle appartient, et on regarde si ce jour-là était coché.
  *
- * Le sommeil n'est pas cumulable (c'est une moyenne par nuit) : on en donne
- * la moyenne des quatre dernières semaines, soit le dernier mois.
+ * L'objectif hebdomadaire est ramené au jour (5 séances sur 7 jours), puis
+ * multiplié par le nombre de jours comptés. Le mois en cours ne compte que les
+ * jours déjà écoulés : le 3 du mois, on n'attend pas encore le quota complet.
  */
-export function bilanCumule(entreesParSemaine, objectifs, cleActuelle, aujourdHui = new Date()) {
-  const clesRenseignees = Object.keys(entreesParSemaine)
-    .filter((c) => c && c <= cleActuelle)
-    .sort();
-  if (clesRenseignees.length === 0) return null;
+export function bilanMois(entreesParSemaine, objectifs, annee, mois, aujourdHui = new Date()) {
+  const dernierJour = new Date(annee, mois + 1, 0).getDate();
+  const enCours = annee === aujourdHui.getFullYear() && mois === aujourdHui.getMonth();
+  const jusqua = enCours ? Math.min(aujourdHui.getDate(), dernierJour) : dernierJour;
 
-  const joursEcoules = aujourdHui.getDay() || 7; // lundi = 1 … dimanche = 7
+  let seances = 0;
+  let diete = 0;
+  const nuits = [];
 
-  let seancesFaites = 0;
-  let seancesAttendues = 0;
-  let dieteTenue = 0;
-  let dieteAttendue = 0;
-  let semaines = 0;
+  for (let jour = 1; jour <= jusqua; jour++) {
+    const date = new Date(annee, mois, jour);
+    const entree = entreesParSemaine[cleSemaine(date)];
+    const index = (date.getDay() || 7) - 1; // 0 = lundi … 6 = dimanche
 
-  for (let cle = clesRenseignees[0]; cle <= cleActuelle && semaines < 520; cle = semaineSuivante(cle)) {
-    const entree = entreesParSemaine[cle];
-    const prorata = cle === cleActuelle ? joursEcoules / 7 : 1;
-    seancesFaites += nombreSeances(entree);
-    seancesAttendues += Math.round(objectifs.seancesParSemaine * prorata);
-    dieteTenue += nombreJoursDiete(entree);
-    dieteAttendue += Math.round(objectifs.dieteParSemaine * prorata);
-    semaines += 1;
+    if (Array.isArray(entree?.joursEntraines) && entree.joursEntraines.includes(index)) seances += 1;
+    if (Array.isArray(entree?.joursDiete) && entree.joursDiete.includes(index)) diete += 1;
+
+    if (nuitSuivie(index) && Array.isArray(entree?.heuresSommeil)) {
+      const h = entree.heuresSommeil[index];
+      if (typeof h === "number" && Number.isFinite(h)) nuits.push(h);
+    }
   }
 
-  const heuresDuMois = clesDesDernieresSemaines(cleActuelle, 4)
-    .map((c) => moyenneNuits(entreesParSemaine[c]))
-    .filter((h) => h != null);
-  const moyenneSommeil = heuresDuMois.length
-    ? heuresDuMois.reduce((a, b) => a + b, 0) / heuresDuMois.length
-    : null;
-
   return {
-    semaines,
-    depuis: clesRenseignees[0],
-    seances: { fait: seancesFaites, cible: seancesAttendues },
-    diete: { fait: dieteTenue, cible: dieteAttendue },
+    annee,
+    mois,
+    enCours,
+    jours: jusqua,
+    joursDuMois: dernierJour,
+    libelle: new Date(annee, mois, 1).toLocaleDateString("fr-FR", { month: "long", year: "numeric" }),
+    seances: { fait: seances, cible: Math.round((objectifs.seancesParSemaine / 7) * jusqua) },
+    diete: { fait: diete, cible: Math.round((objectifs.dieteParSemaine / 7) * jusqua) },
     sommeil: {
-      moyenne: moyenneSommeil,
+      moyenne: nuits.length ? nuits.reduce((a, b) => a + b, 0) / nuits.length : null,
       cible: objectifs.sommeilHeures,
-      semainesMesurees: heuresDuMois.length,
+      nuits: nuits.length,
     },
   };
+}
+
+/**
+ * Tous les mois couverts par le journal, du plus récent au plus ancien, avec
+ * leur bilan. Le mois en cours figure en premier ; les précédents constituent
+ * l'historique, figé puisque leurs semaines ne bougent plus.
+ */
+export function bilansParMois(entreesParSemaine, objectifs, aujourdHui = new Date()) {
+  const cles = Object.keys(entreesParSemaine).filter(Boolean).sort();
+  if (cles.length === 0) return [];
+
+  // Le mois de départ est celui du lundi de la première semaine renseignée.
+  const premier = lundiDeSemaine(cles[0]);
+  const debut = new Date(premier.getUTCFullYear(), premier.getUTCMonth(), 1);
+  const fin = new Date(aujourdHui.getFullYear(), aujourdHui.getMonth(), 1);
+
+  const bilans = [];
+  for (let d = new Date(debut); d <= fin && bilans.length < 120; d.setMonth(d.getMonth() + 1)) {
+    bilans.push(bilanMois(entreesParSemaine, objectifs, d.getFullYear(), d.getMonth(), aujourdHui));
+  }
+  return bilans.reverse();
 }
 
 /** Les n dernières semaines (plus récente en dernier), avec leur bilan. */

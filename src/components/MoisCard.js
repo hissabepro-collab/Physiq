@@ -1,10 +1,9 @@
 import { GlareCard } from "@/components/ui/GlareCard";
-import { lundiDeSemaine } from "@/lib/semaines";
 
-// Score d'assiduité depuis le début du suivi : ce que tu as réellement fait
-// rapporté à ce que tu étais censé faire sur toute la période. Le dénominateur
-// grandit chaque semaine, donc le pourcentage récompense la régularité et non
-// le volume.
+// Assiduité du mois en cours : ce que tu as réellement fait rapporté à ce que
+// tu étais censé faire depuis le 1er. L'objectif hebdomadaire est ramené au
+// jour, donc le pourcentage mesure la régularité et non le volume — et il
+// repart de zéro à chaque mois, le précédent passant à l'historique.
 
 const FORMAT = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 });
 
@@ -42,7 +41,7 @@ function Score({ label, fait, cible, couleur, suffixe }) {
   );
 }
 
-function Sommeil({ moyenne, cible, semainesMesurees }) {
+function Sommeil({ moyenne, cible, nuits }) {
   const couleur = "#b69cff";
   const atteint = moyenne != null && moyenne >= cible;
 
@@ -73,59 +72,37 @@ function Sommeil({ moyenne, cible, semainesMesurees }) {
       </div>
 
       <div className="mt-1 text-[11px] text-foreground-muted">
-        {semainesMesurees === 0
-          ? "aucune semaine renseignée"
-          : `par nuit hors week-end · ${semainesMesurees} sem.`}
+        {nuits === 0 ? "aucune nuit renseignée" : `par nuit · ${nuits} nuit${nuits > 1 ? "s" : ""}, hors week-end`}
       </div>
     </div>
   );
 }
 
-export default function AssiduiteCard({ cumul, objectifs }) {
-  if (!cumul) return null;
+export default function MoisCard({ bilan, objectifs }) {
+  if (!bilan) return null;
 
-  const debut = lundiDeSemaine(cumul.depuis).toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  });
+  const restants = bilan.enCours ? bilan.joursDuMois - bilan.jours : 0;
 
   return (
     <GlareCard className="p-5 sm:p-6" tiltIntensity={4}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h2 className="font-display text-base font-semibold">Depuis le début</h2>
+        <h2 className="font-display text-base font-semibold capitalize">{bilan.libelle}</h2>
         <span className="text-xs text-foreground-muted">
-          {cumul.semaines} semaine{cumul.semaines > 1 ? "s" : ""} · depuis le {debut}
+          {bilan.enCours
+            ? `${bilan.jours} jour${bilan.jours > 1 ? "s" : ""} écoulé${bilan.jours > 1 ? "s" : ""}, ${restants} restant${restants > 1 ? "s" : ""}`
+            : "mois terminé"}
         </span>
       </div>
 
       <div className="mt-4 flex flex-col gap-5 sm:flex-row sm:gap-6">
-        <Score
-          label="Séances"
-          fait={cumul.seances.fait}
-          cible={cumul.seances.cible}
-          suffixe="séances"
-          couleur="#4de8ff"
-        />
-        <Score
-          label="Diète"
-          fait={cumul.diete.fait}
-          cible={cumul.diete.cible}
-          suffixe="jours"
-          couleur="#2fe6b8"
-        />
-        <Sommeil
-          moyenne={cumul.sommeil.moyenne}
-          cible={cumul.sommeil.cible}
-          semainesMesurees={cumul.sommeil.semainesMesurees}
-        />
+        <Score label="Séances" fait={bilan.seances.fait} cible={bilan.seances.cible} suffixe="séances" couleur="#4de8ff" />
+        <Score label="Diète" fait={bilan.diete.fait} cible={bilan.diete.cible} suffixe="jours" couleur="#2fe6b8" />
+        <Sommeil moyenne={bilan.sommeil.moyenne} cible={bilan.sommeil.cible} nuits={bilan.sommeil.nuits} />
       </div>
 
       <p className="mt-4 text-[11px] leading-relaxed text-foreground-muted">
         Référence : {objectifs.seancesParSemaine} séances et {objectifs.dieteParSemaine} jours de diète par semaine,
-        {" "}{objectifs.sommeilHeures} h de sommeil par nuit. La semaine en cours compte au prorata des jours
-        déjà passés.
+        {" "}{objectifs.sommeilHeures} h de sommeil par nuit. Le mois en cours ne compte que les jours déjà passés.
       </p>
     </GlareCard>
   );

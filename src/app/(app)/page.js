@@ -6,9 +6,10 @@ import StatCard from "@/components/StatCard";
 import ProfilCard from "@/components/ProfilCard";
 import HeroScan from "@/components/HeroScan";
 import SemaineCard from "@/components/SemaineCard";
-import AssiduiteCard from "@/components/AssiduiteCard";
+import MoisCard from "@/components/MoisCard";
+import HistoriqueMois from "@/components/HistoriqueMois";
 import {
-  bilanCumule,
+  bilansParMois,
   bilanSemaine,
   calculerSerie,
   cleSemaine,
@@ -40,7 +41,8 @@ export default async function AccueilPage() {
   const semaineActuelle = cleSemaine(new Date());
   const bilan = bilanSemaine(parSemaine[semaineActuelle], OBJECTIFS_DEFAUT);
   const serie = calculerSerie(parSemaine, OBJECTIFS_DEFAUT, semaineActuelle);
-  const cumul = bilanCumule(parSemaine, OBJECTIFS_DEFAUT, semaineActuelle);
+  // Le premier est le mois en cours, les suivants sont l'historique figé.
+  const [moisEnCours, ...moisPrecedents] = bilansParMois(parSemaine, OBJECTIFS_DEFAUT);
 
   const derniere = mesures.at(-1);
   const precedente = mesures.at(-2);
@@ -158,9 +160,15 @@ export default async function AccueilPage() {
         />
       </div>
 
-      {cumul && (
+      {moisEnCours && (
         <div className="mt-4">
-          <AssiduiteCard cumul={cumul} objectifs={OBJECTIFS_DEFAUT} />
+          <MoisCard bilan={moisEnCours} objectifs={OBJECTIFS_DEFAUT} />
+        </div>
+      )}
+
+      {moisPrecedents.length > 0 && (
+        <div className="mt-4">
+          <HistoriqueMois mois={moisPrecedents} />
         </div>
       )}
 
