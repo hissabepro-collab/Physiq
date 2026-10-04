@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRafraichir } from "@/lib/useRafraichir";
 
 export const CHAMPS_MESURE = [
   { key: "scoreVisbody", label: "Score Visbody", unite: "/100" },
@@ -18,6 +19,7 @@ export const CHAMPS_MESURE = [
 ];
 
 export default function MesureForm({ mesure, onSaved, onDeleted, compact = false }) {
+  const rafraichir = useRafraichir();
   const [valeurs, setValeurs] = useState(mesure);
   const [statut, setStatut] = useState(null);
 
@@ -37,6 +39,7 @@ export default function MesureForm({ mesure, onSaved, onDeleted, compact = false
     if (res.ok) {
       setStatut("enregistré");
       onSaved?.((await res.json()).mesure);
+      rafraichir();
     } else {
       setStatut("erreur");
     }
@@ -45,7 +48,10 @@ export default function MesureForm({ mesure, onSaved, onDeleted, compact = false
   async function supprimer() {
     if (!confirm("Supprimer définitivement ce scan ?")) return;
     const res = await fetch(`/api/mesures/${mesure.id}`, { method: "DELETE" });
-    if (res.ok) onDeleted?.(mesure.id);
+    if (res.ok) {
+      onDeleted?.(mesure.id);
+      rafraichir();
+    }
   }
 
   const champs = compact

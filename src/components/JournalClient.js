@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import StarRating from "@/components/StarRating";
 import PageHeader from "@/components/PageHeader";
 import GrilleSemaine from "@/components/GrilleSemaine";
+import { useRafraichir } from "@/lib/useRafraichir";
 import {
   cleSemaine,
   libelleSemaine,
@@ -62,6 +63,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
   const [photo, setPhoto] = useState(null);
   const [envoi, setEnvoi] = useState(false);
   const [surbrillance, setSurbrillance] = useState(false);
+  const rafraichir = useRafraichir();
   const formulaireRef = useRef(null);
 
   // Si un bilan existe déjà pour la semaine choisie, on le reprend pour le
@@ -112,6 +114,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
         setEntrees((liste) => [entree, ...liste.filter((x) => x.id !== entree.id)]);
         setMesureId("");
         setPhoto(null);
+        rafraichir(); // le tableau de bord doit voir ce bilan tout de suite
       }
     } finally {
       setEnvoi(false);
@@ -121,7 +124,10 @@ export default function JournalClient({ entreesInitiales, mesures }) {
   async function supprimer(id) {
     if (!confirm("Supprimer cette entrée ?")) return;
     const res = await fetch(`/api/journal/${id}`, { method: "DELETE" });
-    if (res.ok) setEntrees((es) => es.filter((e) => e.id !== id));
+    if (res.ok) {
+      setEntrees((es) => es.filter((e) => e.id !== id));
+      rafraichir();
+    }
   }
 
   return (

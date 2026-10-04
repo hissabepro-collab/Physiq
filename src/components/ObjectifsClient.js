@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { GlareCard } from "@/components/ui/GlareCard";
+import { useRafraichir } from "@/lib/useRafraichir";
 import PageHeader from "@/components/PageHeader";
 
 const METRIQUES = [
@@ -39,6 +40,7 @@ function ProgressRing({ percent }) {
 }
 
 function CarteObjectif({ objectif, mesures, onDeleted }) {
+  const rafraichir = useRafraichir();
   const meta = METRIQUES.find((m) => m.key === objectif.metrique) ?? { label: objectif.metrique, unite: "" };
   const valeurs = mesures.filter((m) => m[objectif.metrique] != null);
   const baseline = valeurs[0]?.[objectif.metrique];
@@ -53,7 +55,10 @@ function CarteObjectif({ objectif, mesures, onDeleted }) {
   async function supprimer() {
     if (!confirm("Supprimer cet objectif ?")) return;
     const res = await fetch(`/api/objectifs/${objectif.id}`, { method: "DELETE" });
-    if (res.ok) onDeleted(objectif.id);
+    if (res.ok) {
+      onDeleted(objectif.id);
+      rafraichir();
+    }
   }
 
   return (
@@ -74,6 +79,7 @@ function CarteObjectif({ objectif, mesures, onDeleted }) {
 }
 
 export default function ObjectifsClient({ objectifsInitiaux, mesures }) {
+  const rafraichir = useRafraichir();
   const [objectifs, setObjectifs] = useState(objectifsInitiaux);
   const [metrique, setMetrique] = useState(METRIQUES[0].key);
   const [valeurCible, setValeurCible] = useState("");
@@ -90,6 +96,7 @@ export default function ObjectifsClient({ objectifsInitiaux, mesures }) {
       const { objectif } = await res.json();
       setObjectifs((o) => [objectif, ...o]);
       setValeurCible("");
+      rafraichir();
     }
   }
 
