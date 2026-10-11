@@ -10,6 +10,12 @@ const nextConfig = {
   // en require() Node natif à la place.
   serverExternalPackages: ["pdf-parse", "pdfjs-dist", "@napi-rs/canvas"],
 
+  // Le worker de pdfjs est chargé par chemin depuis le disque : Vercel ne le
+  // suit pas tout seul dans la fonction d'import. On l'inscrit explicitement.
+  outputFileTracingIncludes: {
+    "/api/scan": ["./node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"],
+  },
+
   experimental: {
     // Toutes les pages interrogent la base et sont donc rendues à la demande.
     // Par défaut, Next ne garde aucune de ces pages en mémoire côté client :
