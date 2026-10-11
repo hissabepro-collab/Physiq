@@ -1,10 +1,29 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { parseVisbodyPdf } from "@/lib/parseVisbodyPdf";
 
 export async function POST(request) {
-  const formData = await request.formData();
-  const fichiers = formData.getAll("fichiers");
+  // Le parseur est chargé ICI, dans le try, et non en tête de fichier. Si la
+  // bibliothèque PDF ne se charge pas dans l'environnement serverless, la
+  // route renvoie alors une erreur lisible au lieu d'un 500 vide — avant, une
+  // seule erreur de chargement faisait tomber tous les imports à la fois.
+  let parseVisbodyPdf;
+  try {
+    ({ parseVisbodyPdf } = await import("@/lib/parseVisbodyPdf"));
+  } catch (e) {
+    console.error("Chargement du parseur PDF impossible:", e);
+    return NextResponse.json(
+      { error: `Lecture PDF indisponible sur le serveur : ${e.message}` },
+      { status: 500 }
+    );
+  }
+
+  let fichiers;
+  try {
+    const formData = await request.formData();
+    fichiers = formData.getAll("fichiers");
+  } catch (e) {
+    return NextResponse.json({ error: `Envoi illisible : ${e.message}` }, { status: 400 });
+  }
 
   if (fichiers.length === 0) {
     return NextResponse.json({ error: "Aucun fichier reçu" }, { status: 400 });
@@ -42,7 +61,12 @@ export async function POST(request) {
       resultats.push({ nom, ok: true, mesure, warnings });
     } catch (e) {
       console.error("Erreur import scan:", e);
-      resultats.push({ nom, ok: false, erreur: "Impossible de lire ce PDF (fichier corrompu ou format inattendu)" });
+      resultats.push({
+        nom,
+        ok: false,
+        erreur: "Impossible de lire ce PDF (fichier corrompu ou format inattendu)",
+        detail: e.message,
+      });
     }
   }
 

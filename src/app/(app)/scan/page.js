@@ -18,9 +18,23 @@ export default function ScanPage() {
 
     try {
       const res = await fetch("/api/scan", { method: "POST", body: formData });
-      const data = await res.json();
+      // Une réponse qui n'est pas du JSON (erreur serveur, session expirée,
+      // dépassement de taille) ne doit plus disparaître en silence : on le dit.
+      const texte = await res.text();
+      let data = null;
+      try {
+        data = JSON.parse(texte);
+      } catch {}
+
+      if (!res.ok || !data) {
+        const raison = data?.error || (res.status === 413 ? "fichier trop volumineux" : `erreur ${res.status}`);
+        setResultats([{ nom: "Import", ok: false, erreur: `Échec de l'envoi : ${raison}` }]);
+        return;
+      }
       setResultats(data.resultats || []);
       setFichiers([]);
+    } catch (e) {
+      setResultats([{ nom: "Import", ok: false, erreur: `Connexion impossible : ${e.message}` }]);
     } finally {
       setEnvoi(false);
     }
