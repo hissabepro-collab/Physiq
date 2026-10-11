@@ -8,6 +8,14 @@ export async function POST(request) {
   // seule erreur de chargement faisait tomber tous les imports à la fois.
   let parseVisbodyPdf;
   try {
+    // pdf-parse attend DOMMatrix, une API de navigateur absente de Node. Il
+    // tente de la fournir via @napi-rs/canvas, qui ne se charge pas sur Vercel.
+    // On fournit donc une implémentation pure JavaScript AVANT l'import : la
+    // bibliothèque la trouve déjà et n'essaie pas le reste.
+    if (!globalThis.DOMMatrix) {
+      const { default: DOMMatrixPolyfill } = await import("@thednp/dommatrix");
+      globalThis.DOMMatrix = DOMMatrixPolyfill;
+    }
     ({ parseVisbodyPdf } = await import("@/lib/parseVisbodyPdf"));
   } catch (e) {
     console.error("Chargement du parseur PDF impossible:", e);
