@@ -1,9 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // @napi-rs/canvas fournit DOMMatrix à pdf-parse côté serveur. pdf-parse le
+  // charge par require() dynamique, que le traçage de Vercel ne détecte pas :
+  // sans l'inscrire ici et en dépendance directe, DOMMatrix reste indéfini et
+  // l'import PDF échoue en production (absent en local, où le paquet traîne).
+  //
   // pdf-parse (via pdfjs-dist) utilise des chemins de worker dynamiques que
   // le bundler de Next.js ne résout pas correctement — on le laisse tourner
   // en require() Node natif à la place.
-  serverExternalPackages: ["pdf-parse", "pdfjs-dist"],
+  serverExternalPackages: ["pdf-parse", "pdfjs-dist", "@napi-rs/canvas"],
 
   experimental: {
     // Toutes les pages interrogent la base et sont donc rendues à la demande.
