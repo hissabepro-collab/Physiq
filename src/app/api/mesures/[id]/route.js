@@ -20,6 +20,9 @@ const CHAMPS_MODIFIABLES = [
   "selsInorganiquesKg",
   "proteineKg",
   "scoreVisbody",
+  "deltaScoreVisbody",
+  "poidsIdealKg",
+  "masseGrasseIdealeKg",
 ];
 
 export async function PATCH(request, { params }) {
@@ -31,6 +34,12 @@ export async function PATCH(request, { params }) {
     if (champ in body) {
       data[champ] = body[champ] === "" || body[champ] === null ? null : Number(body[champ]);
     }
+  }
+  // La date du scan se corrige aussi : une date mal lue ne doit pas figer le
+  // rapport dans le mauvais mois du tableau de bord.
+  if (body.dateScan) {
+    const date = new Date(body.dateScan);
+    if (!Number.isNaN(date.getTime())) data.dateScan = date;
   }
   data.extractionAuto = false;
 

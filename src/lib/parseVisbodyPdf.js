@@ -293,6 +293,7 @@ export async function parseVisbodyPdf(buffer, sourceFichier = null) {
   const donnees = {
     dateScan: header.dateScan,
     scoreVisbody,
+    deltaScoreVisbody: deltaScorePrecedent,
     poidsKg: overview.poidsKg,
     masseGrasseKg: overview.masseGrasseKg,
     bfpPct: positionalFields.bfpPct ?? null,

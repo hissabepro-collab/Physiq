@@ -18,6 +18,8 @@ model Mesure {
 
   // Score global fourni par Visbody (sur 100) — sert de base au rang.
   scoreVisbody Int?
+  // Variation du score par rapport au scan précédent, telle qu'imprimée sur le rapport.
+  deltaScoreVisbody Int?
 
   // Champs principaux affichés partout (dashboard, historique, comparaison).
   poidsKg           Float?
