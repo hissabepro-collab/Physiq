@@ -239,3 +239,20 @@ export function dernieresSemaines(entreesParSemaine, objectifs, cleActuelle, n =
 }
 
 export { nombreSeances, nombreJoursDiete };
+
+/**
+ * Semaines passées sans aucun bilan, depuis la première semaine renseignée
+ * jusqu'à la semaine précédant la semaine en cours. La semaine en cours n'est
+ * pas une « semaine oubliée » : elle est encore ouverte. Renvoie les clés de la
+ * plus ancienne à la plus récente.
+ */
+export function semainesVides(entreesParSemaine, cleActuelle) {
+  const renseignees = Object.keys(entreesParSemaine).filter(Boolean).sort();
+  if (renseignees.length === 0) return [];
+
+  const vides = [];
+  for (let cle = renseignees[0]; cle < cleActuelle; cle = semaineSuivante(cle)) {
+    if (!entreesParSemaine[cle]) vides.push(cle);
+  }
+  return vides;
+}

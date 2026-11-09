@@ -11,6 +11,7 @@ import {
   nuitSuivie,
   OBJECTIFS_DEFAUT,
   semainePrecedente,
+  semainesVides,
 } from "@/lib/semaines";
 
 const NUITS_VIDES = ["", "", "", "", "", "", ""];
@@ -53,6 +54,8 @@ export default function JournalClient({ entreesInitiales, mesures }) {
   const dejaSaisie = entreesInitiales.find((e) => e.semaineIso === semaineEnCours);
 
   const [entrees, setEntrees] = useState(entreesInitiales);
+  // Semaines passées sans aucun bilan : elles sont rappelées en haut de page.
+  const vides = semainesVides(Object.fromEntries(entrees.map((e) => [e.semaineIso, e])), semaineEnCours);
   const [semaine, setSemaine] = useState(semaineEnCours);
   const [texte, setTexte] = useState(dejaSaisie?.texte ?? "");
   const [nuits, setNuits] = useState(() => nuitsDepuisEntree(dejaSaisie));
@@ -137,6 +140,29 @@ export default function JournalClient({ entreesInitiales, mesures }) {
         title="Journal"
         subtitle="Ce que les chiffres ne disent pas : ta forme, ton sommeil, ce qui a changé dans ta semaine. C'est ce qui expliquera tes courbes dans six mois."
       />
+
+      {vides.length > 0 && (
+        <div className="mt-6 rounded-2xl border border-amber-400/40 bg-amber-400/10 p-4">
+          <div className="text-xs font-semibold text-amber-300">
+            {vides.length === 1 ? "1 semaine sans bilan" : `${vides.length} semaines sans bilan`}
+          </div>
+          <p className="mt-1 text-[11px] leading-relaxed text-foreground-muted">
+            Ces semaines ne sont pas remplies. Appuie sur une semaine pour la compléter.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {vides.map((cle) => (
+              <button
+                key={cle}
+                type="button"
+                onClick={() => chargerSemaine(cle, { remonter: true })}
+                className="rounded-lg border border-amber-400/50 px-2.5 py-1 text-[11px] font-semibold text-amber-200 hover:bg-amber-400/10"
+              >
+                {libelleSemaine(cle)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <form
         ref={formulaireRef}
