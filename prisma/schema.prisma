@@ -105,6 +105,15 @@ model JournalEntry {
   createdAt DateTime @default(now())
 }
 
+// Objectif d'habitude mensuel : une valeur cible par nature ("seances",
+// "diete" ou "sommeil"). Un seul objectif par nature.
+model ObjectifMensuel {
+  id          String   @id @default(cuid())
+  nature      String   @unique
+  valeurCible Float
+  createdAt   DateTime @default(now())
+}
+
 // Profil unique (site mono-utilisateur) : identité, mot de passe, préférences.
 model Profil {
   id             Int       @id @default(1)
