@@ -37,8 +37,13 @@ export default async function ObjectifsPage() {
 
   return (
     <>
-      <ObjectifsMensuels progression={progression} libelleMois={bilan.libelle} />
-      <ObjectifsClient objectifsInitiaux={objectifs} mesures={mesures} />
+      {/* Le titre de la page vient en premier : les objectifs mensuels sont
+          une section, pas l'en-tête. ObjectifsClient porte le PageHeader. */}
+      <ObjectifsClient
+        objectifsInitiaux={objectifs}
+        mesures={mesures}
+        sectionDuMois={<ObjectifsMensuels progression={progression} libelleMois={bilan.libelle} />}
+      />
     </>
   );
 }

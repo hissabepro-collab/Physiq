@@ -78,7 +78,7 @@ function CarteObjectif({ objectif, mesures, onDeleted }) {
   );
 }
 
-export default function ObjectifsClient({ objectifsInitiaux, mesures }) {
+export default function ObjectifsClient({ objectifsInitiaux, mesures, sectionDuMois }) {
   const rafraichir = useRafraichir();
   const [objectifs, setObjectifs] = useState(objectifsInitiaux);
   const [metrique, setMetrique] = useState(METRIQUES[0].key);
@@ -111,6 +111,8 @@ export default function ObjectifsClient({ objectifsInitiaux, mesures }) {
         title="Objectifs"
         subtitle="Fixe une valeur cible par métrique. La progression est calculée depuis ton tout premier scan."
       />
+
+      <div className="mt-6">{sectionDuMois}</div>
 
       <form onSubmit={ajouter} className="mt-6 flex flex-wrap items-end gap-3 rounded-2xl border border-border-soft bg-background-soft/30 p-4">
         <label className="block">
