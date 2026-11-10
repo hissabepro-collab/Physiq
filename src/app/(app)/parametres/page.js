@@ -55,16 +55,16 @@ export default function ParametresPage() {
             placeholder="Mot de passe actuel"
             value={motDePasseActuel}
             onChange={(e) => setMotDePasseActuel(e.target.value)}
-            className="w-full rounded-lg border border-border-soft bg-black/20 px-3 py-2 text-sm outline-none focus:border-accent"
+            className="w-full min-h-11 rounded-lg border border-border-soft bg-black/20 px-3 py-2 text-sm outline-none focus:border-accent"
           />
           <input
             type="password"
             placeholder="Nouveau mot de passe"
             value={nouveauMotDePasse}
             onChange={(e) => setNouveauMotDePasse(e.target.value)}
-            className="w-full rounded-lg border border-border-soft bg-black/20 px-3 py-2 text-sm outline-none focus:border-accent"
+            className="w-full min-h-11 rounded-lg border border-border-soft bg-black/20 px-3 py-2 text-sm outline-none focus:border-accent"
           />
-          <button type="submit" className="rounded-lg border border-accent bg-accent-soft px-4 py-2 text-sm font-semibold">
+          <button type="submit" className="inline-flex min-h-11 items-center rounded-lg border border-accent bg-accent-soft px-4 py-2 text-sm font-semibold">
             Mettre à jour
           </button>
           {messagePwd && (
@@ -79,10 +79,10 @@ export default function ParametresPage() {
         <h2 className="font-display text-sm font-semibold">Exporter mes données</h2>
         <p className="mt-1 text-sm text-foreground-muted">Récupère toutes tes mesures à tout moment.</p>
         <div className="mt-3 flex flex-wrap gap-3">
-          <a href="/api/export" className="rounded-lg border border-border-soft px-4 py-2 text-sm font-semibold hover:border-accent/60">
+          <a href="/api/export" className="inline-flex min-h-11 items-center rounded-lg border border-border-soft px-4 py-2 text-sm font-semibold hover:border-accent/60">
             Télécharger en CSV
           </a>
-          <a href="/export-pdf" target="_blank" className="rounded-lg border border-border-soft px-4 py-2 text-sm font-semibold hover:border-accent/60">
+          <a href="/export-pdf" target="_blank" className="inline-flex min-h-11 items-center rounded-lg border border-border-soft px-4 py-2 text-sm font-semibold hover:border-accent/60">
             Export imprimable (PDF)
           </a>
         </div>
@@ -99,12 +99,12 @@ export default function ParametresPage() {
             placeholder='Tape "SUPPRIMER" pour confirmer'
             value={confirmationSuppression}
             onChange={(e) => setConfirmationSuppression(e.target.value)}
-            className="rounded-lg border border-border-soft bg-black/20 px-3 py-2 text-sm outline-none focus:border-red-400"
+            className="min-h-11 rounded-lg border border-border-soft bg-black/20 px-3 py-2 text-sm outline-none focus:border-red-400"
           />
           <button
             onClick={supprimerTout}
             disabled={confirmationSuppression !== "SUPPRIMER"}
-            className="rounded-lg border border-red-400/50 bg-red-400/10 px-4 py-2 text-sm font-semibold text-red-300 disabled:opacity-30"
+            className="min-h-11 rounded-lg border border-red-400/50 bg-red-400/10 px-4 py-2 text-sm font-semibold text-red-300 disabled:opacity-30"
           >
             Tout supprimer
           </button>
