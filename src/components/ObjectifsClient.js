@@ -114,8 +114,15 @@ export default function ObjectifsClient({ objectifsInitiaux, mesures, sectionDuM
 
       <div className="mt-6">{sectionDuMois}</div>
 
-      <form onSubmit={ajouter} className="mt-6 flex flex-wrap items-end gap-3 rounded-2xl border border-border-soft bg-background-soft/30 p-4">
-        <label className="block">
+      <div className="mx-auto mt-10 max-w-2xl px-0">
+        <h2 className="font-display text-base font-semibold">Objectifs de mesures</h2>
+        <p className="mt-1 text-[11px] leading-relaxed text-foreground-muted">
+          Poids, masse grasse, masse musculaire : la progression se calcule depuis ton premier scan.
+        </p>
+      </div>
+
+      <form onSubmit={ajouter} className="mt-4 flex flex-wrap items-end gap-3 rounded-2xl border border-border-soft bg-background-soft/30 p-4">
+        <label className="flex flex-col gap-1.5">
           <span className="text-[11px] font-medium text-foreground-muted">Métrique</span>
           <select
             value={metrique}
@@ -127,7 +134,7 @@ export default function ObjectifsClient({ objectifsInitiaux, mesures, sectionDuM
             ))}
           </select>
         </label>
-        <label className="block">
+        <label className="flex flex-col gap-1.5">
           <span className="text-[11px] font-medium text-foreground-muted">Valeur cible</span>
           <input
             type="number"

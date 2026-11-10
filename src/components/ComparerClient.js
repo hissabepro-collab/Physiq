@@ -64,10 +64,10 @@ export default function ComparerClient({ mesures, photosParMesure }) {
       <PageHeader kicker="Avant / après" title="Comparer" subtitle="Choisis deux dates, ou utilise un raccourci rapide." />
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <button onClick={() => appliquerPreset(7)} className="rounded-full border border-border-soft px-3 py-1.5 text-xs font-semibold text-foreground-muted hover:border-accent/60 hover:text-foreground">
+        <button onClick={() => appliquerPreset(7)} className="inline-flex min-h-11 items-center rounded-full border border-border-soft px-3 py-2 text-xs font-semibold text-foreground-muted hover:border-accent/60 hover:text-foreground">
           Cette semaine vs semaine dernière
         </button>
-        <button onClick={() => appliquerPreset(30)} className="rounded-full border border-border-soft px-3 py-1.5 text-xs font-semibold text-foreground-muted hover:border-accent/60 hover:text-foreground">
+        <button onClick={() => appliquerPreset(30)} className="inline-flex min-h-11 items-center rounded-full border border-border-soft px-3 py-2 text-xs font-semibold text-foreground-muted hover:border-accent/60 hover:text-foreground">
           Ce mois vs mois dernier
         </button>
       </div>

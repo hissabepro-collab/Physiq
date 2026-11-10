@@ -155,7 +155,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
                 key={cle}
                 type="button"
                 onClick={() => chargerSemaine(cle, { remonter: true })}
-                className="rounded-lg border border-amber-400/50 px-2.5 py-1 text-[11px] font-semibold text-amber-200 hover:bg-amber-400/10"
+                className="inline-flex min-h-11 items-center rounded-lg border border-amber-400/50 px-3 py-2 text-[11px] font-semibold text-amber-200 hover:bg-amber-400/10"
               >
                 {libelleSemaine(cle)}
               </button>
@@ -179,7 +179,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
             <button
               type="button"
               onClick={() => chargerSemaine(semainePrecedente(semaine))}
-              className="rounded-lg border border-border-soft px-2 py-1 text-xs text-foreground-muted hover:border-accent/60 hover:text-foreground"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border-soft px-3 py-2 text-xs text-foreground-muted hover:border-accent/60 hover:text-foreground"
             >
               ←
             </button>
@@ -232,12 +232,12 @@ export default function JournalClient({ entreesInitiales, mesures }) {
           className="mt-3 w-full resize-none rounded-lg border border-border-soft bg-black/20 px-3 py-2 text-sm outline-none focus:border-accent"
         />
         <div className="mt-3 flex flex-wrap items-end gap-3">
-          <label className="block">
+          <label className="flex flex-col gap-1.5">
             <span className="text-[11px] font-medium text-foreground-muted">Lier à un scan (optionnel)</span>
             <select
               value={mesureId}
               onChange={(e) => setMesureId(e.target.value)}
-              className="mt-1 rounded-lg border border-border-soft bg-black/20 px-2.5 py-1.5 text-sm outline-none focus:border-accent"
+              className="mt-1 min-h-11 rounded-lg border border-border-soft bg-black/20 px-2.5 py-2 text-sm outline-none focus:border-accent"
             >
               <option value="">Aucun</option>
               {mesures.map((m) => (
@@ -245,13 +245,13 @@ export default function JournalClient({ entreesInitiales, mesures }) {
               ))}
             </select>
           </label>
-          <label className="block">
+          <label className="flex flex-col gap-1.5">
             <span className="text-[11px] font-medium text-foreground-muted">Photo (optionnel)</span>
             <input
               type="file"
               accept="image/*"
               onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
-              className="mt-1 block text-xs text-foreground-muted"
+              className="mt-1 block w-full text-xs text-foreground-muted file:mr-3 file:min-h-11 file:cursor-pointer file:rounded-lg file:border file:border-accent file:bg-accent-soft file:px-3.5 file:py-2 file:text-xs file:font-semibold file:text-foreground"
             />
           </label>
         </div>
@@ -276,7 +276,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
                   <button
                     type="button"
                     onClick={() => chargerSemaine(e.semaineIso, { remonter: true })}
-                    className="ml-2 rounded-md border border-accent/50 px-2 py-0.5 text-[11px] font-semibold text-accent"
+                    className="ml-2 inline-flex min-h-11 items-center rounded-md border border-accent/50 px-3 py-2 text-[11px] font-semibold text-accent"
                   >
                     modifier
                   </button>

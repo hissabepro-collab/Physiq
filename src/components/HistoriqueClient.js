@@ -46,7 +46,7 @@ export default function HistoriqueClient({ mesuresInitiales }) {
         <div className="flex rounded-lg border border-border-soft p-1">
           <button
             onClick={() => setVue("courbe")}
-            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold ${
+            className={`flex min-h-11 items-center gap-1.5 rounded-md px-3 py-2 text-xs font-semibold ${
               vue === "courbe" ? "bg-accent-soft text-accent" : "text-foreground-muted"
             }`}
           >
@@ -54,7 +54,7 @@ export default function HistoriqueClient({ mesuresInitiales }) {
           </button>
           <button
             onClick={() => setVue("liste")}
-            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold ${
+            className={`flex min-h-11 items-center gap-1.5 rounded-md px-3 py-2 text-xs font-semibold ${
               vue === "liste" ? "bg-accent-soft text-accent" : "text-foreground-muted"
             }`}
           >
@@ -71,7 +71,7 @@ export default function HistoriqueClient({ mesuresInitiales }) {
               <button
                 key={m.key}
                 onClick={() => setMetrique(m)}
-                className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                className={`inline-flex min-h-11 items-center rounded-full border px-3 py-2 text-xs font-semibold transition ${
                   metrique.key === m.key
                     ? "border-accent bg-accent-soft text-accent"
                     : "border-border-soft text-foreground-muted"

@@ -85,10 +85,10 @@ function Ligne({ nature, valeur, progression }) {
             placeholder="aucun"
             onChange={(e) => setSaisie(e.target.value)}
             aria-label={`Objectif mensuel : ${nature.label}`}
-            className="w-20 rounded-lg border border-border-soft bg-black/20 px-2 py-1 text-right text-sm outline-none focus:border-accent"
+            className="min-h-11 w-24 rounded-lg border border-border-soft bg-black/20 px-2 py-2 text-right text-sm outline-none focus:border-accent"
           />
           <span className="text-[11px] text-foreground-muted">{nature.unite}</span>
-          <button onClick={enregistrer} className="rounded-lg border border-accent px-2.5 py-1 text-[11px] font-semibold">
+          <button onClick={enregistrer} className="min-h-11 rounded-lg border border-accent px-3.5 py-2 text-[11px] font-semibold">
             OK
           </button>
         </div>

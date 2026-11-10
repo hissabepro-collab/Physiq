@@ -3,7 +3,7 @@
 import { JOURS, JOURS_LONGS, nuitSuivie } from "@/lib/semaines";
 
 function Case({ actif, onClick, couleur, titre, lectureSeule }) {
-  const base = "flex h-9 w-full items-center justify-center rounded-lg border text-[11px] font-bold transition";
+  const base = "flex h-11 w-full items-center justify-center rounded-lg border text-[11px] font-bold transition";
   // Même recette de lueur que les jauges du tableau de bord : diffusion pleine,
   // sans retrait. L'ancienne valeur (`0 0 14px -4px`) rognait le halo de 4 px
   // avant même qu'il ne sorte de la case, ce qui le rendait presque invisible
@@ -45,7 +45,7 @@ function Case({ actif, onClick, couleur, titre, lectureSeule }) {
 // s'ouvre quand même sur mobile grâce à inputMode.
 function Nuit({ valeur, onChange, titre, lectureSeule, suivie }) {
   const base =
-    "flex h-9 w-full items-center justify-center rounded-lg border text-[11px] font-bold tabular-nums";
+    "flex h-11 w-full items-center justify-center rounded-lg border text-[11px] font-bold tabular-nums";
   const couleur = "#b69cff";
 
   // Vendredi et samedi soir ne se saisissent pas : la case reste barrée, pour
