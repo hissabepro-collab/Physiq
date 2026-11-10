@@ -108,7 +108,7 @@ export default function ParcoursClient({
 
       <Link
         href="/"
-        className="fixed right-4 top-5 z-40 rounded-full border border-border-soft bg-background-soft/95 px-4 py-2 text-xs font-semibold sm:backdrop-blur hover:border-accent/60"
+        className="fixed right-4 top-5 z-40 inline-flex min-h-11 items-center rounded-full border border-border-soft bg-background-soft/95 px-4 py-2 text-xs font-semibold sm:backdrop-blur hover:border-accent/60"
       >
         Quitter le parcours
       </Link>

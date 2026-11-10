@@ -78,7 +78,7 @@ export default function ComparerClient({ mesures, photosParMesure }) {
           <select
             value={idA}
             onChange={(e) => setIdA(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-border-soft bg-black/20 px-2.5 py-2 text-sm outline-none focus:border-accent"
+            className="mt-1 min-h-11 w-full rounded-lg border border-border-soft bg-black/20 px-2.5 py-2 text-sm outline-none focus:border-accent"
           >
             {mesures.map((m) => (
               <option key={m.id} value={m.id}>{formatDate(m.dateScan)}</option>
@@ -90,7 +90,7 @@ export default function ComparerClient({ mesures, photosParMesure }) {
           <select
             value={idB}
             onChange={(e) => setIdB(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-border-soft bg-black/20 px-2.5 py-2 text-sm outline-none focus:border-accent"
+            className="mt-1 min-h-11 w-full rounded-lg border border-border-soft bg-black/20 px-2.5 py-2 text-sm outline-none focus:border-accent"
           >
             {mesures.map((m) => (
               <option key={m.id} value={m.id}>{formatDate(m.dateScan)}</option>

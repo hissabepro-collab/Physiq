@@ -63,7 +63,6 @@ export default function JournalClient({ entreesInitiales, mesures }) {
   const [seances, setSeances] = useState(dejaSaisie?.joursEntraines ?? []);
   const [diete, setDiete] = useState(dejaSaisie?.joursDiete ?? []);
   const [mesureId, setMesureId] = useState(dejaSaisie?.mesureId ?? "");
-  const [photo, setPhoto] = useState(null);
   const [envoi, setEnvoi] = useState(false);
   const [surbrillance, setSurbrillance] = useState(false);
   const rafraichir = useRafraichir();
@@ -85,7 +84,6 @@ export default function JournalClient({ entreesInitiales, mesures }) {
     setNoteEtoiles(existante?.noteEtoiles ?? null);
     setTexte(existante?.texte ?? "");
     setMesureId(existante?.mesureId ?? "");
-    setPhoto(null);
 
     if (remonter) {
       formulaireRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -98,7 +96,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
 
   async function ajouter(e) {
     e.preventDefault();
-    if (!texte && moyenne == null && !photo && !noteEtoiles && seances.length === 0 && diete.length === 0) return;
+    if (!texte && moyenne == null && !noteEtoiles && seances.length === 0 && diete.length === 0) return;
     setEnvoi(true);
     const formData = new FormData();
     formData.append("semaineIso", semaine);
@@ -108,7 +106,6 @@ export default function JournalClient({ entreesInitiales, mesures }) {
     if (texte) formData.append("texte", texte);
     if (noteEtoiles) formData.append("noteEtoiles", noteEtoiles);
     if (mesureId) formData.append("mesureId", mesureId);
-    if (photo) formData.append("photo", photo);
 
     try {
       const res = await fetch("/api/journal", { method: "POST", body: formData });
@@ -116,8 +113,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
         const { entree } = await res.json();
         setEntrees((liste) => [entree, ...liste.filter((x) => x.id !== entree.id)]);
         setMesureId("");
-        setPhoto(null);
-        rafraichir(); // le tableau de bord doit voir ce bilan tout de suite
+            rafraichir(); // le tableau de bord doit voir ce bilan tout de suite
       }
     } finally {
       setEnvoi(false);
@@ -245,15 +241,6 @@ export default function JournalClient({ entreesInitiales, mesures }) {
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1.5">
-            <span className="text-[11px] font-medium text-foreground-muted">Photo (optionnel)</span>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
-              className="mt-1 block w-full text-xs text-foreground-muted file:mr-3 file:min-h-11 file:cursor-pointer file:rounded-lg file:border file:border-accent file:bg-accent-soft file:px-3.5 file:py-2 file:text-xs file:font-semibold file:text-foreground"
-            />
-          </label>
         </div>
         <button
           type="submit"
@@ -282,7 +269,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
                   </button>
                 )}
               </div>
-              <button onClick={() => supprimer(e.id)} className="text-xs text-foreground-muted hover:text-red-400">
+              <button onClick={() => supprimer(e.id)} className="inline-flex min-h-11 items-center px-2 text-xs text-foreground-muted hover:text-red-400">
                 Supprimer
               </button>
             </div>

@@ -121,10 +121,19 @@ export default function GrilleSemaine({
     onChangeNuits(suite);
   }
 
+  // Le nom de chaque ligne est au-dessus des cases, et non à gauche : les sept
+  // jours occupent alors toute la largeur, et chaque case atteint 44 px sur un
+  // téléphone au lieu d'environ 36.
+  const Ligne = ({ titre, children }) => (
+    <div className="space-y-1">
+      <span className="block text-[11px] font-semibold text-foreground-muted">{titre}</span>
+      <div className="grid grid-cols-7 gap-1.5">{children}</div>
+    </div>
+  );
+
   return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-[86px_repeat(7,1fr)] items-center gap-1.5">
-        <span />
+    <div className="space-y-3">
+      <div className="grid grid-cols-7 gap-1.5">
         {JOURS.map((j, i) => (
           <span key={i} className="text-center text-[10px] font-bold uppercase tracking-wide text-foreground-muted">
             {j}
@@ -132,8 +141,7 @@ export default function GrilleSemaine({
         ))}
       </div>
 
-      <div className="grid grid-cols-[86px_repeat(7,1fr)] items-center gap-1.5">
-        <span className="text-[11px] font-semibold text-foreground-muted">Séances</span>
+      <Ligne titre="Séances">
         {JOURS.map((_, i) => (
           <Case
             key={i}
@@ -144,10 +152,9 @@ export default function GrilleSemaine({
             lectureSeule={lectureSeule}
           />
         ))}
-      </div>
+      </Ligne>
 
-      <div className="grid grid-cols-[86px_repeat(7,1fr)] items-center gap-1.5">
-        <span className="text-[11px] font-semibold text-foreground-muted">Diète</span>
+      <Ligne titre="Diète">
         {JOURS.map((_, i) => (
           <Case
             key={i}
@@ -158,10 +165,9 @@ export default function GrilleSemaine({
             lectureSeule={lectureSeule}
           />
         ))}
-      </div>
+      </Ligne>
 
-      <div className="grid grid-cols-[86px_repeat(7,1fr)] items-center gap-1.5">
-        <span className="text-[11px] font-semibold text-foreground-muted">Sommeil</span>
+      <Ligne titre="Sommeil">
         {JOURS.map((_, i) => (
           <Nuit
             key={i}
@@ -172,7 +178,7 @@ export default function GrilleSemaine({
             suivie={nuitSuivie(i)}
           />
         ))}
-      </div>
+      </Ligne>
     </div>
   );
 }

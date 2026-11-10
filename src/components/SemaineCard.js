@@ -57,7 +57,7 @@ export default function SemaineCard({ libelle, bilan, serie, renseignee }) {
 
       <Link
         href="/journal"
-        className="mt-4 inline-flex w-full items-center justify-center rounded-lg border border-accent bg-accent-soft px-4 py-2 text-xs font-semibold"
+        className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-accent bg-accent-soft px-4 py-2 text-xs font-semibold"
       >
         {renseignee ? "Mettre à jour ma semaine" : "Remplir mon bilan de la semaine"}
       </Link>

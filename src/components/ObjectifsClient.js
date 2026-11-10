@@ -71,7 +71,7 @@ function CarteObjectif({ objectif, mesures, onDeleted }) {
         </div>
         <div className="mt-1 text-[11px] font-semibold text-accent">{Math.round(Math.max(0, Math.min(100, percent)))}%</div>
       </div>
-      <button onClick={supprimer} className="self-start text-xs text-foreground-muted hover:text-red-400">
+      <button onClick={supprimer} className="inline-flex min-h-11 items-center self-start px-2 text-xs text-foreground-muted hover:text-red-400">
         Supprimer
       </button>
     </GlareCard>
@@ -127,7 +127,7 @@ export default function ObjectifsClient({ objectifsInitiaux, mesures, sectionDuM
           <select
             value={metrique}
             onChange={(e) => setMetrique(e.target.value)}
-            className="mt-1 rounded-lg border border-border-soft bg-black/20 px-2.5 py-2 text-sm outline-none focus:border-accent"
+            className="mt-1 min-h-11 rounded-lg border border-border-soft bg-black/20 px-2.5 py-2 text-sm outline-none focus:border-accent"
           >
             {METRIQUES.map((m) => (
               <option key={m.key} value={m.key}>{m.label}</option>
@@ -141,10 +141,10 @@ export default function ObjectifsClient({ objectifsInitiaux, mesures, sectionDuM
             step="0.1"
             value={valeurCible}
             onChange={(e) => setValeurCible(e.target.value)}
-            className="mt-1 w-28 rounded-lg border border-border-soft bg-black/20 px-2.5 py-2 text-sm outline-none focus:border-accent"
+            className="mt-1 w-28 min-h-11 rounded-lg border border-border-soft bg-black/20 px-2.5 py-2 text-sm outline-none focus:border-accent"
           />
         </label>
-        <button type="submit" className="rounded-lg border border-accent bg-accent-soft px-4 py-2 text-sm font-semibold">
+        <button type="submit" className="inline-flex min-h-11 items-center rounded-lg border border-accent bg-accent-soft px-4 py-2 text-sm font-semibold">
           Ajouter l'objectif
         </button>
       </form>
