@@ -6,7 +6,7 @@
     "dev": "next dev",
     "entree": "node scripts/generate-entree.mjs",
     "prebuild": "npm run entree",
-    "build": "prisma migrate deploy && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate"
