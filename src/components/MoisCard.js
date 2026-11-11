@@ -84,7 +84,7 @@ export default function MoisCard({ bilan, objectifs }) {
   const restants = bilan.enCours ? bilan.joursDuMois - bilan.jours : 0;
 
   return (
-    <GlareCard className="p-5 sm:p-6" tiltIntensity={4}>
+    <GlareCard className="h-full p-5 sm:p-6" tiltIntensity={4}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <h2 className="titre text-lg capitalize">{bilan.libelle}</h2>
         <span className="text-xs text-foreground-muted">

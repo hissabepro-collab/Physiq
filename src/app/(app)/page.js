@@ -32,9 +32,9 @@ function serieValeurs(mesures, champ) {
 
 // Les trois étapes, affichées tant qu'aucun scan n'est enregistré.
 const ETAPES = [
-  { n: "01", titre: "Scanne-toi", texte: "Le mercredi matin, à jeun, avant la séance. Toutes les deux semaines." },
-  { n: "02", titre: "Importe le PDF", texte: "Dépose le rapport Visbody : Physiq lit tous les indicateurs." },
-  { n: "03", titre: "Regarde-toi évoluer", texte: "Rang, anneau, courbes et radar se construisent scan après scan." },
+  { n: "01", titre: "Scanne-toi", texte: "Le mercredi soir, toutes les deux semaines, toujours dans les mêmes conditions.", href: "/scan" },
+  { n: "02", titre: "Importe le PDF", href: "/scan", texte: "Dépose le rapport Visbody : Physiq lit tous les indicateurs." },
+  { n: "03", titre: "Regarde-toi évoluer", texte: "Rang, XP, courbes et radar se construisent scan après scan.", href: "/historique" },
 ];
 
 export default async function AccueilPage() {
@@ -108,47 +108,62 @@ export default async function AccueilPage() {
         <div className="apparait lg:col-span-7" style={{ animationDelay: "60ms" }}>
           {derniere ? (
             <div className="grid h-full grid-cols-2 gap-3">
-              <StatCard
-                label="Poids"
-                value={derniere.poidsKg}
-                unite="kg"
-                precedente={precedente?.poidsKg}
-                senseInverse
-                historique={serieValeurs(recentes, "poidsKg")}
-              />
-              <StatCard
-                label="Masse grasse"
-                value={derniere.bfpPct}
-                unite="%"
-                precedente={precedente?.bfpPct}
-                senseInverse
-                historique={serieValeurs(recentes, "bfpPct")}
-              />
-              <StatCard
-                label="Muscle"
-                value={derniere.masseMusculaireKg}
-                unite="kg"
-                precedente={precedente?.masseMusculaireKg}
-                historique={serieValeurs(recentes, "masseMusculaireKg")}
-              />
-              <StatCard
-                label="IMC"
-                value={derniere.imc}
-                unite=""
-                precedente={precedente?.imc}
-                senseInverse
-                historique={serieValeurs(recentes, "imc")}
-              />
+              <Link href="/historique" className="block rounded-[22px]">
+                <StatCard
+                  label="Poids"
+                  value={derniere.poidsKg}
+                  unite="kg"
+                  precedente={precedente?.poidsKg}
+                  senseInverse
+                  historique={serieValeurs(recentes, "poidsKg")}
+                />
+              </Link>
+              <Link href="/historique" className="block rounded-[22px]">
+                <StatCard
+                  label="Masse grasse"
+                  value={derniere.bfpPct}
+                  unite="%"
+                  precedente={precedente?.bfpPct}
+                  senseInverse
+                  historique={serieValeurs(recentes, "bfpPct")}
+                />
+              </Link>
+              <Link href="/historique" className="block rounded-[22px]">
+                <StatCard
+                  label="Muscle"
+                  value={derniere.masseMusculaireKg}
+                  unite="kg"
+                  precedente={precedente?.masseMusculaireKg}
+                  historique={serieValeurs(recentes, "masseMusculaireKg")}
+                />
+              </Link>
+              <Link href="/historique" className="block rounded-[22px]">
+                <StatCard
+                  label="IMC"
+                  value={derniere.imc}
+                  unite=""
+                  precedente={precedente?.imc}
+                  senseInverse
+                  historique={serieValeurs(recentes, "imc")}
+                />
+              </Link>
             </div>
           ) : (
             <ol className="grid h-full gap-3">
               {ETAPES.map((e) => (
-                <li key={e.n} className="verre flex gap-4 rounded-[22px] p-4 sm:p-5">
-                  <span className="tabular holo-texte text-sm font-semibold">{e.n}</span>
-                  <div>
-                    <h3 className="titre text-base">{e.titre}</h3>
-                    <p className="mt-1 text-sm leading-relaxed text-foreground-muted">{e.texte}</p>
-                  </div>
+                <li key={e.n}>
+                  <Link href={e.href} className="block h-full rounded-[22px]">
+                    <GlareCard className="h-full p-4 sm:p-5" tiltIntensity={4}>
+                      <div className="flex gap-4">
+                        <span className="tabular holo-texte text-sm font-semibold">{e.n}</span>
+                        <div className="flex-1">
+                          <h3 className="titre text-base">{e.titre}</h3>
+                          <p className="mt-1 text-sm leading-relaxed text-foreground-muted">{e.texte}</p>
+                        </div>
+                        <span className="self-center text-foreground-muted" aria-hidden="true">→</span>
+                      </div>
+                    </GlareCard>
+                  </Link>
                 </li>
               ))}
             </ol>
@@ -166,7 +181,9 @@ export default async function AccueilPage() {
 
         {moisEnCours && (
           <div className="apparait lg:col-span-6" style={{ animationDelay: "160ms" }}>
-            <MoisCard bilan={moisEnCours} objectifs={OBJECTIFS_DEFAUT} />
+            <Link href="/objectifs" className="block h-full rounded-[22px]">
+              <MoisCard bilan={moisEnCours} objectifs={OBJECTIFS_DEFAUT} />
+            </Link>
           </div>
         )}
 
@@ -175,7 +192,12 @@ export default async function AccueilPage() {
             <GlareCard className="p-5 sm:p-6 lg:col-span-8" tiltIntensity={3}>
               <div className="flex items-baseline justify-between">
                 <span className="etiquette">Évolution</span>
-                <span className="tabular text-xs text-foreground-muted">{mesures.length} scans</span>
+                <Link
+                  href="/historique"
+                  className="-my-3 inline-flex h-11 items-center text-xs font-medium text-foreground-muted transition hover:text-accent"
+                >
+                  {mesures.length} scans · Historique →
+                </Link>
               </div>
               <div className="mt-4">
                 <EvolutionChart series={chartSeries} />
@@ -191,30 +213,35 @@ export default async function AccueilPage() {
             </GlareCard>
 
             {axesProfil && (
-              <GlareCard className="p-5 sm:p-6 lg:col-span-4" tiltIntensity={4}>
-                <ProfilCard axes={axesProfil} />
-              </GlareCard>
+              <Link href="/comparer" className="block rounded-[22px] lg:col-span-4">
+                <GlareCard className="h-full p-5 sm:p-6" tiltIntensity={4}>
+                  <ProfilCard axes={axesProfil} />
+                </GlareCard>
+              </Link>
             )}
           </>
         )}
 
         {moisPrecedents.length > 0 && (
           <div className="lg:col-span-12">
-            <HistoriqueMois mois={moisPrecedents} />
+            <Link href="/journal" className="block rounded-[22px]">
+              <HistoriqueMois mois={moisPrecedents} />
+            </Link>
           </div>
         )}
 
-        <Link
-          href="/parcours"
-          className="verre group flex items-center justify-between gap-4 rounded-[22px] p-5 transition hover:border-white/20 lg:col-span-12"
-        >
-          <div>
-            <span className="etiquette">Récit</span>
-            <p className="titre mt-1 text-lg">Ton parcours, en plein écran</p>
-          </div>
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/15 text-accent transition group-hover:translate-x-1">
-            →
-          </span>
+        <Link href="/parcours" className="group block rounded-[22px] lg:col-span-12">
+          <GlareCard className="p-5" tiltIntensity={2}>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <span className="etiquette">Récit</span>
+                <p className="titre mt-1 text-lg">Ton parcours, en plein écran</p>
+              </div>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/15 text-accent transition group-hover:translate-x-1">
+                →
+              </span>
+            </div>
+          </GlareCard>
         </Link>
       </div>
     </div>

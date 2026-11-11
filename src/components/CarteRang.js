@@ -165,6 +165,14 @@ export default function CarteRang({ rang, jours }) {
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/[0.07]">
               <div className="h-full rounded-full bg-accent" style={{ width: `${rang ? Math.max(4, rang.xpPercent) : 0}%` }} />
             </div>
+            {rang && (
+              <Link
+                href="/historique"
+                className="-mb-2 mt-2 inline-flex h-11 items-center text-xs font-medium text-foreground-muted transition hover:text-accent"
+              >
+                Voir mon évolution →
+              </Link>
+            )}
             {!rang && (
               <Link
                 href="/scan"
