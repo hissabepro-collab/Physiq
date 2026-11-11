@@ -129,11 +129,14 @@ function verdictCelebration(lettre, niveau) {
 }
 
 // Éclats projetés depuis le centre (angles et distances fixes : rendu stable).
-const ECLATS = Array.from({ length: 18 }, (_, i) => ({
-  angle: i * 20 + (i % 2 ? 7 : 0),
-  distance: 110 + (i % 3) * 45,
-  taille: 3 + (i % 3) * 2,
-  delai: (i % 4) * 40,
+const ECLATS = Array.from({ length: 28 }, (_, i) => ({
+  angle: i * (360 / 28) + (i % 2 ? 6 : -4),
+  distance: 120 + ((i * 37) % 90),
+  largeur: 3 + (i % 3) * 2,
+  hauteur: 6 + (i % 4) * 3,
+  tour: (i % 2 ? 1 : -1) * (180 + (i % 5) * 90),
+  delai: (i % 5) * 35,
+  clair: i % 3 === 0,
 }));
 
 // Étincelles de la finition « + », posées sur la lettre.
@@ -148,6 +151,9 @@ const ETINCELLES = [
 export default function CarteRang({ rang, jours, xp }) {
   const carteRef = useRef(null);
   const cible = useRef({ x: 0, y: 0, actif: false, gyro: false });
+  // Pendant une célébration, le balancement s'arrête : une seule animation à
+  // la fois, sinon l'iPhone calcule deux mouvements 3D en même temps.
+  const enFete = useRef(false);
   const [fete, setFete] = useState(null);
   // Pendant un changement de matériau, la carte garde l'ancienne matière
   // jusqu'au milieu du retournement.
@@ -166,9 +172,11 @@ export default function CarteRang({ rang, jours, xp }) {
     plus(message.type === "debloque" ? 0 : 300, () => setFete(message));
     // Instant où la nouvelle matière apparaît : au milieu du tour, ou à
     // l'éclair pour le prisme.
-    if (changeMatiere) plus(message.type === "prisme" ? 300 + 1250 : 300 + 470, () => setApparenceTransitoire(null));
-    plus(message.type === "prisme" ? 5400 : 4300, () => {
-      setFete(null);
+    if (changeMatiere) plus(message.type === "prisme" ? 300 + 1250 : 300 + 600, () => setApparenceTransitoire(null));
+    // Les effets s'arrêtent, mais le badge reste affiché jusqu'à ce qu'on le
+    // touche : l'annonce ne doit pas filer avant qu'on ait eu le temps de la lire.
+    plus(message.type === "prisme" ? 4200 : 3200, () => {
+      setFete((f) => (f ? { ...f, calme: true } : f));
       verdictsMontres.add(`${lettre}|${niveau}`);
     });
     return () => minuteurs.forEach(clearTimeout);
@@ -190,15 +198,24 @@ export default function CarteRang({ rang, jours, xp }) {
       const c = cible.current;
       let tx = c.x;
       let ty = c.y;
-      if (!c.actif && !c.gyro) {
+      if (enFete.current) {
+        tx = 0;
+        ty = 0;
+      } else if (!c.actif && !c.gyro) {
         const s = (t - debut) / 1000;
         tx = Math.sin(s * 0.55) * 0.45;
         ty = Math.cos(s * 0.4) * 0.3;
       }
-      x += (tx - x) * 0.08;
-      y += (ty - y) * 0.08;
-      carte.style.setProperty("--mx", x.toFixed(3));
-      carte.style.setProperty("--my", y.toFixed(3));
+      const nx = x + (tx - x) * (enFete.current ? 0.2 : 0.08);
+      const ny = y + (ty - y) * (enFete.current ? 0.2 : 0.08);
+      // On n'écrit que si la valeur bouge vraiment : une fois la carte posée,
+      // plus aucun recalcul de style.
+      if (Math.abs(nx - x) > 0.0005 || Math.abs(ny - y) > 0.0005) {
+        carte.style.setProperty("--mx", nx.toFixed(3));
+        carte.style.setProperty("--my", ny.toFixed(3));
+      }
+      x = nx;
+      y = ny;
       if (visible) raf = requestAnimationFrame(image);
     }
 
@@ -259,7 +276,17 @@ export default function CarteRang({ rang, jours, xp }) {
 
   const apparence = apparenceTransitoire ?? apparenceRang(lettre);
   const { materiau, finition } = apparence;
-  const type = fete?.type ?? null;
+  // Pendant les effets seulement ; une fois « calme », il ne reste que le badge.
+  const type = fete && !fete.calme ? fete.type : null;
+
+  useEffect(() => {
+    enFete.current = Boolean(type);
+  }, [type]);
+
+  function fermerBadge() {
+    setFete((f) => (f ? { ...f, sortie: true } : f));
+    setTimeout(() => setFete(null), 380);
+  }
 
   const scan =
     jours == null ? null : jours === 0 ? "Scan d'aujourd'hui" : jours === 1 ? "Scan d'hier" : `Scan il y a ${jours} j`;
@@ -278,19 +305,22 @@ export default function CarteRang({ rang, jours, xp }) {
       {fete && (
         <button
           type="button"
-          onClick={() => setFete(null)}
+          onClick={fermerBadge}
+          aria-label={`${fete.titre} ${fete.valeur}, toucher pour fermer`}
           className={`carte-rang-badge absolute left-1/2 top-0 z-30 flex h-11 items-center gap-2 whitespace-nowrap rounded-full border border-white/20 bg-[#0b0f16] px-4 text-xs font-semibold ${
-            type === "niveau" ? "badge-rebond" : ""
-          }`}
+            fete.type === "niveau" ? "badge-rebond" : ""
+          } ${fete.sortie ? "badge-sortie" : ""}`}
           style={variablesMateriau(apparenceRang(lettre).materiau)}
         >
           <span className="text-foreground-muted">{fete.titre}</span>
-          <span className={type === "niveau" ? "text-sm text-accent" : "carte-rang-texte-matiere text-sm"}>
+          <span className={fete.type === "niveau" ? "text-sm text-accent" : "carte-rang-texte-matiere badge-brillance text-sm"}>
             {fete.valeur}
           </span>
+          <span className="ml-0.5 text-foreground-muted/60" aria-hidden="true">×</span>
         </button>
       )}
 
+      {type && type !== "niveau" && <div className="carte-rang-aura pointer-events-none absolute inset-0 rounded-[28px]" />}
       {type === "prisme" && <div className="carte-rang-onde pointer-events-none absolute inset-0 z-0 rounded-[28px]" />}
 
       <div className={`h-full ${classeAnimation}`} style={{ transformStyle: "preserve-3d" }}>
@@ -312,7 +342,12 @@ export default function CarteRang({ rang, jours, xp }) {
             {(type === "finition" || type === "materiau") && (
               <div className="carte-rang-eclat pointer-events-none absolute inset-0 z-10" />
             )}
-            {type === "debloque" && <div className="carte-rang-faisceau pointer-events-none absolute inset-x-0 z-10" />}
+            {type === "debloque" && (
+              <>
+                <div className="carte-rang-voile pointer-events-none absolute inset-0 z-10" />
+                <div className="carte-rang-faisceau pointer-events-none absolute inset-0 z-10" />
+              </>
+            )}
             {type === "prisme" && (
               <>
                 <svg
@@ -331,14 +366,14 @@ export default function CarteRang({ rang, jours, xp }) {
               </>
             )}
 
-            <div className="relative flex items-center justify-between">
+            <div className="carte-rang-info relative flex items-center justify-between">
               <span className="etiquette">
                 Rang Physiq{rang ? ` · ${MATERIAUX[materiau].nom}` : ""}
               </span>
               {scan && <span className="text-[11px] font-medium text-foreground-muted">{scan}</span>}
             </div>
 
-            <div className="relative mt-2 flex flex-1 items-center justify-between gap-4">
+            <div className="carte-rang-info relative mt-2 flex flex-1 items-center justify-between gap-4">
               <span className="relative">
                 <span className="carte-rang-lettre carte-rang-texte-matiere tabular select-none text-[104px] font-semibold leading-none tracking-[-0.06em] sm:text-[128px]">
                   {rang ? rang.label : "?"}
@@ -368,7 +403,7 @@ export default function CarteRang({ rang, jours, xp }) {
               )}
             </div>
 
-            <div className="relative mt-4 space-y-3">
+            <div className="carte-rang-info relative mt-4 space-y-3">
               <div>
                 <div className="flex items-baseline justify-between text-[11px] font-medium text-foreground-muted">
                   <span>Corps</span>
@@ -441,13 +476,14 @@ export default function CarteRang({ rang, jours, xp }) {
               {ECLATS.map((e, i) => (
                 <span
                   key={i}
-                  className="carte-rang-eclat-piece absolute"
+                  className={`carte-rang-eclat-piece absolute ${e.clair ? "eclat-clair" : ""}`}
                   style={{
                     "--angle": `${e.angle}deg`,
                     "--distance": `${e.distance}px`,
-                    width: e.taille,
-                    height: e.taille,
-                    animationDelay: `${(type === "prisme" ? 1250 : 470) + e.delai}ms`,
+                    "--tour": `${e.tour}deg`,
+                    width: e.largeur,
+                    height: e.hauteur,
+                    animationDelay: `${(type === "prisme" ? 1250 : 1450) + e.delai}ms`,
                   }}
                 />
               ))}
@@ -457,20 +493,29 @@ export default function CarteRang({ rang, jours, xp }) {
       </div>
 
       <style>{`
-        .carte-rang-scene { perspective: 900px; }
+        .carte-rang-scene { perspective: 1000px; }
         .carte-rang {
           padding: 1px;
           transform-style: preserve-3d;
           transform: rotateY(calc(var(--mx) * 9deg)) rotateX(calc(var(--my) * -9deg));
-          background: linear-gradient(calc(120deg + var(--mx) * 40deg), var(--c1), var(--c2), var(--c3), var(--c2));
+          background: linear-gradient(125deg, var(--c1), var(--c2), var(--c3), var(--c2));
           box-shadow: 0 30px 60px -30px rgba(0,0,0,0.9), 0 0 50px -28px var(--lueur);
-          transition: background 0.4s, box-shadow 0.4s;
+          transition: background 0.5s, box-shadow 0.5s;
+          will-change: transform;
           touch-action: pan-y;
           -webkit-tap-highlight-color: transparent;
         }
-        /* Pendant un tour, on voit le dos de la carte : le métal plein, et non
-           le texte à l'envers. */
-        .carte-rang-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+        /* Le contenu est décollé d'un pixel du fond de la carte. Sur le même
+           plan, Safari ne savait plus lequel des deux afficher devant quand
+           la carte s'inclinait (« z-fighting ») : les informations
+           disparaissaient au bout de quelques secondes. Le dos caché permet,
+           pendant un retournement, de voir le métal plein et non le texte à
+           l'envers. */
+        .carte-rang-face {
+          transform: translateZ(1px);
+          backface-visibility: hidden;
+          -webkit-backface-visibility: hidden;
+        }
         [data-finition="etincelant"] .carte-rang {
           padding: 1.5px;
           box-shadow: 0 30px 60px -30px rgba(0,0,0,0.9), 0 0 60px -20px var(--lueur);
@@ -478,19 +523,23 @@ export default function CarteRang({ rang, jours, xp }) {
         .carte-rang-texte-matiere {
           display: inline-block;
           background-image: linear-gradient(100deg, var(--l1), var(--l2), var(--l3));
-          background-size: 200% 100%;
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent;
         }
         .carte-rang-barre-corps { background: linear-gradient(90deg, var(--c3), var(--c2)); opacity: 0.8; }
+
+        /* Film et reflet : de grandes couches qui GLISSENT (transform), au lieu
+           de dégradés redessinés à chaque image. Le balancement ne coûte plus
+           qu'un déplacement de calque, ce qui garde l'iPhone fluide. */
         .carte-rang-film {
+          inset: -60%;
           background: repeating-linear-gradient(115deg,
-            transparent 0%, var(--f1) 8%, rgba(255,255,255,0.35) 15%, var(--f2) 22%, transparent 30%);
-          background-size: 260% 260%;
-          background-position: calc(50% + var(--mx) * 45%) calc(50% + var(--my) * 45%);
+            transparent 0%, var(--f1) 4%, rgba(255,255,255,0.35) 7.5%, var(--f2) 11%, transparent 15%);
+          transform: translate3d(calc(var(--mx) * 14%), calc(var(--my) * 14%), 0);
           mix-blend-mode: color-dodge;
           opacity: 0.13;
+          will-change: transform;
         }
         [data-finition="brosse"] .carte-rang-film { opacity: 0.05; }
         [data-finition="etincelant"] .carte-rang-film { opacity: 0.2; }
@@ -498,20 +547,22 @@ export default function CarteRang({ rang, jours, xp }) {
           background: repeating-linear-gradient(90deg, rgba(255,255,255,0.022) 0 1px, transparent 1px 3px);
         }
         .carte-rang-reflet {
-          background: radial-gradient(circle at calc(50% + var(--mx) * 45%) calc(50% + var(--my) * 45%),
-            rgba(255,255,255,0.09), transparent 55%);
+          inset: -50%;
+          background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.09), transparent 30%);
+          transform: translate3d(calc(var(--mx) * 22%), calc(var(--my) * 22%), 0);
+          will-change: transform;
         }
         [data-finition="brosse"] .carte-rang-reflet { opacity: 0.4; }
+        /* Pas de filtre (drop-shadow, saturate) sur la lettre : un filtre est
+           recalculé à chaque image d'un mouvement 3D, c'était la principale
+           cause de saccades. Le brossé s'obtient par l'opacité. */
         .carte-rang-lettre {
           transform: translate3d(calc(var(--mx) * 6px), calc(var(--my) * 6px), 0);
-          background-position: calc(50% + var(--mx) * 50%) 50%;
-          filter: drop-shadow(0 10px 30px var(--lueur));
         }
-        [data-finition="brosse"] .carte-rang-lettre { filter: saturate(0.75) brightness(0.92); }
+        [data-finition="brosse"] .carte-rang-lettre { opacity: 0.82; }
         .carte-rang-etincelle {
           width: 9px; height: 9px; background: #fff;
           clip-path: polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);
-          filter: drop-shadow(0 0 4px var(--l1));
           animation: etincelle 2.6s ease-in-out infinite;
           opacity: 0;
         }
@@ -521,87 +572,155 @@ export default function CarteRang({ rang, jours, xp }) {
           60% { opacity: 0; transform: scale(0.4) rotate(70deg); }
         }
 
-        /* Badge d'annonce */
+        /* Badge : arrive avec un ressort, brille, reste jusqu'au toucher. */
         .carte-rang-badge {
           transform: translate(-50%, -50%);
           box-shadow: 0 0 40px -6px var(--lueur);
-          animation: badge-entree 0.6s 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+          animation: badge-entree 0.7s 1.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
         }
-        .carte-rang-badge.badge-rebond { animation: badge-entree 0.5s 0.9s cubic-bezier(0.34, 1.8, 0.64, 1) both; }
+        .carte-rang-badge.badge-rebond { animation: badge-entree 0.6s 1s cubic-bezier(0.34, 1.9, 0.64, 1) both; }
+        .carte-rang-badge.badge-sortie { animation: badge-sortie 0.38s cubic-bezier(0.4, 0, 1, 1) both; }
         @keyframes badge-entree {
-          from { opacity: 0; transform: translate(-50%, -20%) scale(0.85); }
+          from { opacity: 0; transform: translate(-50%, -10%) scale(0.8); }
           to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
         }
-
-        /* Premier rang : un faisceau balaie la carte et la révèle. */
-        .fete-apparition .carte-rang { animation: apparition 1.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
-        @keyframes apparition {
-          from { clip-path: inset(0 0 100% 0 round 28px); }
-          to { clip-path: inset(0 0 0 0 round 28px); }
+        @keyframes badge-sortie {
+          from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+          to { opacity: 0; transform: translate(-50%, -80%) scale(0.92); }
         }
+        .badge-brillance {
+          background-size: 250% 100%;
+          animation: brillance 2.4s 1.4s ease-in-out infinite;
+        }
+        @keyframes brillance { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+
+        /* Halo de lumière qui gonfle derrière la carte. */
+        .carte-rang-aura {
+          box-shadow: 0 0 60px 8px var(--lueur);
+          opacity: 0;
+          animation: aura 2.2s 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        @keyframes aura {
+          0% { opacity: 0; transform: scale(0.92); }
+          35% { opacity: 1; transform: scale(1.03); }
+          100% { opacity: 0; transform: scale(1.08); }
+        }
+
+        /* Pendant un mouvement : calque d'animation dédié, et on retire ce qui
+           coûte cher à recomposer en 3D (film en mode de fusion, reflet,
+           étincelles). Les infos s'effacent dès que la carte tourne et ne
+           reviennent qu'une fois la carte de face. */
+        .fete-tour, .fete-prisme, .fete-apparition { will-change: transform; }
+        .fete-tour .carte-rang-film, .fete-tour .carte-rang-reflet, .fete-tour .carte-rang-etincelle,
+        .fete-prisme .carte-rang-film, .fete-prisme .carte-rang-reflet, .fete-prisme .carte-rang-etincelle,
+        .fete-apparition .carte-rang-film { display: none; }
+        .fete-tour .carte-rang-info { animation: info-tour 2s both; }
+        @keyframes info-tour {
+          0% { opacity: 1; }
+          7% { opacity: 0; }
+          86% { opacity: 0; }
+          100% { opacity: 1; }
+        }
+        .fete-prisme .carte-rang-info { animation: info-prisme 2.9s both; }
+        @keyframes info-prisme {
+          0%, 41% { opacity: 1; }
+          45% { opacity: 0; }
+          88% { opacity: 0; }
+          100% { opacity: 1; }
+        }
+        .fete-apparition .carte-rang-info { animation: info-apparition 1.6s both; }
+        @keyframes info-apparition {
+          0%, 45% { opacity: 0; }
+          80%, 100% { opacity: 1; }
+        }
+
+        /* Premier rang : la carte arrive couchée, se redresse en 3D, et un voile
+           se retire sous un faisceau de scan. */
+        .fete-apparition { animation: apparition 1.6s both; }
+        @keyframes apparition {
+          0% { opacity: 0; transform: translateY(40px) translateZ(-160px) rotateX(68deg); animation-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1); }
+          70% { opacity: 1; transform: translateY(-4px) translateZ(20px) rotateX(-7deg); animation-timing-function: ease-in-out; }
+          100% { opacity: 1; transform: none; }
+        }
+        /* Premier rang : un voile se retire sous un faisceau de scan. */
+        .carte-rang-voile {
+          background: #06080c;
+          transform-origin: 50% 100%;
+          animation: voile 1.5s cubic-bezier(0.65, 0, 0.35, 1) both;
+        }
+        @keyframes voile { from { transform: scaleY(1); } to { transform: scaleY(0); } }
         .carte-rang-faisceau {
-          top: 0; height: 3px;
-          background: linear-gradient(90deg, transparent, var(--l1), #fff, var(--l1), transparent);
-          box-shadow: 0 0 24px 6px var(--lueur);
-          animation: faisceau 1.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+          background:
+            linear-gradient(180deg, transparent 0, var(--lueur) 10px, #fff 13px, var(--l1) 15px, transparent 40px);
+          transform: translateY(-40px);
+          animation: faisceau 1.5s cubic-bezier(0.65, 0, 0.35, 1) both;
         }
         @keyframes faisceau {
-          0% { top: 0; opacity: 1; }
-          85% { opacity: 1; }
-          100% { top: 100%; opacity: 0; }
+          0% { transform: translateY(-40px); opacity: 1; }
+          90% { opacity: 1; }
+          100% { transform: translateY(100%); opacity: 0; }
         }
 
-        /* Nouvelle finition ou nouveau matériau : un tour complet. */
-        .fete-tour { animation: carte-retourne 1.15s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        /* Nouvelle finition ou matériau : élan, retournement, atterrissage. */
+        /* Double tour en 3D : élan en arrière, la carte s'élève vers soi en
+           tournant et en basculant, puis atterrit avec un léger rebond. */
+        .fete-tour { animation: carte-retourne 2s both; }
         @keyframes carte-retourne {
-          0% { transform: rotateY(0deg) scale(1); }
-          40% { transform: rotateY(200deg) scale(1.04); }
-          100% { transform: rotateY(360deg) scale(1); }
+          0% { transform: translateZ(0) rotateX(0deg) rotateY(0deg) scale(1); animation-timing-function: cubic-bezier(0.3, 0, 0.5, 1); }
+          12% { transform: translateZ(-30px) rotateX(8deg) rotateY(-22deg) scale(0.97); animation-timing-function: cubic-bezier(0.55, 0, 0.35, 1); }
+          45% { transform: translateZ(90px) rotateX(-16deg) rotateY(380deg) scale(1.08); animation-timing-function: cubic-bezier(0.25, 0, 0.25, 1); }
+          76% { transform: translateZ(30px) rotateX(7deg) rotateY(700deg) scale(1.03); animation-timing-function: cubic-bezier(0.2, 0, 0.3, 1); }
+          90% { transform: translateZ(0) rotateX(-2deg) rotateY(727deg) scale(1); animation-timing-function: ease-out; }
+          100% { transform: translateZ(0) rotateX(0deg) rotateY(720deg) scale(1); }
         }
         .carte-rang-eclat {
-          background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.35) 48%, var(--f1) 52%, transparent 70%);
-          transform: translateX(-120%);
-          animation: carte-eclat 1.4s 0.6s ease-out both;
+          background: linear-gradient(105deg, transparent 32%, rgba(255,255,255,0.4) 48%, var(--f1) 52%, transparent 68%);
+          transform: translateX(-130%);
+          animation: carte-eclat 1.2s 1.55s cubic-bezier(0.4, 0, 0.2, 1) both;
         }
-        @keyframes carte-eclat { to { transform: translateX(120%); } }
+        @keyframes carte-eclat { to { transform: translateX(130%); } }
         .carte-rang-eclat-piece {
-          left: 0; top: 0; border-radius: 2px;
-          background: var(--l1);
-          box-shadow: 0 0 8px var(--lueur);
+          left: 0; top: 0; border-radius: 1px;
+          background: linear-gradient(135deg, var(--l1), var(--l2));
           opacity: 0;
-          animation: eclat-vol 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+          animation: eclat-vol 1.4s cubic-bezier(0.12, 0.8, 0.3, 1) both;
         }
+        .carte-rang-eclat-piece.eclat-clair { background: #fff; }
         @keyframes eclat-vol {
-          0% { opacity: 1; transform: rotate(var(--angle)) translateX(0) scale(1); }
-          100% { opacity: 0; transform: rotate(var(--angle)) translateX(var(--distance)) scale(0.3); }
+          0% { opacity: 1; transform: rotate(var(--angle)) translateX(8px) rotate(0deg) scale(1); }
+          70% { opacity: 1; }
+          100% { opacity: 0; transform: rotate(var(--angle)) translateX(var(--distance)) rotate(var(--tour)) scale(0.4); }
         }
 
-        /* Arrivée en S : fissures de lumière, éclair, onde. */
-        .fete-prisme { animation: prisme-tremble 1.25s ease-in both; }
-        @keyframes prisme-tremble {
-          0%, 100% { transform: none; }
-          20% { transform: translateX(-1px) rotate(-0.3deg); }
-          40% { transform: translateX(2px) rotate(0.4deg); }
-          60% { transform: translateX(-2px) rotate(-0.4deg); }
-          80% { transform: translateX(1px) rotate(0.2deg); }
+        /* Arrivée en S : la carte tremble, se fissure, éclate en lumière. */
+        .fete-prisme { animation: prisme 2.9s both; }
+        @keyframes prisme {
+          0% { transform: none; animation-timing-function: linear; }
+          9% { transform: translateX(-1px) rotate(-0.3deg) scale(1.005); }
+          18% { transform: translateX(2px) rotate(0.4deg) scale(1.01); }
+          27% { transform: translateX(-2px) rotate(-0.5deg) scale(1.015); }
+          36% { transform: translateX(2px) rotate(0.3deg) scale(1.02); }
+          43% { transform: translateZ(0) rotateX(0deg) rotateY(0deg) scale(1.02); animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1); }
+          72% { transform: translateZ(110px) rotateX(-18deg) rotateY(300deg) scale(1.1); animation-timing-function: cubic-bezier(0.2, 0, 0.3, 1); }
+          90% { transform: translateZ(0) rotateX(3deg) rotateY(366deg) scale(1); animation-timing-function: ease-out; }
+          100% { transform: rotateY(360deg) scale(1); }
         }
         .carte-rang-fissures polyline {
           fill: none; stroke: #fff; stroke-width: 0.6; vector-effect: non-scaling-stroke;
           stroke-dasharray: 160; stroke-dashoffset: 160;
-          filter: drop-shadow(0 0 3px #8fe3ff);
-          animation: fissure 1.1s ease-in both, fissure-fin 0.4s 1.3s ease-out both;
+          animation: fissure 1.1s cubic-bezier(0.5, 0, 0.9, 0.5) both, fissure-fin 0.4s 1.3s ease-out both;
         }
         @keyframes fissure { to { stroke-dashoffset: 0; } }
         @keyframes fissure-fin { to { opacity: 0; } }
         .carte-rang-eclair {
           background: radial-gradient(circle at 50% 48%, #fff, rgba(143,227,255,0.6) 40%, transparent 75%);
           opacity: 0;
-          animation: eclair 0.9s 1.15s ease-out both;
+          animation: eclair 1s 1.15s ease-out both;
         }
-        @keyframes eclair { 0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; } }
+        @keyframes eclair { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; } }
         .carte-rang-onde {
           border: 2px solid rgba(143,227,255,0.7);
-          animation: onde 1.4s 1.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+          animation: onde 1.5s 1.25s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
         @keyframes onde {
           from { opacity: 1; transform: scale(1); }
@@ -610,16 +729,17 @@ export default function CarteRang({ rang, jours, xp }) {
 
         /* Niveau : la barre se remplit, déborde, puis revient. */
         .barre-debordement {
+          width: 100%;
+          transform-origin: 0 50%;
           background: linear-gradient(90deg, var(--accent), #fff);
-          box-shadow: 0 0 12px var(--accent);
-          animation: debordement 1.6s 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+          animation: debordement 1.7s 0.4s cubic-bezier(0.65, 0, 0.35, 1) both;
         }
         @keyframes debordement {
-          0% { width: 0%; opacity: 1; }
-          55% { width: 100%; opacity: 1; }
-          100% { width: 100%; opacity: 0; }
+          0% { transform: scaleX(0); opacity: 1; }
+          55% { transform: scaleX(1); opacity: 1; }
+          100% { transform: scaleX(1); opacity: 0; }
         }
-        .puce-rebond { animation: puce-rebond 0.6s 1.3s cubic-bezier(0.34, 1.8, 0.64, 1) both; }
+        .puce-rebond { animation: puce-rebond 0.7s 1.35s cubic-bezier(0.34, 1.9, 0.64, 1) both; }
         @keyframes puce-rebond {
           0% { transform: scale(1); }
           40% { transform: scale(1.45); }
@@ -627,13 +747,14 @@ export default function CarteRang({ rang, jours, xp }) {
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .fete-apparition .carte-rang, .carte-rang-faisceau, .fete-tour, .carte-rang-eclat,
+          .fete-apparition, .carte-rang-voile, .carte-rang-faisceau, .fete-tour, .carte-rang-info, .carte-rang-eclat, .carte-rang-aura,
           .carte-rang-eclat-piece, .fete-prisme, .carte-rang-fissures polyline, .carte-rang-eclair,
-          .carte-rang-onde, .barre-debordement, .puce-rebond, .carte-rang-badge, .carte-rang-etincelle {
+          .carte-rang-onde, .barre-debordement, .puce-rebond, .carte-rang-badge, .carte-rang-etincelle,
+          .badge-brillance {
             animation: none;
           }
-          .carte-rang-faisceau, .carte-rang-eclat, .carte-rang-eclat-piece, .carte-rang-fissures,
-          .carte-rang-eclair, .carte-rang-onde, .barre-debordement { display: none; }
+          .carte-rang-voile, .carte-rang-faisceau, .carte-rang-eclat, .carte-rang-eclat-piece, .carte-rang-aura,
+          .carte-rang-fissures, .carte-rang-eclair, .carte-rang-onde, .barre-debordement { display: none; }
           .carte-rang-etincelle { opacity: 0.8; }
         }
       `}</style>
