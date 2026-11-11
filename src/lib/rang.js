@@ -18,6 +18,9 @@ const PALIERS = [
   { label: "S+", min: 97, max: 100 },
 ];
 
+/** Lettres du plus bas au plus haut, pour comparer deux rangs. */
+export const ORDRE_RANGS = PALIERS.map((p) => p.label);
+
 export function calculerRang(score) {
   if (score == null) return null;
 

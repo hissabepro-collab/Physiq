@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { calculerRang } from "@/lib/rang";
+import { calculerXp } from "@/lib/xp";
 import { calculerAxesProfil } from "@/lib/profilStats";
 import EvolutionChart from "@/components/EvolutionChart";
 import StatCard from "@/components/StatCard";
@@ -50,6 +51,8 @@ export default async function AccueilPage() {
   const serie = calculerSerie(parSemaine, OBJECTIFS_DEFAUT, semaineActuelle);
   // Le premier est le mois en cours, les suivants sont l'historique figé.
   const [moisEnCours, ...moisPrecedents] = bilansParMois(parSemaine, OBJECTIFS_DEFAUT);
+
+  const xp = calculerXp(entreesJournal, mesures.length, OBJECTIFS_DEFAUT, semaineActuelle);
 
   const derniere = mesures.at(-1);
   const precedente = mesures.at(-2);
@@ -102,7 +105,7 @@ export default async function AccueilPage() {
 
       <div className="mt-6 grid grid-cols-1 gap-3 lg:grid-cols-12">
         <div className="apparait lg:col-span-5">
-          <CarteRang rang={rang} jours={jours} />
+          <CarteRang rang={rang} jours={jours} xp={xp} />
         </div>
 
         <div className="apparait lg:col-span-7" style={{ animationDelay: "60ms" }}>
