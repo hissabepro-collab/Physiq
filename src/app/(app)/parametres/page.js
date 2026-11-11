@@ -48,23 +48,23 @@ export default function ParametresPage() {
       <PageHeader kicker="Ton compte" title="Paramètres" />
 
       <section className="mt-6 rounded-2xl border border-border-soft bg-background-soft/40 p-5">
-        <h2 className="font-display text-sm font-semibold">Mot de passe</h2>
+        <h2 className="titre-serif text-2xl italic">Mot de passe</h2>
         <form onSubmit={changerMotDePasse} className="mt-3 space-y-3">
           <input
             type="password"
             placeholder="Mot de passe actuel"
             value={motDePasseActuel}
             onChange={(e) => setMotDePasseActuel(e.target.value)}
-            className="w-full min-h-11 rounded-lg border border-border-soft bg-black/20 px-3 py-2 text-sm outline-none focus:border-accent"
+            className="w-full min-h-11 rounded-xl border border-border-soft bg-white/[0.04] px-3 py-2 text-sm outline-none focus:border-accent"
           />
           <input
             type="password"
             placeholder="Nouveau mot de passe"
             value={nouveauMotDePasse}
             onChange={(e) => setNouveauMotDePasse(e.target.value)}
-            className="w-full min-h-11 rounded-lg border border-border-soft bg-black/20 px-3 py-2 text-sm outline-none focus:border-accent"
+            className="w-full min-h-11 rounded-xl border border-border-soft bg-white/[0.04] px-3 py-2 text-sm outline-none focus:border-accent"
           />
-          <button type="submit" className="inline-flex min-h-11 items-center rounded-lg border border-accent bg-accent-soft px-4 py-2 text-sm font-semibold">
+          <button type="submit" className="inline-flex min-h-11 items-center rounded-full border border-accent/60 bg-accent-soft px-4 py-2 text-sm font-semibold">
             Mettre à jour
           </button>
           {messagePwd && (
@@ -76,7 +76,7 @@ export default function ParametresPage() {
       </section>
 
       <section className="mt-5 rounded-2xl border border-border-soft bg-background-soft/40 p-5">
-        <h2 className="font-display text-sm font-semibold">Exporter mes données</h2>
+        <h2 className="titre-serif text-2xl italic">Exporter mes données</h2>
         <p className="mt-1 text-sm text-foreground-muted">Récupère toutes tes mesures à tout moment.</p>
         <div className="mt-3 flex flex-wrap gap-3">
           <a href="/api/export" className="inline-flex min-h-11 items-center rounded-lg border border-border-soft px-4 py-2 text-sm font-semibold hover:border-accent/60">
@@ -89,7 +89,7 @@ export default function ParametresPage() {
       </section>
 
       <section className="mt-5 rounded-2xl border border-red-400/25 bg-red-400/5 p-5">
-        <h2 className="font-display text-sm font-semibold text-red-300">Zone dangereuse</h2>
+        <h2 className="titre-serif text-2xl italic text-coral">Zone dangereuse</h2>
         <p className="mt-1 text-sm text-foreground-muted">
           Supprime définitivement toutes tes mesures, objectifs, notes de journal et ton mot de passe. Irréversible.
         </p>
@@ -99,7 +99,7 @@ export default function ParametresPage() {
             placeholder='Tape "SUPPRIMER" pour confirmer'
             value={confirmationSuppression}
             onChange={(e) => setConfirmationSuppression(e.target.value)}
-            className="min-h-11 rounded-lg border border-border-soft bg-black/20 px-3 py-2 text-sm outline-none focus:border-red-400"
+            className="min-h-11 rounded-xl border border-border-soft bg-white/[0.04] px-3 py-2 text-sm outline-none focus:border-red-400"
           />
           <button
             onClick={supprimerTout}
@@ -113,7 +113,7 @@ export default function ParametresPage() {
 
       <button
         onClick={seDeconnecter}
-        className="mt-5 flex items-center gap-2 rounded-lg border border-border-soft px-4 py-2 text-sm font-semibold text-foreground-muted hover:text-foreground"
+        className="mt-5 flex min-h-11 items-center gap-2 rounded-lg border border-border-soft px-4 py-2 text-sm font-semibold text-foreground-muted hover:text-foreground"
       >
         <IconLogout width={16} height={16} /> Se déconnecter
       </button>

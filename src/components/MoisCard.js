@@ -27,7 +27,7 @@ function Score({ label, fait, cible, couleur, suffixe }) {
         </span>
       </div>
 
-      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/35">
+      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
         <div
           className="h-full rounded-full"
           style={{ width: `${largeur}%`, background: couleur, boxShadow: `0 0 10px ${couleur}` }}
@@ -59,7 +59,7 @@ function Sommeil({ moyenne, cible, nuits }) {
         <span className="text-sm text-foreground-muted tabular-nums">/ {cible} h</span>
       </div>
 
-      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/35">
+      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
         <div
           className="h-full rounded-full"
           style={{
@@ -86,7 +86,7 @@ export default function MoisCard({ bilan, objectifs }) {
   return (
     <GlareCard className="p-5 sm:p-6" tiltIntensity={4}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h2 className="font-display text-base font-semibold capitalize">{bilan.libelle}</h2>
+        <h2 className="titre-serif text-2xl italic capitalize">{bilan.libelle}</h2>
         <span className="text-xs text-foreground-muted">
           {bilan.enCours
             ? `${bilan.jours} jour${bilan.jours > 1 ? "s" : ""} écoulé${bilan.jours > 1 ? "s" : ""}, ${restants} restant${restants > 1 ? "s" : ""}`

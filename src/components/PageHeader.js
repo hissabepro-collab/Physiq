@@ -1,17 +1,17 @@
+// En-tête de page éditorial : petite étiquette en capitales, grand titre en
+// serif italique, sous-titre discret. Même gabarit sur toutes les « pièces ».
 export default function PageHeader({ kicker, title, subtitle, action }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4">
-      <div>
+    <div className="apparait flex flex-wrap items-end justify-between gap-4">
+      <div className="min-w-0">
         {kicker && (
-          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">{kicker}</div>
+          <div className="etiquette flex items-center gap-2">
+            <span className="h-px w-6 bg-accent/70" />
+            {kicker}
+          </div>
         )}
-        <h1
-          className="mt-1 font-display text-2xl font-bold sm:text-3xl"
-          style={{ textShadow: "0 0 24px rgba(77,232,255,0.25)" }}
-        >
-          {title}
-        </h1>
-        {subtitle && <p className="mt-1.5 text-sm text-foreground-muted">{subtitle}</p>}
+        <h1 className="titre-serif mt-3 text-[40px] italic sm:text-[54px]">{title}</h1>
+        {subtitle && <p className="mt-2 text-sm text-foreground-muted">{subtitle}</p>}
       </div>
       {action}
     </div>

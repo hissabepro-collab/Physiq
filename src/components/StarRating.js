@@ -20,7 +20,7 @@ export default function StarRating({ value, onChange, readOnly = false }) {
         readOnly ? (
           <Star key={n} filled={n <= (value ?? 0)} />
         ) : (
-          <button key={n} type="button" onClick={() => onChange(n === value ? null : n)} className="p-0.5">
+          <button key={n} type="button" onClick={() => onChange(n === value ? null : n)} className="flex min-h-11 min-w-11 items-center justify-center">
             <Star filled={n <= (value ?? 0)} />
           </button>
         )

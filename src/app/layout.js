@@ -1,19 +1,22 @@
-import { Space_Grotesk, Manrope } from "next/font/google";
+import { Geist, Instrument_Serif } from "next/font/google";
 import RegisterSW from "@/components/RegisterSW";
 import ImmersiveBackground from "@/components/ImmersiveBackground";
 import { ECRANS_DEMARRAGE } from "@/lib/ecransDemarrage";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
+// Geist : sans géométrique, pour l'interface et les chiffres (variable, donc
+// une seule police pour toutes les graisses). Instrument Serif : titres
+// éditoriaux en italique.
+const geist = Geist({
+  variable: "--font-geist",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
 });
 
-const manrope = Manrope({
-  variable: "--font-manrope",
+const instrument = Instrument_Serif({
+  variable: "--font-instrument",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: "400",
+  style: ["normal", "italic"],
 });
 
 export const metadata = {
@@ -70,7 +73,7 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="fr"
-      className={`${spaceGrotesk.variable} ${manrope.variable} h-full antialiased`}
+      className={`${geist.variable} ${instrument.variable} h-full antialiased`}
       style={{ backgroundColor: FOND, colorScheme: "dark" }}
     >
       <body

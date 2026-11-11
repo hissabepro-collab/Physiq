@@ -48,12 +48,16 @@ export default function PageTransition({ children }) {
         // Course plus courte et durée plus brève : moins de pixels déplacés à
         // chaque image, donc un glissement franc plutôt que traînant.
         // `willChange` prévient le navigateur pour qu'il prépare la couche.
-        style={{ willChange: "transform, opacity" }}
-        initial={{ x: `${sens * 22}%`, opacity: 0 }}
-        animate={{ x: "0%", opacity: 1 }}
+        style={{ willChange: "transform, opacity", transformOrigin: "50% 30%" }}
+        // Effet « pièce suivante » : la page arrive de côté (dans le sens du
+        // geste) et légèrement en retrait, comme une caméra qui avance dans
+        // la pièce voisine.
+        initial={{ x: `${sens * 12}%`, scale: 0.965, opacity: 0 }}
+        animate={{ x: "0%", scale: 1, opacity: 1 }}
         transition={{
-          x: { duration: 0.26, ease: [0.32, 0.72, 0, 1] },
-          opacity: { duration: 0.18 },
+          x: { duration: 0.42, ease: [0.22, 1, 0.36, 1] },
+          scale: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+          opacity: { duration: 0.22 },
         }}
       >
         {children}

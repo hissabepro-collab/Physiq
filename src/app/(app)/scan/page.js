@@ -68,14 +68,14 @@ export default function ScanPage() {
       <button
         onClick={handleUpload}
         disabled={fichiers.length === 0 || envoi}
-        className="mt-4 w-full rounded-lg bg-accent-soft border border-accent px-4 py-3 text-sm font-semibold disabled:opacity-40"
+        className="mt-4 w-full rounded-full bg-accent text-[#04121a] border border-accent px-4 py-3 text-sm font-semibold disabled:opacity-40"
       >
         {envoi ? "Import en cours..." : `Importer ${fichiers.length > 0 ? `(${fichiers.length})` : ""}`}
       </button>
 
       {resultats.length > 0 && (
         <div className="mt-8 space-y-3">
-          <h2 className="font-display text-sm font-semibold">Résultat de l'import</h2>
+          <h2 className="titre-serif text-2xl italic">Résultat de l'import</h2>
           {resultats.map((r, i) =>
             r.ok ? (
               <div key={r.mesure.id} className="rounded-xl border border-border-soft bg-background-soft/40 p-4">

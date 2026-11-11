@@ -184,7 +184,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
               <button
                 type="button"
                 onClick={() => chargerSemaine(cleSemaine(new Date()))}
-                className="text-[11px] font-semibold text-accent"
+                className="inline-flex min-h-11 items-center text-[11px] font-semibold text-accent"
               >
                 revenir à cette semaine
               </button>
@@ -225,7 +225,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
           onChange={(e) => setTexte(e.target.value)}
           placeholder="Comment se sont passées tes séances cette semaine ?"
           rows={3}
-          className="mt-3 w-full resize-none rounded-lg border border-border-soft bg-black/20 px-3 py-2 text-sm outline-none focus:border-accent"
+          className="mt-3 w-full resize-none rounded-xl border border-border-soft bg-white/[0.04] px-3 py-2 text-sm outline-none focus:border-accent"
         />
         <div className="mt-3 flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1.5">
@@ -233,7 +233,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
             <select
               value={mesureId}
               onChange={(e) => setMesureId(e.target.value)}
-              className="mt-1 min-h-11 rounded-lg border border-border-soft bg-black/20 px-2.5 py-2 text-sm outline-none focus:border-accent"
+              className="mt-1 min-h-11 rounded-xl border border-border-soft bg-white/[0.04] px-2.5 py-2 text-sm outline-none focus:border-accent"
             >
               <option value="">Aucun</option>
               {mesures.map((m) => (
@@ -245,7 +245,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
         <button
           type="submit"
           disabled={envoi}
-          className="mt-4 rounded-lg border border-accent bg-accent-soft px-4 py-2 text-sm font-semibold disabled:opacity-40"
+          className="mt-4 inline-flex min-h-11 items-center rounded-full border border-accent/60 bg-accent-soft px-4 py-2 text-sm font-semibold disabled:opacity-40"
         >
           {envoi ? "Enregistrement..." : "Enregistrer le bilan de la semaine"}
         </button>

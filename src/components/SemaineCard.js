@@ -8,13 +8,13 @@ function Jauge({ label, valeur, cible, unite = "", atteint, couleur }) {
   return (
     <div>
       <div className="flex items-baseline justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-foreground-muted">{label}</span>
-        <span className="font-display text-sm font-bold" style={atteint ? { color: couleur } : undefined}>
+        <span className="etiquette">{label}</span>
+        <span className="tabular font-display text-sm font-semibold" style={atteint ? { color: couleur } : undefined}>
           {affichage}
           <span className="text-foreground-muted">/{cible}{unite}</span>
         </span>
       </div>
-      <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-black/30">
+      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
         <div
           className="h-full rounded-full transition-all"
           style={{
@@ -34,16 +34,16 @@ export default function SemaineCard({ libelle, bilan, serie, renseignee }) {
     <GlareCard className="p-5 sm:p-6" tiltIntensity={4}>
       <div className="flex items-baseline justify-between gap-3">
         <div>
-          <h2 className="font-display text-base font-semibold">Cette semaine</h2>
+          <h3 className="titre-serif text-2xl italic">Cette semaine</h3>
           <p className="text-xs text-foreground-muted">{libelle}</p>
         </div>
         {serie > 0 && (
           <div className="text-right">
-            <div className="font-display text-xl font-bold text-accent" style={{ textShadow: "0 0 14px rgba(77,232,255,0.6)" }}>
+            <div className="tabular font-display text-2xl font-semibold text-accent" style={{ textShadow: "0 0 14px rgba(77,232,255,0.6)" }}>
               {serie}
             </div>
             <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground-muted">
-              semaine{serie > 1 ? "s" : ""} d'affilée
+              semaine{serie > 1 ? "s" : ""} d&apos;affilée
             </div>
           </div>
         )}
@@ -57,7 +57,7 @@ export default function SemaineCard({ libelle, bilan, serie, renseignee }) {
 
       <Link
         href="/journal"
-        className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-accent bg-accent-soft px-4 py-2 text-xs font-semibold"
+        className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-sm font-semibold transition hover:border-accent/60 hover:bg-accent-soft"
       >
         {renseignee ? "Mettre à jour ma semaine" : "Remplir mon bilan de la semaine"}
       </Link>

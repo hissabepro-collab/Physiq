@@ -1,87 +1,60 @@
-import ParticleField from "@/components/ParticleField";
-
-// Décor immersif persistant : lueurs animées, champ de particules réactif,
-// sol en perspective, grain fin. Une seule instance montée dans le layout —
-// reste fixe pendant la navigation, ne rejoue pas ses animations à chaque
-// changement de page.
+// Décor persistant « Lumen » : une nuit profonde éclairée par une lumière
+// zénithale, deux nébuleuses très lentes (cyan et violet) et un grain fin.
+// Volontairement calme : la vedette, c'est le corps en particules de
+// l'accueil. Tout est en CSS (aucun JavaScript, aucun canvas) : rien ne
+// tourne en tâche de fond pendant la navigation.
 
 export default function ImmersiveBackground() {
   return (
     <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-background">
-      <div className="immersive-aurora immersive-aurora--a" />
-      <div className="immersive-aurora immersive-aurora--b" />
-      <div className="immersive-aurora immersive-aurora--c" />
-      <ParticleField />
-      <div className="immersive-grain" />
-      <div className="immersive-floor" />
-      <div className="immersive-vignette" />
+      <div className="lumen-zenith" />
+      <div className="lumen-nebuleuse lumen-nebuleuse--a" />
+      <div className="lumen-nebuleuse lumen-nebuleuse--b" />
+      <div className="lumen-grain" />
+      <div className="lumen-vignette" />
 
       <style>{`
-        .immersive-aurora {
-          position: absolute;
-          border-radius: 9999px;
-          filter: blur(90px);
-          opacity: 0.30;
-          mix-blend-mode: screen;
-          will-change: transform;
-          transform: translateZ(0);
+        .lumen-zenith {
+          position: absolute; left: 50%; top: -30vh;
+          width: 140vw; height: 90vh; transform: translateX(-50%);
+          background: radial-gradient(ellipse at 50% 0%, rgba(120,220,255,0.16) 0%, rgba(77,232,255,0.05) 35%, transparent 70%);
         }
-        .immersive-aurora--a {
-          width: 620px; height: 620px; top: -220px; left: -140px;
-          background: radial-gradient(circle, rgba(77,232,255,0.55) 0%, transparent 70%);
-          animation: drift-a 22s ease-in-out infinite;
+        .lumen-nebuleuse {
+          position: absolute; border-radius: 9999px;
+          filter: blur(80px); opacity: 0.5;
+          will-change: transform; transform: translateZ(0);
         }
-        .immersive-aurora--b {
-          width: 520px; height: 520px; top: 20%; right: -180px;
-          background: radial-gradient(circle, rgba(124,111,224,0.4) 0%, transparent 70%);
-          animation: drift-b 28s ease-in-out infinite;
+        .lumen-nebuleuse--a {
+          width: 560px; height: 560px; top: 35%; left: -260px;
+          background: radial-gradient(circle, rgba(77,232,255,0.22) 0%, transparent 70%);
+          animation: lumen-derive 34s ease-in-out infinite;
         }
-        .immersive-aurora--c {
-          width: 480px; height: 480px; bottom: -200px; left: 30%;
-          background: radial-gradient(circle, rgba(47,230,184,0.28) 0%, transparent 70%);
-          animation: drift-a 26s ease-in-out infinite reverse;
+        .lumen-nebuleuse--b {
+          width: 620px; height: 620px; bottom: -280px; right: -240px;
+          background: radial-gradient(circle, rgba(182,156,255,0.2) 0%, transparent 70%);
+          animation: lumen-derive 40s ease-in-out infinite reverse;
         }
-        @keyframes drift-a {
+        @keyframes lumen-derive {
           0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(50px, 30px) scale(1.08); }
+          50% { transform: translate(60px, -40px) scale(1.1); }
         }
-        @keyframes drift-b {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(-40px, -25px) scale(1.05); }
+        .lumen-grain {
+          position: absolute; inset: -50%;
+          background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.55'/></svg>");
+          opacity: 0.06;
+          mix-blend-mode: overlay;
         }
-        .immersive-grain {
+        .lumen-vignette {
           position: absolute; inset: 0;
-          background-image: radial-gradient(rgba(255,255,255,0.7) 1px, transparent 1.4px);
-          background-size: 4px 4px;
-          opacity: 0.025;
-        }
-        .immersive-floor {
-          position: absolute; left: -10%; right: -10%; bottom: 0; height: 280px;
-          background-image:
-            linear-gradient(rgba(77,232,255,0.10) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(77,232,255,0.10) 1px, transparent 1px);
-          background-size: 56px 56px;
-          transform: perspective(480px) rotateX(62deg);
-          transform-origin: bottom;
-          opacity: 0.5;
-          mask-image: linear-gradient(to top, black, transparent);
-          -webkit-mask-image: linear-gradient(to top, black, transparent);
-        }
-        .immersive-vignette {
-          position: absolute; inset: 0;
-          background: radial-gradient(ellipse at 50% 0%, transparent 40%, rgba(5,10,14,0.6) 100%);
+          background: radial-gradient(ellipse at 50% 30%, transparent 45%, rgba(3,6,9,0.75) 100%);
         }
         @media (prefers-reduced-motion: reduce) {
-          .immersive-aurora { animation: none; }
+          .lumen-nebuleuse { animation: none; }
         }
         @media (max-width: 640px) {
-          /* Le flou est l'effet le plus coûteux du décor : sur mobile on le
-             réduit fortement, on garde deux lueurs sur trois, et on retire
-             le sol en perspective et le grain. */
-          .immersive-aurora { filter: blur(40px); opacity: 0.34; }
-          .immersive-aurora--c { display: none; }
-          .immersive-grain { display: none; }
-          .immersive-floor { display: none; }
+          .lumen-nebuleuse { filter: blur(50px); }
+          .lumen-nebuleuse--a { width: 380px; height: 380px; left: -200px; }
+          .lumen-nebuleuse--b { width: 420px; height: 420px; }
         }
       `}</style>
     </div>

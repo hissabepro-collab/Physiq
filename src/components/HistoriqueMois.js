@@ -23,7 +23,7 @@ function Colonne({ fait, cible, couleur, unite }) {
           {unite}
         </span>
       </div>
-      <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-black/35">
+      <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
         <div className="h-full rounded-full" style={{ width: `${Math.min(100, pct)}%`, background: couleur }} />
       </div>
     </div>
@@ -82,7 +82,7 @@ export default function HistoriqueMois({ mois }) {
   return (
     <GlareCard className="p-5 sm:p-6" tiltIntensity={3}>
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="font-display text-base font-semibold">Mois précédents</h2>
+        <h2 className="titre-serif text-2xl italic">Mois précédents</h2>
         <span className="text-xs text-foreground-muted">
           {mois.length} mois archivé{mois.length > 1 ? "s" : ""}
         </span>

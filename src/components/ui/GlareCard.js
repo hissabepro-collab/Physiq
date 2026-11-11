@@ -12,8 +12,10 @@ import React, { useEffect, useRef, useState } from "react";
 import { motion, useMotionTemplate, useMotionValue, useSpring, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
+// Surface « verre » de la direction Lumen (voir globals.css) : voile
+// translucide et liseré lumineux, sans flou coûteux sur mobile.
 const CLASSES_BASE =
-  "relative group isolate overflow-hidden rounded-2xl border border-border-soft bg-background-soft/40 sm:backdrop-blur-md transition-shadow duration-500";
+  "verre group isolate overflow-hidden rounded-[26px] transition-[border-color,box-shadow] duration-500";
 
 function CarteInclinable({ children, className, glareColor, tiltIntensity, ...props }) {
   const internalRef = useRef(null);
@@ -51,7 +53,7 @@ function CarteInclinable({ children, className, glareColor, tiltIntensity, ...pr
         transformStyle: "preserve-3d",
         perspective: 1000,
       }}
-      className={cn(CLASSES_BASE, "hover:border-accent/40 hover:shadow-[0_0_40px_-15px_rgba(77,232,255,0.5)]", className)}
+      className={cn(CLASSES_BASE, "hover:border-white/20 hover:shadow-[0_0_50px_-20px_rgba(77,232,255,0.45)]", className)}
       {...props}
     >
       <motion.div

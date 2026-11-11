@@ -1,13 +1,26 @@
 @import "tailwindcss";
 
+/* ───────────────────────────────────────────────────────────────────────────
+   Physiq — direction « Lumen » (11/11/2026)
+   Le corps comme matière lumineuse : un fond nuit profond, des surfaces en
+   verre, une typographie éditoriale (serif italique pour les titres, sans
+   géométrique pour les chiffres) et trois lumières de données :
+   cyan = scans, menthe = habitudes, violet = sommeil. Corail = masse grasse.
+   ─────────────────────────────────────────────────────────────────────────── */
 :root {
   --background: #050a0e;
-  --background-soft: #0b1a22;
-  --foreground: #e8f6fa;
-  --foreground-muted: #7fa6ae;
+  --background-soft: #0a141b;
+  --foreground: #eef7fa;
+  --foreground-muted: #8aa3ab;
+  --foreground-faint: #56707a;
   --accent: #4de8ff;
-  --accent-soft: rgba(77, 232, 255, 0.12);
-  --border-soft: rgba(77, 232, 255, 0.25);
+  --accent-soft: rgba(77, 232, 255, 0.1);
+  --mint: #2fe6b8;
+  --violet: #b69cff;
+  --coral: #ff8f7a;
+  --border-soft: rgba(255, 255, 255, 0.09);
+  --glass: rgba(255, 255, 255, 0.035);
+  --glass-strong: rgba(14, 24, 31, 0.72);
 }
 
 @theme inline {
@@ -15,11 +28,16 @@
   --color-background-soft: var(--background-soft);
   --color-foreground: var(--foreground);
   --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-faint: var(--foreground-faint);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-mint: var(--mint);
+  --color-violet: var(--violet);
+  --color-coral: var(--coral);
   --color-border-soft: var(--border-soft);
-  --font-sans: var(--font-manrope);
-  --font-display: var(--font-space-grotesk);
+  --font-sans: var(--font-geist);
+  --font-display: var(--font-geist);
+  --font-serif: var(--font-instrument);
 }
 
 /* La couleur de fond doit être posée dès le premier rendu, avant tout
@@ -38,7 +56,6 @@ html {
   background-color: var(--background);
   color-scheme: dark;
   overflow-x: clip;
-  scroll-behavior: smooth;
 }
 
 body {
@@ -47,10 +64,64 @@ body {
   overflow-x: clip;
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
+  font-feature-settings: "ss01", "cv11";
+  letter-spacing: -0.005em;
 }
 
 a, button, [role="button"], select, input[type="file"] {
   touch-action: manipulation;
+}
+
+::selection {
+  background: rgba(77, 232, 255, 0.28);
+}
+
+/* Chiffres alignés : un compteur qui change ne fait pas danser la ligne. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Titre éditorial : serif italique, comme une légende de magazine. */
+.titre-serif {
+  font-family: var(--font-instrument), Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.02;
+}
+
+/* ── Verre ────────────────────────────────────────────────────────────────
+   Le flou d'arrière-plan est l'effet le plus coûteux sur iPhone. Les cartes
+   (nombreuses, qui défilent) n'en ont pas : un voile translucide et un liseré
+   lumineux suffisent sur un fond sombre. Seuls les éléments flottants (barre
+   de navigation, panneaux) reçoivent le vrai flou. */
+.verre {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.015) 60%),
+    var(--glass);
+  border: 1px solid var(--border-soft);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 20px 50px -30px rgba(0, 0, 0, 0.8);
+}
+
+.verre-flottant {
+  background: var(--glass-strong);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 18px 40px -12px rgba(0, 0, 0, 0.75);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(22px) saturate(160%);
+}
+
+/* Petite étiquette en capitales espacées, au-dessus des titres. */
+.etiquette {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--foreground-muted);
 }
 
 /* Fondu d'apparition, utilisé pour que le décor animé ne surgisse pas d'un
@@ -58,6 +129,19 @@ a, button, [role="button"], select, input[type="file"] {
 @keyframes apparition {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@keyframes montee {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+.apparait {
+  animation: montee 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .apparait { animation: none; }
 }
 
 /* Encoche / barre de gestes iPhone : la nav mobile ne doit pas passer dessous. */

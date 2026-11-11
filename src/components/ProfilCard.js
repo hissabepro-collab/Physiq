@@ -8,7 +8,7 @@ function format(n, unite) {
 export default function ProfilCard({ axes }) {
   return (
     <div>
-      <h2 className="font-display text-base font-semibold">Profil</h2>
+      <h2 className="titre-serif text-2xl italic">Profil</h2>
       <p className="text-xs text-foreground-muted">
         Position de chaque valeur dans la plage normale calculée par Visbody pour ton profil.
       </p>

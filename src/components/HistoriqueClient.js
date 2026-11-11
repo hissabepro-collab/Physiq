@@ -91,7 +91,7 @@ export default function HistoriqueClient({ mesuresInitiales }) {
             <div key={m.id} className="rounded-2xl border border-border-soft bg-background-soft/40 p-4">
               <button
                 onClick={() => setEditionId(editionId === m.id ? null : m.id)}
-                className="flex w-full items-center justify-between text-left"
+                className="flex min-h-11 w-full items-center justify-between text-left"
               >
                 <span className="text-sm font-semibold">{formatDate(m.dateScan)}</span>
                 <span className="flex gap-4 text-xs text-foreground-muted">

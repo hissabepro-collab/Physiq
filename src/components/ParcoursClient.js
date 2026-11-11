@@ -229,7 +229,7 @@ export default function ParcoursClient({
                     </span>
                   </span>
                 </div>
-                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-black/30">
+                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/[0.06]">
                   <div
                     className="h-full rounded-full"
                     style={{

@@ -115,7 +115,7 @@ export default function ObjectifsClient({ objectifsInitiaux, mesures, sectionDuM
       <div className="mt-6">{sectionDuMois}</div>
 
       <div className="mx-auto mt-10 max-w-2xl px-0">
-        <h2 className="font-display text-base font-semibold">Objectifs de mesures</h2>
+        <h2 className="titre-serif text-2xl italic">Objectifs de mesures</h2>
         <p className="mt-1 text-[11px] leading-relaxed text-foreground-muted">
           Poids, masse grasse, masse musculaire : la progression se calcule depuis ton premier scan.
         </p>
@@ -127,7 +127,7 @@ export default function ObjectifsClient({ objectifsInitiaux, mesures, sectionDuM
           <select
             value={metrique}
             onChange={(e) => setMetrique(e.target.value)}
-            className="mt-1 min-h-11 rounded-lg border border-border-soft bg-black/20 px-2.5 py-2 text-sm outline-none focus:border-accent"
+            className="mt-1 min-h-11 rounded-xl border border-border-soft bg-white/[0.04] px-2.5 py-2 text-sm outline-none focus:border-accent"
           >
             {METRIQUES.map((m) => (
               <option key={m.key} value={m.key}>{m.label}</option>
@@ -141,10 +141,10 @@ export default function ObjectifsClient({ objectifsInitiaux, mesures, sectionDuM
             step="0.1"
             value={valeurCible}
             onChange={(e) => setValeurCible(e.target.value)}
-            className="mt-1 w-28 min-h-11 rounded-lg border border-border-soft bg-black/20 px-2.5 py-2 text-sm outline-none focus:border-accent"
+            className="mt-1 w-28 min-h-11 rounded-xl border border-border-soft bg-white/[0.04] px-2.5 py-2 text-sm outline-none focus:border-accent"
           />
         </label>
-        <button type="submit" className="inline-flex min-h-11 items-center rounded-lg border border-accent bg-accent-soft px-4 py-2 text-sm font-semibold">
+        <button type="submit" className="inline-flex min-h-11 items-center rounded-full border border-accent/60 bg-accent-soft px-4 py-2 text-sm font-semibold">
           Ajouter l'objectif
         </button>
       </form>

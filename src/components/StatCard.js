@@ -30,14 +30,12 @@ export default function StatCard({ label, value, unite, precedente, senseInverse
   const delta = value != null && precedente != null ? value - precedente : null;
   const positif = delta != null && (senseInverse ? delta < 0 : delta > 0);
   const negatif = delta != null && (senseInverse ? delta > 0 : delta < 0);
-  const couleurSpark = historique.length > 1 && !senseInverse ? "#4de8ff" : "#f0a38f";
+  const couleurSpark = historique.length > 1 && !senseInverse ? "#4de8ff" : "#ff8f7a";
 
   return (
     <GlareCard className="p-4 sm:p-5" tiltIntensity={6}>
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-foreground-muted">
-        {label}
-      </div>
-      <div className="mt-2 font-display text-2xl font-bold sm:text-[28px]">
+      <div className="etiquette">{label}</div>
+      <div className="tabular mt-3 font-display text-[30px] font-semibold leading-none tracking-tight sm:text-[34px]">
         {formatNombre(value)}
         <span className="ml-1 text-sm font-medium text-foreground-muted">{unite}</span>
       </div>
@@ -45,9 +43,9 @@ export default function StatCard({ label, value, unite, precedente, senseInverse
         <div
           className={`mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
             positif
-              ? "bg-emerald-400/10 text-emerald-300"
+              ? "bg-mint/10 text-mint"
               : negatif
-              ? "bg-red-400/10 text-red-300"
+              ? "bg-coral/10 text-coral"
               : "text-foreground-muted"
           }`}
         >

@@ -16,7 +16,7 @@ const NATURES = [
 
 function Barre({ pct, couleur }) {
   return (
-    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/35">
+    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
       <div
         className="h-full rounded-full"
         style={{ width: `${Math.max(0, Math.min(100, pct))}%`, background: couleur, boxShadow: pct >= 100 ? `0 0 10px ${couleur}` : "none" }}
@@ -85,7 +85,7 @@ function Ligne({ nature, valeur, progression }) {
             placeholder="aucun"
             onChange={(e) => setSaisie(e.target.value)}
             aria-label={`Objectif mensuel : ${nature.label}`}
-            className="min-h-11 w-24 rounded-lg border border-border-soft bg-black/20 px-2 py-2 text-right text-sm outline-none focus:border-accent"
+            className="min-h-11 w-24 rounded-xl border border-border-soft bg-white/[0.04] px-2 py-2 text-right text-sm outline-none focus:border-accent"
           />
           <span className="text-[11px] text-foreground-muted">{nature.unite}</span>
           <button onClick={enregistrer} className="min-h-11 rounded-lg border border-accent px-3.5 py-2 text-[11px] font-semibold">
@@ -104,7 +104,7 @@ export default function ObjectifsMensuels({ progression, libelleMois }) {
     <div className="mx-auto max-w-2xl px-5 pt-8 sm:px-10 sm:pt-10">
       <GlareCard className="p-5 sm:p-6" tiltIntensity={3}>
         <div className="flex items-baseline justify-between gap-3">
-          <h2 className="font-display text-base font-semibold">Objectifs du mois</h2>
+          <h2 className="titre-serif text-2xl italic">Objectifs du mois</h2>
           <span className="text-xs capitalize text-foreground-muted">{libelleMois}</span>
         </div>
         <p className="mt-1 text-[11px] leading-relaxed text-foreground-muted">

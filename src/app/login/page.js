@@ -2,7 +2,6 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import DotGridField from "@/components/ui/DotGridField";
 
 function LoginForm() {
   const router = useRouter();
@@ -34,43 +33,42 @@ function LoginForm() {
   }
 
   return (
-    <div className="relative flex flex-1 items-center justify-center overflow-hidden px-6">
-      <DotGridField />
-      <form
-        onSubmit={handleSubmit}
-        className="relative z-10 w-full max-w-sm rounded-2xl border border-border-soft bg-background-soft/70 p-8 shadow-[0_0_60px_-20px_rgba(77,232,255,0.5)] sm:backdrop-blur-md"
-      >
-        <div className="mb-6 flex items-center gap-3">
-          <div className="relative h-6 w-6 rounded-full border border-accent">
-            <div className="absolute inset-[7px] rounded-full bg-accent shadow-[0_0_10px_var(--accent)]" />
-          </div>
-          <span className="font-display text-lg font-bold tracking-wide">PHYSIQ</span>
+    <div className="relative flex flex-1 flex-col items-center justify-center px-6 py-16">
+      <div className="apparait w-full max-w-sm">
+        <div className="etiquette flex items-center gap-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_8px_var(--accent)]" />
+          Accès privé
         </div>
+        <h1 className="titre-serif mt-4 text-[64px] italic leading-none">
+          Physiq<span className="text-accent">.</span>
+        </h1>
+        <p className="mt-3 text-sm text-foreground-muted">Ton corps, scan après scan.</p>
 
-        <h1 className="font-display text-xl font-semibold">Accès privé</h1>
-        <p className="mt-1 text-sm text-foreground-muted">
-          Entre le mot de passe pour consulter tes données.
-        </p>
+        <form onSubmit={handleSubmit} className="verre mt-10 rounded-[28px] p-6">
+          <label htmlFor="mot-de-passe" className="etiquette">
+            Mot de passe
+          </label>
+          <input
+            id="mot-de-passe"
+            type="password"
+            autoFocus
+            autoComplete="current-password"
+            value={motDePasse}
+            onChange={(e) => setMotDePasse(e.target.value)}
+            className="mt-3 h-12 w-full rounded-2xl border border-border-soft bg-white/[0.04] px-4 text-base text-foreground outline-none transition focus:border-accent/70 focus:bg-white/[0.06]"
+          />
 
-        <input
-          type="password"
-          autoFocus
-          value={motDePasse}
-          onChange={(e) => setMotDePasse(e.target.value)}
-          placeholder="Mot de passe"
-          className="mt-6 w-full rounded-lg border border-border-soft bg-black/20 px-4 py-3 text-sm text-foreground outline-none focus:border-accent"
-        />
+          {erreur && <p className="mt-3 text-sm text-coral">{erreur}</p>}
 
-        {erreur && <p className="mt-3 text-sm text-red-400">{erreur}</p>}
-
-        <button
-          type="submit"
-          disabled={chargement}
-          className="mt-5 w-full rounded-lg bg-accent-soft border border-accent px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-accent/20 disabled:opacity-50"
-        >
-          {chargement ? "Connexion..." : "Se connecter"}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={chargement}
+            className="mt-5 h-12 w-full rounded-full bg-accent text-sm font-semibold text-[#04121a] shadow-[0_0_30px_-6px_rgba(77,232,255,0.7)] transition hover:brightness-110 disabled:opacity-50"
+          >
+            {chargement ? "Connexion…" : "Entrer"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

@@ -113,7 +113,7 @@ export default function MesureForm({ mesure, onSaved, onDeleted, compact = false
             type="date"
             value={dateSaisie}
             onChange={(e) => setDateSaisie(e.target.value)}
-            className="mt-1 w-full min-h-11 rounded-lg border border-border-soft bg-black/20 px-2.5 py-2 text-sm outline-none focus:border-accent"
+            className="mt-1 w-full min-h-11 rounded-xl border border-border-soft bg-white/[0.04] px-2.5 py-2 text-sm outline-none focus:border-accent"
           />
         </label>
       )}
@@ -135,7 +135,7 @@ export default function MesureForm({ mesure, onSaved, onDeleted, compact = false
                   step="0.1"
                   value={valeurs[c.key] ?? ""}
                   onChange={(e) => set(c.key, e.target.value === "" ? null : Number(e.target.value))}
-                  className="mt-1 w-full min-h-11 rounded-lg border border-border-soft bg-black/20 px-2.5 py-2 text-sm outline-none focus:border-accent"
+                  className="mt-1 w-full min-h-11 rounded-xl border border-border-soft bg-white/[0.04] px-2.5 py-2 text-sm outline-none focus:border-accent"
                 />
               </label>
             ))}
@@ -145,7 +145,7 @@ export default function MesureForm({ mesure, onSaved, onDeleted, compact = false
       <div className="mt-3 flex items-center gap-3">
         <button
           onClick={enregistrer}
-          className="min-h-11 rounded-lg border border-accent bg-accent-soft px-3.5 py-2 text-xs font-semibold"
+          className="min-h-11 rounded-full border border-accent/60 bg-accent-soft px-3.5 py-2 text-xs font-semibold"
         >
           Enregistrer
         </button>
