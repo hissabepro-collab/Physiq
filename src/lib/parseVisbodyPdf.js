@@ -77,11 +77,17 @@ function extractOverviewTable(flat) {
   const weight = flat.match(
     /(?:Weight|Poids)\s*kg\s+([\d.]+)\s*\[[^\]]*\]\s*([\d.]+)\s*\[/i
   );
+  // Depuis l'automne 2026, Visbody a renommé deux lignes du tableau :
+  // « Lean Body Mass » → « fat free mass » (masse maigre + sels minéraux) et
+  // « Muscle Mass » → « lean mass » (masse musculaire + protéines). Les deux
+  // libellés sont acceptés, pour lire aussi bien les anciens rapports que les
+  // nouveaux. « lean mass » apparaît aussi plus haut, dans le tableau du poids
+  // idéal, mais sans plage [min~max] : l'exigence du crochet l'écarte.
   const leanBodyMass = flat.match(
-    /(?:Lean\s*Body\s*M\s*ass|MMC)\s*kg\s+([\d.]+)\s*\[[^\]]*\]\s*([\d.]+)\s*\[/i
+    /(?:Lean\s*Body\s*M\s*ass|fat\s*free\s*mass|MMC)\s*kg\s+([\d.]+)\s*\[[^\]]*\]\s*([\d.]+)\s*\[/i
   );
   const muscleMass = flat.match(
-    /(?:M\s*uscle\s*M\s*ass|Masse\s*musculaire)\s*kg\s+([\d.]+)\s*\[[^\]]*\]\s*([\d.]+)\s*\[/i
+    /(?:M\s*uscle\s*M\s*ass|(?<!free\s)lean\s*mass|Masse\s*musculaire)\s*kg\s+([\d.]+)\s*\[[^\]]*\]\s*([\d.]+)\s*\[/i
   );
   const bodyWater = flat.match(
     /(?:Body Water|Eau\s*Corporelle\s*Totale)\s*kg\s+([\d.]+)\s*\[/i
@@ -128,8 +134,8 @@ function extractPlages(flat) {
     niveauGraisseViscerale: plage(flat, "Visceral Fat Level|Niveau de graisse\\s*visc[ée]rale"),
     eauIntracellulaireKg: plage(flat, "ICW|Eau intracellulaire"),
     eauExtracellulaireKg: plage(flat, "ECW|Eau extracellulaire"),
-    masseMaigreKg: plage(flat, "Lean\\s*Body\\s*M\\s*ass|MMC"),
-    masseMusculaireKg: plage(flat, "M\\s*uscle\\s*M\\s*ass|Masse\\s*musculaire"),
+    masseMaigreKg: plage(flat, "Lean\\s*Body\\s*M\\s*ass|fat\\s*free\\s*mass|MMC"),
+    masseMusculaireKg: plage(flat, "M\\s*uscle\\s*M\\s*ass|(?<!free\\s)lean\\s*mass|Masse\\s*musculaire"),
     eauTotaleKg: plage(flat, "Body Water|Eau\\s*Corporelle\\s*Totale"),
     proteineKg: plage(flat, "Protein|Masse de prot[ée]ine"),
     selsInorganiquesKg: plage(flat, "Inorganic Salts|Sel inorganique"),
