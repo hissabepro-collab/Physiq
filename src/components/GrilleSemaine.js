@@ -94,6 +94,23 @@ function Nuit({ valeur, onChange, titre, lectureSeule, suivie }) {
   );
 }
 
+// Le nom de chaque ligne est au-dessus des cases, et non à gauche : les sept
+// jours occupent alors toute la largeur, et chaque case atteint 44 px sur un
+// téléphone au lieu d'environ 36.
+//
+// Ce composant doit rester HORS de GrilleSemaine. Défini à l'intérieur, il
+// était recréé à chaque frappe : React démontait puis remontait les cases, le
+// champ de sommeil perdait le curseur après chaque caractère, et il fallait
+// retoucher la case pour taper « , » puis « 5 ».
+function Ligne({ titre, children }) {
+  return (
+    <div className="space-y-1">
+      <span className="block text-[11px] font-semibold text-foreground-muted">{titre}</span>
+      <div className="grid grid-cols-7 gap-1.5">{children}</div>
+    </div>
+  );
+}
+
 /**
  * Grille du bilan de la semaine : une ligne "séances", une ligne "diète", une
  * ligne "sommeil", alignées sous les mêmes jours. Séances et diète sont des
@@ -120,16 +137,6 @@ export default function GrilleSemaine({
     suite[index] = valeur;
     onChangeNuits(suite);
   }
-
-  // Le nom de chaque ligne est au-dessus des cases, et non à gauche : les sept
-  // jours occupent alors toute la largeur, et chaque case atteint 44 px sur un
-  // téléphone au lieu d'environ 36.
-  const Ligne = ({ titre, children }) => (
-    <div className="space-y-1">
-      <span className="block text-[11px] font-semibold text-foreground-muted">{titre}</span>
-      <div className="grid grid-cols-7 gap-1.5">{children}</div>
-    </div>
-  );
 
   return (
     <div className="space-y-3">
