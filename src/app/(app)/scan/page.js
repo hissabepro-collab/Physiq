@@ -75,7 +75,7 @@ export default function ScanPage() {
 
       {resultats.length > 0 && (
         <div className="mt-8 space-y-3">
-          <h2 className="titre-serif text-2xl italic">Résultat de l'import</h2>
+          <h2 className="titre text-lg">Résultat de l'import</h2>
           {resultats.map((r, i) =>
             r.ok ? (
               <div key={r.mesure.id} className="rounded-xl border border-border-soft bg-background-soft/40 p-4">

@@ -8,11 +8,11 @@ import PageHeader from "@/components/PageHeader";
 import { IconChart, IconJournal } from "@/components/icons";
 
 const METRIQUES = [
-  { key: "poidsKg", label: "Poids", unite: "kg", color: "#4de8ff" },
+  { key: "poidsKg", label: "Poids", unite: "kg", color: "#8fe3ff" },
   { key: "bfpPct", label: "Masse grasse", unite: "%", color: "#f0a38f" },
-  { key: "masseMusculaireKg", label: "Masse musculaire", unite: "kg", color: "#4de8ff" },
-  { key: "imc", label: "IMC", unite: "", color: "#b69cff" },
-  { key: "scoreVisbody", label: "Score", unite: "/100", color: "#2fe6b8" },
+  { key: "masseMusculaireKg", label: "Masse musculaire", unite: "kg", color: "#8fe3ff" },
+  { key: "imc", label: "IMC", unite: "", color: "#b9a4ff" },
+  { key: "scoreVisbody", label: "Score", unite: "/100", color: "#9ff0c4" },
 ];
 
 function formatDate(date) {

@@ -46,14 +46,14 @@ export default function HoloRing({ size = 150, scanBeam = false, equator = false
         .holo-core {
           position: absolute; inset: 0; margin: auto;
           width: 22%; height: 22%; border-radius: 9999px;
-          background: radial-gradient(circle, #bff6ff 0%, #4de8ff 55%, transparent 75%);
-          box-shadow: 0 0 30px 8px rgba(77,232,255,0.35);
+          background: radial-gradient(circle, #bff6ff 0%, #8fe3ff 55%, transparent 75%);
+          box-shadow: 0 0 30px 8px rgba(143,227,255,0.35);
           animation: holo-pulse 3.6s ease-in-out infinite;
         }
         .holo-scanbeam {
           position: absolute; left: 50%; height: 2px;
           background: linear-gradient(90deg, transparent, rgba(180,245,255,0.95), transparent);
-          filter: drop-shadow(0 0 6px rgba(77,232,255,0.8));
+          filter: drop-shadow(0 0 6px rgba(143,227,255,0.8));
           animation: holo-sweep 4.2s ease-in-out infinite;
         }
         @keyframes holo-spin {

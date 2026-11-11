@@ -82,7 +82,7 @@ export default function HistoriqueMois({ mois }) {
   return (
     <GlareCard className="p-5 sm:p-6" tiltIntensity={3}>
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="titre-serif text-2xl italic">Mois précédents</h2>
+        <h2 className="titre text-lg">Mois précédents</h2>
         <span className="text-xs text-foreground-muted">
           {mois.length} mois archivé{mois.length > 1 ? "s" : ""}
         </span>
@@ -105,9 +105,9 @@ export default function HistoriqueMois({ mois }) {
                 .toLocaleDateString("fr-FR", { month: "short", year: "2-digit" })
                 .replace(".", "")}
             </span>
-            <Colonne fait={m.seances.fait} cible={m.seances.cible} couleur="#4de8ff" unite="" />
-            <Colonne fait={m.diete.fait} cible={m.diete.cible} couleur="#2fe6b8" unite="" />
-            <span className="w-16 shrink-0 text-right font-display text-sm font-bold tabular-nums" style={{ color: "#b69cff" }}>
+            <Colonne fait={m.seances.fait} cible={m.seances.cible} couleur="#8fe3ff" unite="" />
+            <Colonne fait={m.diete.fait} cible={m.diete.cible} couleur="#9ff0c4" unite="" />
+            <span className="w-16 shrink-0 text-right font-display text-sm font-bold tabular-nums" style={{ color: "#b9a4ff" }}>
               {m.sommeil.moyenne == null ? "—" : `${FORMAT.format(m.sommeil.moyenne)} h`}
             </span>
           </div>

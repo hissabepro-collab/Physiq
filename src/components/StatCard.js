@@ -30,7 +30,7 @@ export default function StatCard({ label, value, unite, precedente, senseInverse
   const delta = value != null && precedente != null ? value - precedente : null;
   const positif = delta != null && (senseInverse ? delta < 0 : delta > 0);
   const negatif = delta != null && (senseInverse ? delta > 0 : delta < 0);
-  const couleurSpark = historique.length > 1 && !senseInverse ? "#4de8ff" : "#ff8f7a";
+  const couleurSpark = historique.length > 1 && !senseInverse ? "#8fe3ff" : "#ff8f7a";
 
   return (
     <GlareCard className="p-4 sm:p-5" tiltIntensity={6}>

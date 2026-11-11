@@ -166,7 +166,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
         className="mt-6 scroll-mt-4 rounded-2xl border bg-background-soft/30 p-4 transition-colors duration-300"
         style={
           surbrillance
-            ? { borderColor: "#4de8ff", boxShadow: "0 0 24px -8px #4de8ff" }
+            ? { borderColor: "#8fe3ff", boxShadow: "0 0 24px -8px #8fe3ff" }
             : { borderColor: "var(--border-soft)" }
         }
       >

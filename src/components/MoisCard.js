@@ -42,7 +42,7 @@ function Score({ label, fait, cible, couleur, suffixe }) {
 }
 
 function Sommeil({ moyenne, cible, nuits }) {
-  const couleur = "#b69cff";
+  const couleur = "#b9a4ff";
   const atteint = moyenne != null && moyenne >= cible;
 
   return (
@@ -86,7 +86,7 @@ export default function MoisCard({ bilan, objectifs }) {
   return (
     <GlareCard className="p-5 sm:p-6" tiltIntensity={4}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h2 className="titre-serif text-2xl italic capitalize">{bilan.libelle}</h2>
+        <h2 className="titre text-lg capitalize">{bilan.libelle}</h2>
         <span className="text-xs text-foreground-muted">
           {bilan.enCours
             ? `${bilan.jours} jour${bilan.jours > 1 ? "s" : ""} écoulé${bilan.jours > 1 ? "s" : ""}, ${restants} restant${restants > 1 ? "s" : ""}`
@@ -95,8 +95,8 @@ export default function MoisCard({ bilan, objectifs }) {
       </div>
 
       <div className="mt-4 flex flex-col gap-5 sm:flex-row sm:gap-6">
-        <Score label="Séances" fait={bilan.seances.fait} cible={bilan.seances.cible} suffixe="séances" couleur="#4de8ff" />
-        <Score label="Diète" fait={bilan.diete.fait} cible={bilan.diete.cible} suffixe="jours" couleur="#2fe6b8" />
+        <Score label="Séances" fait={bilan.seances.fait} cible={bilan.seances.cible} suffixe="séances" couleur="#8fe3ff" />
+        <Score label="Diète" fait={bilan.diete.fait} cible={bilan.diete.cible} suffixe="jours" couleur="#9ff0c4" />
         <Sommeil moyenne={bilan.sommeil.moyenne} cible={bilan.sommeil.cible} nuits={bilan.sommeil.nuits} />
       </div>
 

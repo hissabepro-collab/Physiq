@@ -2,10 +2,10 @@
 
 function Star({ filled }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill={filled ? "#4de8ff" : "none"}>
+    <svg width="20" height="20" viewBox="0 0 20 20" fill={filled ? "#8fe3ff" : "none"}>
       <path
         d="M10 2.5l2.35 4.76 5.25.76-3.8 3.7.9 5.23L10 14.5l-4.7 2.45.9-5.23-3.8-3.7 5.25-.76L10 2.5z"
-        stroke={filled ? "#4de8ff" : "currentColor"}
+        stroke={filled ? "#8fe3ff" : "currentColor"}
         strokeOpacity={filled ? 1 : 0.35}
         strokeWidth={1.3}
       />

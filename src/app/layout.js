@@ -1,22 +1,14 @@
-import { Geist, Instrument_Serif } from "next/font/google";
+import { Geist } from "next/font/google";
 import RegisterSW from "@/components/RegisterSW";
 import ImmersiveBackground from "@/components/ImmersiveBackground";
 import { ECRANS_DEMARRAGE } from "@/lib/ecransDemarrage";
 import "./globals.css";
 
-// Geist : sans géométrique, pour l'interface et les chiffres (variable, donc
-// une seule police pour toutes les graisses). Instrument Serif : titres
-// éditoriaux en italique.
+// Geist : sans géométrique, seule police du site (variable, donc une seule
+// police pour toutes les graisses, titres comme chiffres).
 const geist = Geist({
   variable: "--font-geist",
   subsets: ["latin"],
-});
-
-const instrument = Instrument_Serif({
-  variable: "--font-instrument",
-  subsets: ["latin"],
-  weight: "400",
-  style: ["normal", "italic"],
 });
 
 export const metadata = {
@@ -73,7 +65,7 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="fr"
-      className={`${geist.variable} ${instrument.variable} h-full antialiased`}
+      className={`${geist.variable} h-full antialiased`}
       style={{ backgroundColor: FOND, colorScheme: "dark" }}
     >
       <body

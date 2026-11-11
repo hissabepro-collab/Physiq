@@ -50,7 +50,7 @@ function Onglet({ href, label, Icon, actif, reduit }) {
           className="absolute inset-0 rounded-full"
           style={{
             background: "linear-gradient(180deg, #f4fdff 0%, #bff6ff 100%)",
-            boxShadow: "0 0 22px -2px rgba(77,232,255,0.65), inset 0 -2px 6px rgba(77,232,255,0.35)",
+            boxShadow: "0 0 22px -2px rgba(143,227,255,0.65), inset 0 -2px 6px rgba(143,227,255,0.35)",
           }}
         />
       )}

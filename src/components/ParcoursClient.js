@@ -78,7 +78,7 @@ export default function ParcoursClient({
   const series = [
     {
       label: "Masse musculaire",
-      color: "#4de8ff",
+      color: "#8fe3ff",
       points: recentes.filter((m) => m.masseMusculaireKg != null).map((m) => ({ date: new Date(m.dateScan), value: m.masseMusculaireKg })),
     },
     {
@@ -129,7 +129,7 @@ export default function ParcoursClient({
           <p className="mt-8 text-[11px] font-semibold uppercase tracking-[0.3em] text-accent">Ton parcours, {prenom}</p>
           {rang && (
             <>
-              <div className="mt-3 font-display text-7xl font-bold" style={{ textShadow: "0 0 40px rgba(77,232,255,0.5)" }}>
+              <div className="mt-3 font-display text-7xl font-bold" style={{ textShadow: "0 0 40px rgba(143,227,255,0.5)" }}>
                 {rang.label}
               </div>
               <p className="mt-2 text-sm text-foreground-muted">
@@ -173,7 +173,7 @@ export default function ParcoursClient({
           <EvolutionChart series={series} />
           <div className="mt-3 flex gap-5 text-xs font-medium text-foreground-muted">
             <span className="flex items-center gap-1.5">
-              <span className="h-[3px] w-3 rounded bg-[#4de8ff]" /> Masse musculaire
+              <span className="h-[3px] w-3 rounded bg-[#8fe3ff]" /> Masse musculaire
             </span>
             <span className="flex items-center gap-1.5">
               <span className="h-[3px] w-3 rounded bg-[#f0a38f]" /> Masse grasse
@@ -208,15 +208,15 @@ export default function ParcoursClient({
         <div className="rounded-2xl border border-border-soft bg-background-soft/40 p-6 sm:backdrop-blur-md sm:p-8">
           <p className="text-xs text-foreground-muted">{libelleSemaine}</p>
           {serie > 0 && (
-            <p className="mt-1 font-display text-2xl font-bold text-accent" style={{ textShadow: "0 0 20px rgba(77,232,255,0.5)" }}>
+            <p className="mt-1 font-display text-2xl font-bold text-accent" style={{ textShadow: "0 0 20px rgba(143,227,255,0.5)" }}>
               {serie} semaine{serie > 1 ? "s" : ""} d'affilée
             </p>
           )}
           <div className="mt-5 space-y-4">
             {[
-              { label: "Séances", ...bilan.seances, couleur: "#4de8ff", unite: "" },
-              { label: "Diète", ...bilan.diete, couleur: "#2fe6b8", unite: "" },
-              { label: "Sommeil", ...bilan.sommeil, couleur: "#b69cff", unite: "h" },
+              { label: "Séances", ...bilan.seances, couleur: "#8fe3ff", unite: "" },
+              { label: "Diète", ...bilan.diete, couleur: "#9ff0c4", unite: "" },
+              { label: "Sommeil", ...bilan.sommeil, couleur: "#b9a4ff", unite: "h" },
             ].map((j) => (
               <div key={j.label}>
                 <div className="flex items-baseline justify-between text-sm">

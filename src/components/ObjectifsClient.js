@@ -28,7 +28,7 @@ function ProgressRing({ percent }) {
         cy="36"
         r={r}
         fill="none"
-        stroke="#4de8ff"
+        stroke="#8fe3ff"
         strokeWidth="7"
         strokeLinecap="round"
         strokeDasharray={c}
@@ -115,7 +115,7 @@ export default function ObjectifsClient({ objectifsInitiaux, mesures, sectionDuM
       <div className="mt-6">{sectionDuMois}</div>
 
       <div className="mx-auto mt-10 max-w-2xl px-0">
-        <h2 className="titre-serif text-2xl italic">Objectifs de mesures</h2>
+        <h2 className="titre text-lg">Objectifs de mesures</h2>
         <p className="mt-1 text-[11px] leading-relaxed text-foreground-muted">
           Poids, masse grasse, masse musculaire : la progression se calcule depuis ton premier scan.
         </p>

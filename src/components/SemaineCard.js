@@ -34,12 +34,12 @@ export default function SemaineCard({ libelle, bilan, serie, renseignee }) {
     <GlareCard className="p-5 sm:p-6" tiltIntensity={4}>
       <div className="flex items-baseline justify-between gap-3">
         <div>
-          <h3 className="titre-serif text-2xl italic">Cette semaine</h3>
+          <h3 className="titre text-lg">Cette semaine</h3>
           <p className="text-xs text-foreground-muted">{libelle}</p>
         </div>
         {serie > 0 && (
           <div className="text-right">
-            <div className="tabular font-display text-2xl font-semibold text-accent" style={{ textShadow: "0 0 14px rgba(77,232,255,0.6)" }}>
+            <div className="tabular font-display text-2xl font-semibold text-accent" style={{ textShadow: "0 0 14px rgba(143,227,255,0.6)" }}>
               {serie}
             </div>
             <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground-muted">
@@ -50,9 +50,9 @@ export default function SemaineCard({ libelle, bilan, serie, renseignee }) {
       </div>
 
       <div className="mt-4 space-y-3">
-        <Jauge label="Séances" valeur={bilan.seances.valeur} cible={bilan.seances.cible} atteint={bilan.seances.atteint} couleur="#4de8ff" />
-        <Jauge label="Diète" valeur={bilan.diete.valeur} cible={bilan.diete.cible} atteint={bilan.diete.atteint} couleur="#2fe6b8" />
-        <Jauge label="Sommeil" valeur={bilan.sommeil.valeur} cible={bilan.sommeil.cible} unite="h" atteint={bilan.sommeil.atteint} couleur="#b69cff" />
+        <Jauge label="Séances" valeur={bilan.seances.valeur} cible={bilan.seances.cible} atteint={bilan.seances.atteint} couleur="#8fe3ff" />
+        <Jauge label="Diète" valeur={bilan.diete.valeur} cible={bilan.diete.cible} atteint={bilan.diete.atteint} couleur="#9ff0c4" />
+        <Jauge label="Sommeil" valeur={bilan.sommeil.valeur} cible={bilan.sommeil.cible} unite="h" atteint={bilan.sommeil.atteint} couleur="#b9a4ff" />
       </div>
 
       <Link

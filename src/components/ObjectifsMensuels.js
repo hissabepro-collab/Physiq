@@ -9,9 +9,9 @@ import { useRafraichir } from "@/lib/useRafraichir";
 // mois en cours depuis le Journal.
 
 const NATURES = [
-  { key: "seances", label: "Séances", unite: "séances", couleur: "#4de8ff" },
-  { key: "diete", label: "Jours de diète", unite: "jours", couleur: "#2fe6b8" },
-  { key: "sommeil", label: "Sommeil moyen", unite: "h / nuit", couleur: "#b69cff" },
+  { key: "seances", label: "Séances", unite: "séances", couleur: "#8fe3ff" },
+  { key: "diete", label: "Jours de diète", unite: "jours", couleur: "#9ff0c4" },
+  { key: "sommeil", label: "Sommeil moyen", unite: "h / nuit", couleur: "#b9a4ff" },
 ];
 
 function Barre({ pct, couleur }) {
@@ -104,7 +104,7 @@ export default function ObjectifsMensuels({ progression, libelleMois }) {
     <div className="mx-auto max-w-2xl px-5 pt-8 sm:px-10 sm:pt-10">
       <GlareCard className="p-5 sm:p-6" tiltIntensity={3}>
         <div className="flex items-baseline justify-between gap-3">
-          <h2 className="titre-serif text-2xl italic">Objectifs du mois</h2>
+          <h2 className="titre text-lg">Objectifs du mois</h2>
           <span className="text-xs capitalize text-foreground-muted">{libelleMois}</span>
         </div>
         <p className="mt-1 text-[11px] leading-relaxed text-foreground-muted">

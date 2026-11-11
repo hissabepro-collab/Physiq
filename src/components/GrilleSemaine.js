@@ -46,7 +46,7 @@ function Case({ actif, onClick, couleur, titre, lectureSeule }) {
 function Nuit({ valeur, onChange, titre, lectureSeule, suivie }) {
   const base =
     "flex h-11 w-full items-center justify-center rounded-lg border text-[11px] font-bold tabular-nums";
-  const couleur = "#b69cff";
+  const couleur = "#b9a4ff";
 
   // Vendredi et samedi soir ne se saisissent pas : la case reste barrée, pour
   // qu'on voie que c'est voulu et non un oubli.
@@ -147,7 +147,7 @@ export default function GrilleSemaine({
             key={i}
             actif={seances.includes(i)}
             onClick={() => bascule(seances, i, onChangeSeances)}
-            couleur="#4de8ff"
+            couleur="#8fe3ff"
             titre={`Séance le ${JOURS_LONGS[i].toLowerCase()}`}
             lectureSeule={lectureSeule}
           />
@@ -160,7 +160,7 @@ export default function GrilleSemaine({
             key={i}
             actif={diete.includes(i)}
             onClick={() => bascule(diete, i, onChangeDiete)}
-            couleur="#2fe6b8"
+            couleur="#9ff0c4"
             titre={`Alimentation tenue le ${JOURS_LONGS[i].toLowerCase()}`}
             lectureSeule={lectureSeule}
           />

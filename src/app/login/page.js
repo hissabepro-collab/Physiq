@@ -39,7 +39,7 @@ function LoginForm() {
           <span className="h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_8px_var(--accent)]" />
           Accès privé
         </div>
-        <h1 className="titre-serif mt-4 text-[64px] italic leading-none">
+        <h1 className="titre holo-texte mt-4 text-[60px] leading-none">
           Physiq<span className="text-accent">.</span>
         </h1>
         <p className="mt-3 text-sm text-foreground-muted">Ton corps, scan après scan.</p>
@@ -63,7 +63,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={chargement}
-            className="mt-5 h-12 w-full rounded-full bg-accent text-sm font-semibold text-[#04121a] shadow-[0_0_30px_-6px_rgba(77,232,255,0.7)] transition hover:brightness-110 disabled:opacity-50"
+            className="mt-5 h-12 w-full rounded-full bg-accent text-sm font-semibold text-[#04121a] shadow-[0_0_30px_-6px_rgba(143,227,255,0.7)] transition hover:brightness-110 disabled:opacity-50"
           >
             {chargement ? "Connexion…" : "Entrer"}
           </button>

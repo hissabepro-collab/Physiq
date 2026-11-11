@@ -1,5 +1,5 @@
-// En-tête de page éditorial : petite étiquette en capitales, grand titre en
-// serif italique, sous-titre discret. Même gabarit sur toutes les « pièces ».
+// En-tête de page éditorial : petite étiquette en capitales, grand titre
+// en Geist serré, sous-titre discret. Même gabarit sur toutes les « pièces ».
 export default function PageHeader({ kicker, title, subtitle, action }) {
   return (
     <div className="apparait flex flex-wrap items-end justify-between gap-4">
@@ -10,7 +10,7 @@ export default function PageHeader({ kicker, title, subtitle, action }) {
             {kicker}
           </div>
         )}
-        <h1 className="titre-serif mt-3 text-[40px] italic sm:text-[54px]">{title}</h1>
+        <h1 className="titre mt-3 text-[32px] sm:text-[44px]">{title}</h1>
         {subtitle && <p className="mt-2 text-sm text-foreground-muted">{subtitle}</p>}
       </div>
       {action}

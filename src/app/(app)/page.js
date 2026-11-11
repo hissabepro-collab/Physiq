@@ -5,7 +5,7 @@ import { calculerAxesProfil } from "@/lib/profilStats";
 import EvolutionChart from "@/components/EvolutionChart";
 import StatCard from "@/components/StatCard";
 import ProfilCard from "@/components/ProfilCard";
-import HeroCorps from "@/components/HeroCorps";
+import CarteRang from "@/components/CarteRang";
 import SemaineCard from "@/components/SemaineCard";
 import MoisCard from "@/components/MoisCard";
 import HistoriqueMois from "@/components/HistoriqueMois";
@@ -28,21 +28,6 @@ function joursDepuis(date) {
 
 function serieValeurs(mesures, champ) {
   return mesures.map((m) => m[champ]).filter((v) => v != null);
-}
-
-// Titre de chapitre éditorial, réutilisé entre les sections de l'accueil.
-function Chapitre({ numero, etiquette, titre, children }) {
-  return (
-    <section className="mt-16 first:mt-0 sm:mt-24">
-      <div className="etiquette flex items-center gap-3">
-        <span className="tabular text-accent">{numero}</span>
-        <span className="h-px w-8 bg-white/15" />
-        {etiquette}
-      </div>
-      <h2 className="titre-serif mt-3 text-[34px] italic sm:text-[46px]">{titre}</h2>
-      <div className="mt-6">{children}</div>
-    </section>
-  );
 }
 
 // Les trois étapes, affichées tant qu'aucun scan n'est enregistré.
@@ -77,7 +62,7 @@ export default async function AccueilPage() {
   const chartSeries = [
     {
       label: "Masse musculaire",
-      color: "#4de8ff",
+      color: "#8fe3ff",
       points: recentes
         .filter((m) => m.masseMusculaireKg != null)
         .map((m) => ({ date: m.dateScan, value: m.masseMusculaireKg })),
@@ -92,22 +77,37 @@ export default async function AccueilPage() {
     },
   ];
 
-  let numero = 0;
-  const suivant = () => String(++numero).padStart(2, "0");
+  const aujourdhui = new Date().toLocaleDateString("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "Europe/Paris",
+  });
 
   return (
-    <div className="relative">
-      <HeroCorps prenom={prenom} rang={rang} jours={jours} />
+    <div className="mx-auto max-w-6xl px-4 pb-10 pt-[max(env(safe-area-inset-top),20px)] sm:px-8 sm:pt-10">
+      <header className="apparait flex items-end justify-between gap-4">
+        <div>
+          <div className="text-xs font-medium text-foreground-muted first-letter:uppercase">{aujourdhui}</div>
+          <h1 className="titre mt-1 text-[30px] sm:text-[38px]">Salut {prenom}</h1>
+        </div>
+        <Link
+          href="/scan"
+          className="flex h-11 items-center gap-2 rounded-full border border-border-soft bg-white/[0.03] px-4 text-xs font-semibold text-foreground transition hover:border-white/20"
+        >
+          <span className={`h-1.5 w-1.5 rounded-full ${jours != null && jours > 13 ? "bg-amber-300" : "bg-mint"}`} />
+          {jours != null && jours > 13 ? "Scan dû" : "Scanner"}
+        </Link>
+      </header>
 
-      <div className="relative mx-auto max-w-5xl px-5 pb-10 sm:px-10">
-        {derniere ? (
-          <Chapitre numero={suivant()} etiquette="Dernier scan" titre="Les chiffres.">
-            {jours > 13 && (
-              <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-xs font-semibold text-amber-200">
-                Ton prochain scan est dû : mercredi matin, à jeun.
-              </p>
-            )}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mt-6 grid grid-cols-1 gap-3 lg:grid-cols-12">
+        <div className="apparait lg:col-span-5">
+          <CarteRang rang={rang} jours={jours} />
+        </div>
+
+        <div className="apparait lg:col-span-7" style={{ animationDelay: "60ms" }}>
+          {derniere ? (
+            <div className="grid h-full grid-cols-2 gap-3">
               <StatCard
                 label="Poids"
                 value={derniere.poidsKg}
@@ -140,85 +140,79 @@ export default async function AccueilPage() {
                 historique={serieValeurs(recentes, "imc")}
               />
             </div>
-          </Chapitre>
-        ) : (
-          <Chapitre numero={suivant()} etiquette="Pour commencer" titre="Trois gestes, et c'est parti.">
-            <ol className="grid gap-3 sm:grid-cols-3">
+          ) : (
+            <ol className="grid h-full gap-3">
               {ETAPES.map((e) => (
-                <li key={e.n} className="verre rounded-[26px] p-5">
-                  <span className="tabular font-display text-sm font-semibold text-accent">{e.n}</span>
-                  <h3 className="titre-serif mt-3 text-2xl italic">{e.titre}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-foreground-muted">{e.texte}</p>
+                <li key={e.n} className="verre flex gap-4 rounded-[22px] p-4 sm:p-5">
+                  <span className="tabular holo-texte text-sm font-semibold">{e.n}</span>
+                  <div>
+                    <h3 className="titre text-base">{e.titre}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-foreground-muted">{e.texte}</p>
+                  </div>
                 </li>
               ))}
             </ol>
-            <Link
-              href="/scan"
-              className="mt-5 inline-flex h-12 items-center gap-2 rounded-full bg-accent px-6 text-sm font-semibold text-[#04121a] shadow-[0_0_30px_-6px_rgba(77,232,255,0.7)]"
-            >
-              Importer mon premier rapport →
-            </Link>
-          </Chapitre>
-        )}
+          )}
+        </div>
 
-        <Chapitre numero={suivant()} etiquette="Habitudes" titre="Le rythme.">
+        <div className="apparait lg:col-span-6" style={{ animationDelay: "120ms" }}>
           <SemaineCard
             libelle={libelleSemaine(semaineActuelle)}
             bilan={bilan}
             serie={serie}
             renseignee={Boolean(parSemaine[semaineActuelle])}
           />
-          {moisEnCours && (
-            <div className="mt-3">
-              <MoisCard bilan={moisEnCours} objectifs={OBJECTIFS_DEFAUT} />
-            </div>
-          )}
-          {moisPrecedents.length > 0 && (
-            <div className="mt-3">
-              <HistoriqueMois mois={moisPrecedents} />
-            </div>
-          )}
-        </Chapitre>
+        </div>
+
+        {moisEnCours && (
+          <div className="apparait lg:col-span-6" style={{ animationDelay: "160ms" }}>
+            <MoisCard bilan={moisEnCours} objectifs={OBJECTIFS_DEFAUT} />
+          </div>
+        )}
 
         {derniere && (
-          <Chapitre numero={suivant()} etiquette="Tendance" titre="La courbe.">
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_320px]">
-              <GlareCard className="p-5 sm:p-7" tiltIntensity={3}>
-                <div className="flex items-baseline justify-between">
-                  <span className="etiquette">Évolution</span>
-                  <span className="tabular text-xs text-foreground-muted">{mesures.length} scans</span>
-                </div>
-                <div className="mt-4">
-                  <EvolutionChart series={chartSeries} />
-                </div>
-                <div className="mt-3 flex gap-5 text-xs font-medium text-foreground-muted">
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-[3px] w-3 rounded bg-accent" /> Muscle
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-[3px] w-3 rounded bg-coral" /> Masse grasse
-                  </span>
-                </div>
-              </GlareCard>
+          <>
+            <GlareCard className="p-5 sm:p-6 lg:col-span-8" tiltIntensity={3}>
+              <div className="flex items-baseline justify-between">
+                <span className="etiquette">Évolution</span>
+                <span className="tabular text-xs text-foreground-muted">{mesures.length} scans</span>
+              </div>
+              <div className="mt-4">
+                <EvolutionChart series={chartSeries} />
+              </div>
+              <div className="mt-3 flex gap-5 text-xs font-medium text-foreground-muted">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-[3px] w-3 rounded bg-accent" /> Muscle
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-[3px] w-3 rounded bg-coral" /> Masse grasse
+                </span>
+              </div>
+            </GlareCard>
 
-              {axesProfil && (
-                <GlareCard className="p-5 sm:p-6" tiltIntensity={4}>
-                  <ProfilCard axes={axesProfil} />
-                </GlareCard>
-              )}
-            </div>
-          </Chapitre>
+            {axesProfil && (
+              <GlareCard className="p-5 sm:p-6 lg:col-span-4" tiltIntensity={4}>
+                <ProfilCard axes={axesProfil} />
+              </GlareCard>
+            )}
+          </>
+        )}
+
+        {moisPrecedents.length > 0 && (
+          <div className="lg:col-span-12">
+            <HistoriqueMois mois={moisPrecedents} />
+          </div>
         )}
 
         <Link
           href="/parcours"
-          className="verre group mt-16 flex items-center justify-between gap-4 rounded-[26px] p-6 transition hover:border-white/20 sm:mt-24 sm:p-8"
+          className="verre group flex items-center justify-between gap-4 rounded-[22px] p-5 transition hover:border-white/20 lg:col-span-12"
         >
           <div>
             <span className="etiquette">Récit</span>
-            <p className="titre-serif mt-2 text-3xl italic sm:text-4xl">Ton parcours, en plein écran.</p>
+            <p className="titre mt-1 text-lg">Ton parcours, en plein écran</p>
           </div>
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/15 text-accent transition group-hover:translate-x-1">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/15 text-accent transition group-hover:translate-x-1">
             →
           </span>
         </Link>

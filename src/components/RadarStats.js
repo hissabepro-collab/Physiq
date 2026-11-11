@@ -72,9 +72,9 @@ export default function RadarStats({ axes }) {
 
       <polygon
         points={polygonPoints(axes.map((a) => a.valeur), total)}
-        fill="#4de8ff"
+        fill="#8fe3ff"
         fillOpacity={0.22}
-        stroke="#4de8ff"
+        stroke="#8fe3ff"
         strokeWidth={2}
       />
 

@@ -25,12 +25,12 @@ export default function SegmentBars({ segments }) {
 
   return (
     <div className="grid grid-cols-2 gap-x-6 gap-y-2.5">
-      <Barre label="Bras gauche" valeur={lean.brasGauche} max={maxLean} couleur="#4de8ff" />
-      <Barre label="Bras droit" valeur={lean.brasDroit} max={maxLean} couleur="#4de8ff" />
-      <Barre label="Jambe gauche" valeur={lean.jambeGauche} max={maxLean} couleur="#4de8ff" />
-      <Barre label="Jambe droite" valeur={lean.jambeDroite} max={maxLean} couleur="#4de8ff" />
+      <Barre label="Bras gauche" valeur={lean.brasGauche} max={maxLean} couleur="#8fe3ff" />
+      <Barre label="Bras droit" valeur={lean.brasDroit} max={maxLean} couleur="#8fe3ff" />
+      <Barre label="Jambe gauche" valeur={lean.jambeGauche} max={maxLean} couleur="#8fe3ff" />
+      <Barre label="Jambe droite" valeur={lean.jambeDroite} max={maxLean} couleur="#8fe3ff" />
       <div className="col-span-2">
-        <Barre label="Tronc" valeur={lean.tronc} max={maxLean} couleur="#4de8ff" />
+        <Barre label="Tronc" valeur={lean.tronc} max={maxLean} couleur="#8fe3ff" />
       </div>
       {fat && (
         <p className="col-span-2 mt-1 text-[10.5px] text-foreground-muted">
