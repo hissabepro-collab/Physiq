@@ -48,6 +48,8 @@
 // peindre le fond sombre, la seconde garantit qu'il est bien à l'écran. Sans
 // cela, la navigation peut partir avant la première peinture et l'on retombe
 // sur l'écran blanc qu'on cherche à éviter.
+// Heure de départ, pour le diagnostic du lancement (Paramètres).
+try { localStorage.setItem("physiq-lancement", String(Date.now())); } catch (e) {}
 requestAnimationFrame(function () {
   requestAnimationFrame(function () {
     location.replace("/");

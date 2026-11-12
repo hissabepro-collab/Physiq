@@ -1,5 +1,6 @@
 import { Geist } from "next/font/google";
 import RegisterSW from "@/components/RegisterSW";
+import MesureLancement from "@/components/MesureLancement";
 import ImmersiveBackground from "@/components/ImmersiveBackground";
 import { ECRANS_DEMARRAGE } from "@/lib/ecransDemarrage";
 import "./globals.css";
@@ -75,6 +76,7 @@ export default function RootLayout({ children }) {
         <ImmersiveBackground />
         {children}
         <RegisterSW />
+        <MesureLancement />
       </body>
     </html>
   );

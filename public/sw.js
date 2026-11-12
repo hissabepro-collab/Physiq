@@ -8,7 +8,7 @@
 // mises en cache — tes mesures doivent toujours venir du serveur, et une page
 // protégée ne doit pas rester sur l'appareil.
 
-const CACHE = "physiq-statique-v7";
+const CACHE = "physiq-statique-v8";
 
 const PREFIXES_CACHABLES = ["/_next/static/", "/icons/", "/splash/"];
 

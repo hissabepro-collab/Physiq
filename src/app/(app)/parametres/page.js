@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { IconLogout } from "@/components/icons";
 import PageHeader from "@/components/PageHeader";
+import DiagnosticLancement from "@/components/DiagnosticLancement";
 
 export default function ParametresPage() {
   const router = useRouter();
@@ -117,6 +118,7 @@ export default function ParametresPage() {
       >
         <IconLogout width={16} height={16} /> Se déconnecter
       </button>
+      <DiagnosticLancement />
     </div>
   );
 }
