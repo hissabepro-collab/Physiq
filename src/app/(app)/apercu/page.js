@@ -7,6 +7,7 @@ import ProfilCard from "@/components/ProfilCard";
 import { GlareCard } from "@/components/ui/GlareCard";
 import { calculerBilan } from "@/lib/profilStats";
 import ParcoursClient from "@/components/ParcoursClient";
+import JournalClient from "@/components/JournalClient";
 import { construireParcours } from "@/lib/parcours";
 import { OBJECTIFS_DEFAUT } from "@/lib/semaines";
 
@@ -39,6 +40,7 @@ const SCAN = {
 //   /apercu?score=81&fete=A-
 //   /apercu?vue=rangs&meilleur=81&score=78   (page Collection des rangs)
 //   /apercu?vue=bilan                         (bilan corporel)
+//   /apercu?vue=journal                       (journal ; l'enregistrement part vers /api/journal)
 //   /apercu?vue=parcours                      (parcours, journal et scans fictifs)
 export const dynamic = "force-dynamic";
 
@@ -47,6 +49,10 @@ const XP = { total: 1170, niveau: 5, xpDansNiveau: 70, xpPourSuivant: 400, pourc
 export default async function Apercu({ searchParams }) {
   if (process.env.NODE_ENV === "production") notFound();
   const q = await searchParams;
+  if (q.vue === "journal") {
+    const entrees = SEMAINES.slice(-3).map((e, i) => ({ ...e, id: `fictif-${i}`, date: new Date(), texte: null, noteEtoiles: null }));
+    return <JournalClient entreesInitiales={entrees} mesures={[]} />;
+  }
   if (q.vue === "parcours") {
     const scans = [...SCANS, { ...SCAN, dateScan: new Date("2026-11-11T19:00:00"), scoreVisbody: 80, masseMusculaireKg: 68.7, masseGrasseKg: 18.6 }];
     return <ParcoursClient parcours={construireParcours(scans, SEMAINES, OBJECTIFS_DEFAUT)} />;

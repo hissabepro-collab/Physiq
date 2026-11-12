@@ -64,6 +64,9 @@ export default function JournalClient({ entreesInitiales, mesures }) {
   const [diete, setDiete] = useState(dejaSaisie?.joursDiete ?? []);
   const [mesureId, setMesureId] = useState(dejaSaisie?.mesureId ?? "");
   const [envoi, setEnvoi] = useState(false);
+  // Heure du dernier enregistrement de la semaine ouverte : le bilan reste
+  // ouvert et modifiable, on le met à jour au fil des jours.
+  const [enregistreA, setEnregistreA] = useState(null);
   const [surbrillance, setSurbrillance] = useState(false);
   const rafraichir = useRafraichir();
   const formulaireRef = useRef(null);
@@ -77,6 +80,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
   // mais hors de l'écran.
   function chargerSemaine(cle, { remonter = false } = {}) {
     setSemaine(cle);
+    setEnregistreA(null);
     const existante = entrees.find((e) => e.semaineIso === cle);
     setSeances(existante?.joursEntraines ?? []);
     setDiete(existante?.joursDiete ?? []);
@@ -93,6 +97,9 @@ export default function JournalClient({ entreesInitiales, mesures }) {
   }
 
   const moyenne = moyenneSaisie(nuits);
+  // Le bilan de la semaine ouverte existe déjà : le formulaire le modifie.
+  const dejaEnregistree = entrees.some((e) => e.semaineIso === semaine);
+  const estSemaineEnCours = semaine === cleSemaine(new Date());
 
   async function ajouter(e) {
     e.preventDefault();
@@ -112,7 +119,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
       if (res.ok) {
         const { entree } = await res.json();
         setEntrees((liste) => [entree, ...liste.filter((x) => x.id !== entree.id)]);
-        setMesureId("");
+        setEnregistreA(new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }));
             rafraichir(); // le tableau de bord doit voir ce bilan tout de suite
       }
     } finally {
@@ -180,6 +187,9 @@ export default function JournalClient({ entreesInitiales, mesures }) {
               ←
             </button>
             <span className="font-display text-sm font-bold">{libelleSemaine(semaine)}</span>
+            {estSemaineEnCours && (
+              <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10.5px] font-semibold text-accent">en cours</span>
+            )}
             {semaine !== cleSemaine(new Date()) && (
               <button
                 type="button"
@@ -242,17 +252,27 @@ export default function JournalClient({ entreesInitiales, mesures }) {
             </select>
           </label>
         </div>
-        <button
-          type="submit"
-          disabled={envoi}
-          className="mt-4 inline-flex min-h-11 items-center rounded-full border border-accent/60 bg-accent-soft px-4 py-2 text-sm font-semibold disabled:opacity-40"
-        >
-          {envoi ? "Enregistrement..." : "Enregistrer le bilan de la semaine"}
-        </button>
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <button
+            type="submit"
+            disabled={envoi}
+            className="inline-flex min-h-11 items-center rounded-full border border-accent/60 bg-accent-soft px-4 py-2 text-sm font-semibold disabled:opacity-40"
+          >
+            {envoi ? "Enregistrement..." : dejaEnregistree ? "Mettre à jour le bilan" : "Enregistrer le bilan de la semaine"}
+          </button>
+          <span role="status" className="text-[11.5px] text-foreground-muted">
+            {enregistreA
+              ? `✓ Enregistré à ${enregistreA}. Tu peux continuer à le modifier.`
+              : dejaEnregistree
+              ? "Déjà enregistré : modifie et mets à jour quand tu veux."
+              : null}
+          </span>
+        </div>
       </form>
 
       <div className="mt-6 space-y-3">
-        {entrees.map((e) => (
+        {/* La semaine ouverte dans le formulaire n'est pas répétée ici. */}
+        {entrees.filter((e) => e.semaineIso !== semaine).map((e) => (
           <div key={e.id} className="rounded-2xl border border-border-soft bg-background-soft/40 p-4">
             <div className="flex items-start justify-between">
               <div>
@@ -300,7 +320,7 @@ export default function JournalClient({ entreesInitiales, mesures }) {
             )}
           </div>
         ))}
-        {entrees.length === 0 && <p className="text-sm text-foreground-muted">Aucune entrée pour l'instant.</p>}
+        {entrees.filter((e) => e.semaineIso !== semaine).length === 0 && <p className="text-sm text-foreground-muted">Aucune autre semaine enregistrée pour l&apos;instant.</p>}
       </div>
     </div>
   );
