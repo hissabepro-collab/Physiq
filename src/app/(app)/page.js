@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { calculerRang } from "@/lib/rang";
 import { calculerXp } from "@/lib/xp";
-import { calculerAxesProfil } from "@/lib/profilStats";
+import { calculerBilan } from "@/lib/profilStats";
 import EvolutionChart from "@/components/EvolutionChart";
 import StatCard from "@/components/StatCard";
 import ProfilCard from "@/components/ProfilCard";
@@ -59,7 +59,7 @@ export default async function AccueilPage() {
   const prenom = profil?.prenom || "Issa";
   const rang = derniere ? calculerRang(derniere.scoreVisbody) : null;
   const jours = derniere ? joursDepuis(derniere.dateScan) : null;
-  const axesProfil = derniere ? calculerAxesProfil(mesures) : null;
+  const bilanCorps = derniere ? calculerBilan(mesures) : null;
 
   const recentes = mesures.slice(-8);
   const chartSeries = [
@@ -190,9 +190,18 @@ export default async function AccueilPage() {
           </div>
         )}
 
+        {/* Mois précédents : juste après la semaine et le mois en cours. */}
+        {moisPrecedents.length > 0 && (
+          <div className="lg:col-span-12">
+            <Link href="/journal" className="block rounded-[22px]">
+              <HistoriqueMois mois={moisPrecedents} />
+            </Link>
+          </div>
+        )}
+
         {derniere && (
           <>
-            <GlareCard className="p-5 sm:p-6 lg:col-span-8" tiltIntensity={3}>
+            <GlareCard className="p-5 sm:p-6 lg:col-span-12" tiltIntensity={3}>
               <div className="flex items-baseline justify-between">
                 <span className="etiquette">Évolution</span>
                 <Link
@@ -215,23 +224,16 @@ export default async function AccueilPage() {
               </div>
             </GlareCard>
 
-            {axesProfil && (
-              <Link href="/comparer" className="block rounded-[22px] lg:col-span-4">
-                <GlareCard className="h-full p-5 sm:p-6" tiltIntensity={4}>
-                  <ProfilCard axes={axesProfil} />
+            {bilanCorps && (
+              <Link href="/comparer" className="block rounded-[22px] lg:col-span-12">
+                <GlareCard className="h-full p-5 sm:p-6" tiltIntensity={2}>
+                  <ProfilCard bilan={bilanCorps} />
                 </GlareCard>
               </Link>
             )}
           </>
         )}
 
-        {moisPrecedents.length > 0 && (
-          <div className="lg:col-span-12">
-            <Link href="/journal" className="block rounded-[22px]">
-              <HistoriqueMois mois={moisPrecedents} />
-            </Link>
-          </div>
-        )}
 
         <Link href="/parcours" className="group block rounded-[22px] lg:col-span-12">
           <GlareCard className="p-5" tiltIntensity={2}>

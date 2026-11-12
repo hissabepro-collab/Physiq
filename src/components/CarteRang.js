@@ -4,6 +4,17 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ORDRE_RANGS } from "@/lib/rang";
 import { MATERIAUX, apparenceRang, variablesMateriau } from "@/lib/materiaux";
+import {
+  BRAISES,
+  ECLATS,
+  ETINCELLES,
+  ETOILES,
+  GOUTTES,
+  POUSSIERE,
+  reglagesFete,
+  scintillementsRepos,
+} from "@/lib/celebrations";
+import "./carte-rang.css";
 
 // Carte de rang, pièce maîtresse du tableau de bord.
 //
@@ -20,13 +31,12 @@ import { MATERIAUX, apparenceRang, variablesMateriau } from "@/lib/materiaux";
 // (WebKit) recalculait alors toute la carte à chaque image — mesuré à 107 ms
 // par image au lieu de 16 dans le moteur de Safari (12/11/2026).
 //
-// CÉLÉBRATION D'UNE MONTÉE DE RANG. Toujours la même base — un tour en 3D
-// modérée qui bouge (élan, rotation, balancement, atterrissage) pendant lequel
-// la carte devient une plaque de métal pleine, sans les infos — et chaque
-// palier AJOUTE un effet par-dessus. Plus le rang est haut, plus la fête est
-// riche (voir EFFETS). La nouvelle matière apparaît pendant le tour.
+// CÉLÉBRATION D'UNE MONTÉE DE RANG. Une signature par lettre, enrichie par le
+// signe (voir lib/celebrations) : D impact, C lame, B forge, A couronne,
+// S ascension. Pendant le tour, la carte devient une plaque de métal pleine
+// (sans les infos) et la nouvelle matière apparaît quand elle est de dos.
 // Le passage de niveau (habitudes) a sa propre animation, sans tour : la
-// barre d'XP se remplit, déborde, et le badge rebondit.
+// barre d'XP se remplit, déborde, et le badge rebondit. Styles : carte-rang.css.
 //
 // ANIMATIONS RÉDUITES. Volontairement ignoré (choix de l'utilisateur) : la
 // carte tourne même si le système demande moins d'animations.
@@ -38,23 +48,6 @@ import { MATERIAUX, apparenceRang, variablesMateriau } from "@/lib/materiaux";
 
 const borne = (v) => Math.max(-1, Math.min(1, v));
 const nombre = (n) => n.toLocaleString("fr-FR");
-
-// Effets ajoutés palier par palier (index dans ORDRE_RANGS : 0 = D … 12 = S+).
-// Chaque palier garde tous les effets des paliers inférieurs.
-const EFFETS = {
-  eclat: 1, //        C-  : un trait de lumière traverse la carte à l'atterrissage
-  aura: 2, //         C   : un halo s'allume derrière la carte
-  etoiles: 3, //      C+  : des étoiles éclosent autour de la carte
-  eclats: 4, //       B-  : des éclats de métal jaillissent (plus nombreux à chaque palier)
-  onde: 5, //         B   : une onde part de la carte
-  doubleTour: 6, //   B+  : deux tours au lieu d'un
-  elan: 7, //         A-  : la carte s'avance vers soi en tournant
-  rayons: 8, //       A   : des rayons tournent derrière la carte
-  ondeDouble: 9, //   A+  : seconde onde, halo plus intense
-  fissures: 10, //    S-  : avant le tour, la carte se fissure et éclate en lumière
-  spectre: 11, //     S   : la plaque prend tout le spectre pendant le tour
-  pluie: 12, //       S+  : une pluie de lumière tombe autour de la carte
-};
 
 // Ce que l'appareil a déjà montré : on ne célèbre qu'une montée nouvelle.
 // Stocké sur l'appareil (pas en base) : une célébration manquée sur un autre
@@ -81,7 +74,7 @@ function titreMontee(avant, lettre) {
   if (!avant) return "Rang débloqué";
   if (avant[0] === lettre[0]) return "Nouveau rang";
   const nom = MATERIAUX[apparenceRang(lettre).materiau].nom.toLowerCase();
-  return nom === "or" ? "Passage à l'or" : `Passage au ${nom}`;
+  return /^[aeiouy]/.test(nom) ? `Passage à l'${nom}` : `Passage au ${nom}`;
 }
 
 // La comparaison se fait UNE fois par chargement de page, et son résultat est
@@ -132,54 +125,6 @@ function verdictCelebration(lettre, niveau) {
   return message;
 }
 
-/** Minutage et réglages de la célébration d'un rang (index 0 → 12). */
-function reglagesFete(index) {
-  const a = (cle) => index >= EFFETS[cle];
-  const prelude = a("fissures") ? 1150 : 0; // fissures avant le tour
-  const duree = Math.round((a("doubleTour") ? 1900 : 1500) + index * 25);
-  return {
-    a,
-    prelude,
-    duree,
-    tours: a("doubleTour") ? 720 : 360,
-    avance: a("elan") ? 1.07 : 1.03,
-    // La nouvelle matière s'installe quand la carte est de dos.
-    bascule: prelude + Math.round(duree * 0.3),
-    atterrissage: prelude + Math.round(duree * 0.86),
-    fin: prelude + duree + 1300,
-    nbEclats: a("eclats") ? Math.min(30, 8 + (index - EFFETS.eclats) * 3) : 0,
-  };
-}
-
-// Éclats, étoiles, gouttes : positions fixes (rendu stable, pas de hasard).
-const ECLATS = Array.from({ length: 30 }, (_, i) => ({
-  angle: i * 12 + (i % 2 ? 5 : -3),
-  distance: 120 + ((i * 37) % 100),
-  largeur: 3 + (i % 3) * 2,
-  hauteur: 6 + (i % 4) * 3,
-  tour: (i % 2 ? 1 : -1) * (180 + (i % 5) * 90),
-  delai: (i % 6) * 30,
-  clair: i % 3 === 0,
-}));
-const ETOILES = [
-  { x: "-3%", y: "12%" }, { x: "18%", y: "-6%" }, { x: "52%", y: "-7%" }, { x: "86%", y: "-5%" },
-  { x: "102%", y: "30%" }, { x: "101%", y: "74%" }, { x: "78%", y: "104%" }, { x: "40%", y: "105%" },
-  { x: "6%", y: "102%" }, { x: "-4%", y: "60%" },
-];
-const GOUTTES = Array.from({ length: 18 }, (_, i) => ({
-  x: `${(i * 53) % 100}%`,
-  delai: (i * 97) % 900,
-  duree: 1100 + ((i * 131) % 700),
-  taille: 2 + (i % 3),
-}));
-const ETINCELLES = [
-  { x: "14%", y: "30%", d: "0s" },
-  { x: "34%", y: "64%", d: "0.6s" },
-  { x: "26%", y: "16%", d: "1.1s" },
-  { x: "42%", y: "38%", d: "1.6s" },
-  { x: "9%", y: "58%", d: "2.2s" },
-];
-
 // Programme une célébration : changement de matière au bon moment, effets,
 // puis retour au calme (le badge reste jusqu'au toucher). Renvoie les
 // minuteurs, à annuler si la carte disparaît entre-temps.
@@ -189,7 +134,7 @@ function programmerFete(message, { lettre, setFete, setRangTransitoire, apresCal
   const DEPART = 300;
   plus(0, () => setFete(null));
   if (message.type === "rang") {
-    const r = reglagesFete(ORDRE_RANGS.indexOf(message.cible));
+    const r = reglagesFete(message.cible);
     if (message.avant) plus(0, () => setRangTransitoire(message.avant));
     plus(DEPART, () => setFete({ ...message, reglages: r }));
     plus(DEPART + r.bascule, () => setRangTransitoire(message.cible === lettre ? null : message.cible));
@@ -356,10 +301,12 @@ export default function CarteRang({ rang, jours, xp, demo = null }) {
     setTimeout(() => setFete(null), 380);
   }
 
+
   const lettreAffichee = rangTransitoire ?? lettre;
   const { materiau, finition } = apparenceRang(lettreAffichee);
   const r = type === "rang" ? fete.reglages : null;
-  const a = (cle) => Boolean(r?.a(cle));
+  const fx = r?.fx ?? {};
+  const scintillements = rang ? scintillementsRepos(materiau, finition) : [];
 
   // Variables de minutage, lues par les animations CSS.
   const tempo = r
@@ -367,7 +314,6 @@ export default function CarteRang({ rang, jours, xp, demo = null }) {
         "--prelude": `${r.prelude}ms`,
         "--duree": `${r.duree}ms`,
         "--tours": `${r.tours}deg`,
-        "--avance": r.avance,
         "--atterrissage": `${r.atterrissage}ms`,
       }
     : {};
@@ -378,7 +324,9 @@ export default function CarteRang({ rang, jours, xp, demo = null }) {
   return (
     <div
       className={`carte-rang-scene relative h-full ${type ? "z-20" : ""}`}
+      data-materiau={materiau}
       data-finition={finition}
+      data-info={r?.info}
       style={{ ...variablesMateriau(materiau), ...tempo }}
     >
       {fete && (
@@ -400,12 +348,13 @@ export default function CarteRang({ rang, jours, xp, demo = null }) {
       )}
 
       {/* Derrière la carte */}
-      {a("rayons") && <div className="fx-rayons pointer-events-none absolute left-1/2 top-1/2" aria-hidden="true" />}
-      {a("aura") && <div className="fx-aura pointer-events-none absolute inset-0 rounded-[28px]" aria-hidden="true" />}
-      {a("onde") && <div className="fx-onde pointer-events-none absolute inset-0 rounded-[28px]" aria-hidden="true" />}
-      {a("ondeDouble") && <div className="fx-onde fx-onde-2 pointer-events-none absolute inset-0 rounded-[28px]" aria-hidden="true" />}
+      {fx.rayons && <div className="fx-rayons pointer-events-none absolute left-1/2 top-1/2" aria-hidden="true" />}
+      {fx.aura && <div className="fx-aura pointer-events-none absolute inset-0 rounded-[28px]" aria-hidden="true" />}
+      {fx.onde && <div className="fx-onde pointer-events-none absolute inset-0 rounded-[28px]" aria-hidden="true" />}
+      {fx.ondeDouble && <div className="fx-onde fx-onde-2 pointer-events-none absolute inset-0 rounded-[28px]" aria-hidden="true" />}
+      {fx.grandeOnde && <div className="fx-grande-onde pointer-events-none absolute inset-0 rounded-[28px]" aria-hidden="true" />}
 
-      <div className={`h-full ${type === "rang" ? "fete-tour" : ""}`} style={{ transformStyle: "preserve-3d" }}>
+      <div className={`h-full ${r ? `fete-tour tour-${r.famille}` : ""}`} style={{ transformStyle: "preserve-3d" }}>
         <div
           ref={carteRef}
           className="carte-rang relative flex h-full min-h-[260px] flex-col rounded-[28px]"
@@ -416,18 +365,27 @@ export default function CarteRang({ rang, jours, xp, demo = null }) {
           onClick={activerGyroscope}
         >
           <div className="carte-rang-face relative flex flex-1 flex-col overflow-hidden rounded-[27px] bg-[#06080c] p-5 sm:p-6">
-            {finition === "brosse" && <div className="carte-rang-brosse pointer-events-none absolute inset-0" />}
+            <div className="carte-rang-texture pointer-events-none absolute inset-0" />
             <div ref={filmRef} className="carte-rang-film pointer-events-none absolute inset-0" />
             <div ref={refletRef} className="carte-rang-reflet pointer-events-none absolute inset-0" />
+            {scintillements.map((e, i) => (
+              <span
+                key={i}
+                className={`scint scint-${e.forme} pointer-events-none absolute`}
+                style={{ left: e.x, top: e.y, animationDelay: e.retard }}
+                aria-hidden="true"
+              />
+            ))}
 
             {/* Pendant le tour : la face devient une plaque de métal pleine. */}
-            {type === "rang" && (
+            {r && (
               <div className="fx-plaque pointer-events-none absolute inset-0 z-10" aria-hidden="true">
-                {a("spectre") && <div className="fx-spectre absolute inset-0" />}
+                {fx.spectre && <div className="fx-spectre absolute inset-0" />}
               </div>
             )}
-            {a("eclat") && <div className="fx-eclat pointer-events-none absolute inset-0 z-10" aria-hidden="true" />}
-            {a("fissures") && (
+            {fx.chaleur && <div className="fx-chaleur pointer-events-none absolute inset-0 z-10 rounded-[27px]" aria-hidden="true" />}
+            {fx.trait && <div className="fx-trait pointer-events-none absolute inset-0 z-10" aria-hidden="true" />}
+            {fx.fissures && (
               <>
                 <svg
                   className="fx-fissures pointer-events-none absolute inset-0 z-10 h-full w-full"
@@ -453,19 +411,11 @@ export default function CarteRang({ rang, jours, xp, demo = null }) {
             </div>
 
             <div className="carte-rang-info relative mt-2 flex flex-1 items-center justify-between gap-4">
-              <span className="relative">
-                <span ref={lettreRef} className="carte-rang-lettre carte-rang-texte-matiere tabular select-none text-[104px] font-semibold leading-none tracking-[-0.06em] sm:text-[128px]">
-                  {rang ? lettreAffichee : "?"}
-                </span>
-                {rang &&
-                  finition === "etincelant" &&
-                  ETINCELLES.map((e, i) => (
-                    <span
-                      key={i}
-                      className="carte-rang-etincelle pointer-events-none absolute"
-                      style={{ left: e.x, top: e.y, animationDelay: e.d }}
-                    />
-                  ))}
+              <span
+                ref={lettreRef}
+                className="carte-rang-lettre carte-rang-texte-matiere tabular select-none text-[104px] font-semibold leading-none tracking-[-0.06em] sm:text-[128px]"
+              >
+                {rang ? lettreAffichee : "?"}
               </span>
               {rang ? (
                 <div className="text-right">
@@ -558,18 +508,25 @@ export default function CarteRang({ rang, jours, xp, demo = null }) {
             </div>
           </div>
 
-          {/* Devant la carte */}
-          {r?.nbEclats > 0 && (
+          {/* Devant la carte, partant de son centre */}
+          {(fx.etincelles > 0 || fx.paillettes > 0 || fx.eclatsPrisme > 0) && (
             <div className="pointer-events-none absolute left-1/2 top-1/2 z-20" aria-hidden="true">
-              {ECLATS.slice(0, r.nbEclats).map((e, i) => (
+              {ETINCELLES.slice(0, fx.etincelles).map((e, i) => (
                 <span
-                  key={i}
-                  className={`fx-eclat-piece absolute ${e.clair ? "fx-clair" : ""}`}
+                  key={`e${i}`}
+                  className="fx-etincelle absolute"
+                  style={{ "--angle": `${e.angle}deg`, "--distance": `${e.distance}px`, "--retard": `${e.retard}ms` }}
+                />
+              ))}
+              {ECLATS.slice(0, fx.paillettes || fx.eclatsPrisme).map((e, i) => (
+                <span
+                  key={`p${i}`}
+                  className={`fx-eclat-piece absolute ${fx.eclatsPrisme ? "fx-eclat-prisme" : e.clair ? "fx-clair" : ""}`}
                   style={{
                     "--angle": `${e.angle}deg`,
                     "--distance": `${e.distance}px`,
                     "--tour": `${e.tour}deg`,
-                    "--retard": `${e.delai}ms`,
+                    "--retard": `${e.retard}ms`,
                     width: e.largeur,
                     height: e.hauteur,
                   }}
@@ -580,282 +537,50 @@ export default function CarteRang({ rang, jours, xp, demo = null }) {
         </div>
       </div>
 
-      {a("etoiles") &&
-        ETOILES.map((e, i) => (
-          <span
-            key={i}
-            className="fx-etoile pointer-events-none absolute z-20"
-            style={{ left: e.x, top: e.y, "--retard": `${(i % 5) * 70}ms` }}
-            aria-hidden="true"
-          />
-        ))}
-      {a("pluie") && (
-        <div className="fx-pluie pointer-events-none absolute inset-x-[-10%] -top-10 bottom-0 z-20" aria-hidden="true">
-          {GOUTTES.map((g, i) => (
+      {/* Autour de la carte */}
+      {POUSSIERE.slice(0, fx.poussiere ?? 0).map((p, i) => (
+        <span
+          key={`d${i}`}
+          className="fx-poussiere pointer-events-none absolute z-20"
+          style={{ width: p.taille * 3, height: p.taille * 2, "--dx": `${p.dx}px`, "--dy": `${p.dy}px`, "--retard": `${p.retard}ms` }}
+          aria-hidden="true"
+        />
+      ))}
+      {BRAISES.slice(0, fx.braises ?? 0).map((b, i) => (
+        <span
+          key={`b${i}`}
+          className="fx-braise pointer-events-none absolute z-20"
+          style={{
+            left: b.x,
+            width: b.taille,
+            height: b.taille,
+            "--dx": `${b.dx}px`,
+            "--hauteur": `${b.hauteur}px`,
+            "--retard": `${b.retard}ms`,
+            "--duree-p": `${b.duree}ms`,
+          }}
+          aria-hidden="true"
+        />
+      ))}
+      {ETOILES.slice(0, fx.etoiles ?? 0).map((e, i) => (
+        <span
+          key={`s${i}`}
+          className="fx-etoile pointer-events-none absolute z-20"
+          style={{ left: e.x, top: e.y, width: e.taille, height: e.taille, "--retard": `${e.retard}ms` }}
+          aria-hidden="true"
+        />
+      ))}
+      {fx.pluie > 0 && (
+        <div className="pointer-events-none absolute inset-x-[-10%] -top-10 bottom-0 z-20" aria-hidden="true">
+          {GOUTTES.slice(0, fx.pluie).map((g, i) => (
             <span
               key={i}
               className="fx-goutte absolute top-0"
-              style={{ left: g.x, width: g.taille, "--retard": `${g.delai}ms`, "--chute": `${g.duree}ms` }}
+              style={{ left: g.x, width: g.taille, "--retard": `${g.retard}ms`, "--chute": `${g.duree}ms` }}
             />
           ))}
         </div>
       )}
-
-      <style>{`
-        .carte-rang-scene { perspective: 1600px; }
-        .carte-rang {
-          padding: 1px;
-          transform-style: preserve-3d;
-          background: linear-gradient(125deg, var(--c1), var(--c2), var(--c3), var(--c2));
-          box-shadow: 0 30px 60px -30px rgba(0,0,0,0.9), 0 0 50px -28px var(--lueur);
-          will-change: transform;
-          touch-action: pan-y;
-          -webkit-tap-highlight-color: transparent;
-        }
-        /* Contenu décollé d'un pixel du fond : sur le même plan, Safari ne
-           savait plus lequel afficher devant quand la carte s'inclinait, et
-           les infos disparaissaient. Dos caché : pendant un tour, on voit le
-           métal du dos de la carte. */
-        .carte-rang-face {
-          transform: translateZ(1px);
-          backface-visibility: hidden;
-          -webkit-backface-visibility: hidden;
-        }
-        [data-finition="etincelant"] .carte-rang {
-          padding: 1.5px;
-          box-shadow: 0 30px 60px -30px rgba(0,0,0,0.9), 0 0 60px -20px var(--lueur);
-        }
-        .carte-rang-texte-matiere {
-          display: inline-block;
-          background-image: linear-gradient(100deg, var(--l1), var(--l2), var(--l3));
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-        }
-        .carte-rang-barre-corps { background: linear-gradient(90deg, var(--c3), var(--c2)); opacity: 0.8; }
-
-        /* Film et reflet : de grandes couches qui glissent (transform) au lieu
-           de dégradés redessinés à chaque image. */
-        /* Couches légères : peu débordantes et sans mode de fusion. Un film
-           2,2 fois plus grand que la carte, en « color-dodge », coûtait à lui
-           seul une bonne part de chaque image dans le moteur de Safari. */
-        .carte-rang-film {
-          inset: -25%;
-          background: repeating-linear-gradient(115deg,
-            transparent 0%, var(--f1) 6%, rgba(255,255,255,0.4) 11%, var(--f2) 16%, transparent 22%);
-          opacity: 0.07;
-        }
-        [data-finition="brosse"] .carte-rang-film { opacity: 0.03; }
-        [data-finition="etincelant"] .carte-rang-film { opacity: 0.11; }
-        .carte-rang-brosse {
-          background: repeating-linear-gradient(90deg, rgba(255,255,255,0.022) 0 1px, transparent 1px 3px);
-        }
-        .carte-rang-reflet {
-          inset: -25%;
-          background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.09), transparent 40%);
-        }
-        [data-finition="brosse"] .carte-rang-reflet { opacity: 0.4; }
-        /* Pas de filtre sur la lettre : recalculé à chaque image d'un
-           mouvement 3D, c'était la principale cause de saccades. */
-        [data-finition="brosse"] .carte-rang-lettre { opacity: 0.82; }
-        .carte-rang-etincelle {
-          width: 9px; height: 9px; background: #fff;
-          clip-path: polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);
-          animation: etincelle 2.6s ease-in-out infinite;
-          opacity: 0;
-        }
-        @keyframes etincelle {
-          0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
-          45% { opacity: 1; transform: scale(1) rotate(45deg); }
-          60% { opacity: 0; transform: scale(0.4) rotate(70deg); }
-        }
-
-        /* ── Badge ─────────────────────────────────────────────────────── */
-        .carte-rang-badge {
-          transform: translate(-50%, -50%);
-          box-shadow: 0 0 40px -6px var(--lueur);
-          animation: badge-entree 0.7s calc(var(--atterrissage, 900ms) + 100ms) cubic-bezier(0.34, 1.56, 0.64, 1) both;
-        }
-        .carte-rang-badge.badge-niveau { animation: badge-entree 0.6s 1s cubic-bezier(0.34, 1.9, 0.64, 1) both; }
-        .carte-rang-badge.badge-sortie { animation: badge-sortie 0.38s cubic-bezier(0.4, 0, 1, 1) both; }
-        @keyframes badge-entree {
-          from { opacity: 0; transform: translate(-50%, -10%) scale(0.8); }
-          to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        }
-        @keyframes badge-sortie {
-          from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-          to { opacity: 0; transform: translate(-50%, -80%) scale(0.92); }
-        }
-
-        /* ── Le tour (base commune à tous les paliers) ──────────────────
-           Élan en arrière, rotation qui bascule légèrement d'avant en
-           arrière, atterrissage avec un petit dépassement. 3D modérée :
-           perspective longue, pas de déplacement en profondeur. */
-        .fete-tour {
-          will-change: transform;
-          animation: tour var(--duree) var(--prelude) both;
-        }
-        @keyframes tour {
-          0% { transform: rotateY(0deg) rotateX(0deg) scale(1); animation-timing-function: cubic-bezier(0.33, 0, 0.5, 1); }
-          10% { transform: rotateY(-16deg) rotateX(4deg) scale(0.985); animation-timing-function: cubic-bezier(0.5, 0, 0.25, 1); }
-          50% { transform: rotateY(calc(var(--tours) * 0.55)) rotateX(-6deg) scale(var(--avance)); animation-timing-function: cubic-bezier(0.25, 0, 0.25, 1); }
-          86% { transform: rotateY(calc(var(--tours) + 7deg)) rotateX(2deg) scale(1); animation-timing-function: cubic-bezier(0.3, 0, 0.3, 1); }
-          100% { transform: rotateY(var(--tours)) rotateX(0deg) scale(1); }
-        }
-        /* Pendant le tour, ni infos ni couches coûteuses : la face est une
-           plaque de métal, le dos aussi. */
-        .fete-tour .carte-rang-film, .fete-tour .carte-rang-reflet, .fete-tour .carte-rang-etincelle { display: none; }
-        .fete-tour .carte-rang-info { animation: info-tour var(--duree) var(--prelude) both; }
-        @keyframes info-tour {
-          0% { opacity: 1; } 7% { opacity: 0; } 84% { opacity: 0; } 100% { opacity: 1; }
-        }
-        .fx-plaque {
-          background:
-            repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 3px),
-            linear-gradient(125deg, var(--c3), var(--c2) 45%, var(--c1) 60%, var(--c3));
-          opacity: 0;
-          animation: plaque var(--duree) var(--prelude) both;
-        }
-        @keyframes plaque {
-          0% { opacity: 0; } 7% { opacity: 1; } 84% { opacity: 1; } 100% { opacity: 0; }
-        }
-
-        /* ── Effets ajoutés palier par palier ────────────────────────── */
-        .fx-eclat {
-          background: linear-gradient(105deg, transparent 32%, rgba(255,255,255,0.4) 48%, var(--f1) 52%, transparent 68%);
-          transform: translateX(-130%);
-          animation: eclat 1.1s var(--atterrissage) cubic-bezier(0.4, 0, 0.2, 1) both;
-        }
-        @keyframes eclat { to { transform: translateX(130%); } }
-
-        /* Lueur pleine (et non une ombre portée autour de la carte : son
-           intérieur restait sombre, on voyait un rectangle noir pendant le tour). */
-        .fx-aura {
-          inset: -18% !important;
-          border-radius: 50%;
-          background: radial-gradient(closest-side, var(--lueur), transparent);
-          opacity: 0;
-          animation: aura calc(var(--duree) + 600ms) var(--prelude) cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-        @keyframes aura {
-          0% { opacity: 0; transform: scale(0.94); }
-          45% { opacity: 1; transform: scale(1.02); }
-          100% { opacity: 0; transform: scale(1.06); }
-        }
-
-        .fx-etoile {
-          width: 12px; height: 12px; margin: -6px 0 0 -6px; background: var(--l1);
-          clip-path: polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);
-          opacity: 0;
-          animation: etoile 0.9s calc(var(--atterrissage) + var(--retard)) cubic-bezier(0.34, 1.56, 0.64, 1) both;
-        }
-        @keyframes etoile {
-          0% { opacity: 0; transform: scale(0) rotate(0deg); }
-          45% { opacity: 1; transform: scale(1.2) rotate(60deg); }
-          100% { opacity: 0; transform: scale(0.4) rotate(120deg); }
-        }
-
-        .fx-eclat-piece {
-          left: 0; top: 0; border-radius: 1px;
-          background: linear-gradient(135deg, var(--l1), var(--l2));
-          opacity: 0;
-          animation: eclat-vol 1.3s calc(var(--atterrissage) + var(--retard)) cubic-bezier(0.12, 0.8, 0.3, 1) both;
-        }
-        .fx-eclat-piece.fx-clair { background: #fff; }
-        @keyframes eclat-vol {
-          0% { opacity: 0; transform: rotate(var(--angle)) translateX(8px) rotate(0deg) scale(1); }
-          2% { opacity: 1; }
-          70% { opacity: 1; }
-          100% { opacity: 0; transform: rotate(var(--angle)) translateX(var(--distance)) rotate(var(--tour)) scale(0.4); }
-        }
-
-        .fx-onde {
-          border: 1.5px solid var(--l1);
-          opacity: 0;
-          animation: onde 1.3s var(--atterrissage) cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
-        .fx-onde-2 { animation-delay: calc(var(--atterrissage) + 220ms); border-width: 1px; }
-        /* Première image à opacité nulle : pendant son délai, l'animation
-           applique sa première image, et un cadre restait visible tout le tour. */
-        @keyframes onde {
-          0% { opacity: 0; transform: scale(1); }
-          2% { opacity: 0.9; transform: scale(1); }
-          100% { opacity: 0; transform: scale(1.35); }
-        }
-
-        .fx-rayons {
-          width: 180%; aspect-ratio: 1; margin: -90% 0 0 -90%;
-          background: repeating-conic-gradient(from 0deg, var(--lueur) 0deg 5deg, transparent 5deg 22deg);
-          -webkit-mask-image: radial-gradient(circle, #000 15%, transparent 62%);
-          mask-image: radial-gradient(circle, #000 15%, transparent 62%);
-          opacity: 0;
-          animation: rayons calc(var(--duree) + 1200ms) var(--prelude) ease-out both;
-        }
-        @keyframes rayons {
-          0% { opacity: 0; transform: rotate(0deg) scale(0.8); }
-          30% { opacity: 1; }
-          100% { opacity: 0; transform: rotate(70deg) scale(1.05); }
-        }
-
-        .fx-fissures polyline {
-          fill: none; stroke: #fff; stroke-width: 0.6; vector-effect: non-scaling-stroke;
-          stroke-dasharray: 160; stroke-dashoffset: 160;
-          animation: fissure 1.05s cubic-bezier(0.5, 0, 0.9, 0.5) both, fissure-fin 0.35s 1.1s ease-out both;
-        }
-        @keyframes fissure { to { stroke-dashoffset: 0; } }
-        @keyframes fissure-fin { to { opacity: 0; } }
-        .fx-eclair {
-          background: radial-gradient(circle at 50% 48%, #fff, var(--f1) 40%, transparent 75%);
-          opacity: 0;
-          animation: eclair 0.8s 1.05s ease-out both;
-        }
-        @keyframes eclair { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; } }
-
-        .fx-spectre {
-          background: linear-gradient(110deg, transparent 20%, rgba(143,227,255,0.7) 38%, rgba(228,236,243,0.8) 50%, rgba(185,164,255,0.7) 62%, transparent 80%);
-          background-size: 100% 100%;
-          mix-blend-mode: screen;
-          transform: translateX(-100%);
-          animation: spectre var(--duree) var(--prelude) linear both;
-        }
-        @keyframes spectre { to { transform: translateX(100%); } }
-
-        .fx-goutte {
-          height: 34px; border-radius: 2px;
-          background: linear-gradient(180deg, transparent, var(--l1));
-          opacity: 0;
-          animation: chute var(--chute) calc(var(--atterrissage) + var(--retard)) cubic-bezier(0.4, 0, 1, 1) both;
-        }
-        @keyframes chute {
-          0% { opacity: 0; transform: translateY(-20px); }
-          15% { opacity: 0.9; }
-          100% { opacity: 0; transform: translateY(380px); }
-        }
-
-        /* ── Niveau (habitudes) : la barre déborde, le badge rebondit ── */
-        .barre-debordement {
-          width: 100%;
-          transform-origin: 0 50%;
-          background: linear-gradient(90deg, var(--accent), #fff);
-          animation: debordement 1.7s 0.4s cubic-bezier(0.65, 0, 0.35, 1) both;
-        }
-        @keyframes debordement {
-          0% { transform: scaleX(0); opacity: 1; }
-          55% { transform: scaleX(1); opacity: 1; }
-          100% { transform: scaleX(1); opacity: 0; }
-        }
-        .puce-rebond { animation: puce-rebond 0.7s 1.35s cubic-bezier(0.34, 1.9, 0.64, 1) both; }
-        @keyframes puce-rebond {
-          0% { transform: scale(1); }
-          40% { transform: scale(1.45); }
-          100% { transform: scale(1); }
-        }
-
-        /* Pas de version « animations réduites » : décision de l'utilisateur
-           (12/11/2026). Son Windows a les effets d'animation désactivés, et la
-           version en fondus, sans rotation, ressemblait à un bug. Appli
-           personnelle, mono-utilisateur : la carte tourne toujours. */
-      `}</style>
     </div>
   );
 }

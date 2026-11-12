@@ -34,20 +34,25 @@ export default function RangsClient({ meilleurScore, scoreActuel }) {
 
   // Rang affiché dans la grande carte, et clé qui relance son animation.
   const [choisi, setChoisi] = useState(meilleur?.label ?? null);
-  const [cle, setCle] = useState(0);
+  // Pas d'animation à l'arrivée sur la page (elle se jouait pendant la
+  // transition de page et la faisait paraître lente) : seulement au toucher.
+  const [cle, setCle] = useState(null);
   const [message, setMessage] = useState(null);
   const scene = useRef(null);
 
   // La grande carte est en haut : sur téléphone, on y remonte pour voir
   // l'animation qu'on vient de lancer depuis la grille.
+  // Si la grande carte est hors de l'écran, on y remonte D'ABORD, puis on
+  // lance l'animation : les deux en même temps faisaient saccader.
+  const attente = useRef(0);
   function jouer(label) {
     setChoisi(label);
-    setCle((c) => c + 1);
     setMessage(null);
+    clearTimeout(attente.current);
     const r = scene.current?.getBoundingClientRect();
-    if (r && (r.top < 0 || r.bottom > window.innerHeight)) {
-      scene.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    const horsEcran = r && (r.top < 0 || r.bottom > window.innerHeight);
+    if (horsEcran) scene.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    attente.current = setTimeout(() => setCle((c) => (c ?? 0) + 1), horsEcran ? 450 : 0);
   }
 
   const palierChoisi = PALIERS.find((p) => p.label === choisi);
@@ -123,7 +128,7 @@ export default function RangsClient({ meilleurScore, scoreActuel }) {
                     onClick={() => jouer(p.label)}
                     aria-pressed={selectionne}
                     aria-label={`Rejouer l'animation du rang ${p.label}`}
-                    className={`tuile-rang relative flex h-24 flex-col items-center justify-center rounded-2xl p-px transition ${
+                    className={`tuile-rang relative flex h-24 flex-col items-center justify-center rounded-2xl p-px ${
                       selectionne ? "tuile-rang-active" : ""
                     }`}
                     style={variablesMateriau(materiau)}
@@ -151,7 +156,7 @@ export default function RangsClient({ meilleurScore, scoreActuel }) {
       )}
 
       <style>{`
-        .tuile-rang { background: linear-gradient(125deg, var(--c1), var(--c2), var(--c3)); opacity: 0.85; }
+        .tuile-rang { background: linear-gradient(125deg, var(--c1), var(--c2), var(--c3)); opacity: 0.85; transition: opacity 0.2s, box-shadow 0.2s; }
         .tuile-rang:hover { opacity: 1; }
         .tuile-rang-active { opacity: 1; box-shadow: 0 0 24px -6px var(--lueur); }
         .tuile-rang .carte-rang-texte-matiere {

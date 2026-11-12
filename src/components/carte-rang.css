@@ -1,0 +1,369 @@
+/* ───────────────────────────────────────────────────────────────────────────
+   Carte de rang : matières, finitions et célébrations (voir lib/celebrations).
+   Règle de fluidité : on n'anime que transform et opacity. Les textures sont
+   des fonds STATIQUES, peints une fois. Le balancement est écrit directement
+   sur les éléments par le composant (jamais de variable CSS animée).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.carte-rang-scene { perspective: 1600px; }
+
+.carte-rang {
+  padding: var(--bord, 1px);
+  transform-style: preserve-3d;
+  background: linear-gradient(125deg, var(--c1), var(--c2), var(--c3), var(--c2));
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.9), 0 0 50px -26px var(--lueur);
+  will-change: transform;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+}
+/* Contenu décollé d'un pixel du fond (sinon Safari le masquait en inclinant)
+   et dos caché : pendant un tour, on voit le métal du dos. */
+.carte-rang-face {
+  transform: translateZ(1px);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* ── Matières : bord, texture et lueur propres à chacune ─────────────────── */
+[data-materiau="graphite"] { --bord: 1px; }
+[data-materiau="acier"] { --bord: 1px; }
+[data-materiau="bronze"] { --bord: 1.5px; }
+[data-materiau="or"] { --bord: 2px; }
+[data-materiau="prisme"] { --bord: 2px; }
+[data-finition="etincelant"] .carte-rang { padding: calc(var(--bord) + 0.5px); box-shadow: 0 30px 60px -30px rgba(0,0,0,0.9), 0 0 64px -18px var(--lueur); }
+
+.carte-rang-texture { opacity: var(--texture-force, 1); }
+[data-finition="brosse"] .carte-rang-texture { --texture-force: 1; }
+[data-finition="poli"] .carte-rang-texture { --texture-force: 0.7; }
+[data-finition="etincelant"] .carte-rang-texture { --texture-force: 0.5; }
+
+/* Graphite : grain mat, presque pas d'éclat. */
+[data-materiau="graphite"] .carte-rang-texture {
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23g)' opacity='0.5'/></svg>");
+  opacity: calc(var(--texture-force) * 0.18);
+}
+/* Acier : brossage horizontal net et reflet froid. */
+[data-materiau="acier"] .carte-rang-texture {
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.045) 0 1px, transparent 1px 3px),
+    linear-gradient(160deg, rgba(200,220,240,0.10), transparent 45%, rgba(200,220,240,0.06));
+}
+/* Bronze : métal martelé et chaleur sur les bords. */
+[data-materiau="bronze"] .carte-rang-texture {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(240,201,166,0.08) 0 2px, transparent 3px) 0 0 / 14px 14px,
+    radial-gradient(circle at 70% 70%, rgba(0,0,0,0.25) 0 2px, transparent 3px) 7px 7px / 14px 14px,
+    radial-gradient(ellipse at 100% 100%, rgba(226,150,100,0.16), transparent 55%);
+}
+/* Or : satin diagonal et lumière chaude dans un coin. */
+[data-materiau="or"] .carte-rang-texture {
+  background:
+    repeating-linear-gradient(135deg, rgba(255,241,196,0.035) 0 1px, transparent 1px 4px),
+    radial-gradient(ellipse at 0% 0%, rgba(255,226,150,0.20), transparent 55%),
+    radial-gradient(ellipse at 100% 100%, rgba(216,184,106,0.12), transparent 50%);
+}
+/* Prisme : voile holographique franc. */
+[data-materiau="prisme"] .carte-rang-texture {
+  background:
+    linear-gradient(115deg, rgba(143,227,255,0.16), rgba(228,236,243,0.05) 30%, rgba(185,164,255,0.18) 60%, rgba(143,227,255,0.10)),
+    radial-gradient(ellipse at 20% 0%, rgba(185,164,255,0.18), transparent 50%);
+}
+
+.carte-rang-texte-matiere {
+  display: inline-block;
+  background-image: linear-gradient(100deg, var(--l1), var(--l2), var(--l3));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.carte-rang-barre-corps { background: linear-gradient(90deg, var(--c3), var(--c2)); opacity: 0.85; }
+
+/* Film et reflet : couches qui glissent (le composant écrit leur transform). */
+.carte-rang-film {
+  inset: -25%;
+  background: repeating-linear-gradient(115deg, transparent 0%, var(--f1) 6%, rgba(255,255,255,0.4) 11%, var(--f2) 16%, transparent 22%);
+  opacity: 0.07;
+}
+[data-finition="brosse"] .carte-rang-film { opacity: 0.03; }
+[data-finition="etincelant"] .carte-rang-film { opacity: 0.12; }
+[data-materiau="prisme"] .carte-rang-film { opacity: 0.16; }
+.carte-rang-reflet {
+  inset: -25%;
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.09), transparent 40%);
+}
+[data-finition="brosse"] .carte-rang-reflet { opacity: 0.4; }
+[data-materiau="graphite"] .carte-rang-reflet { opacity: 0.25; }
+[data-finition="brosse"] .carte-rang-lettre { opacity: 0.84; }
+
+/* Scintillements au repos. */
+.scint { opacity: 0; animation: scint 2.6s ease-in-out infinite; }
+.scint-etoile, .scint-prisme {
+  width: 10px; height: 10px; margin: -5px 0 0 -5px;
+  clip-path: polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);
+}
+.scint-etoile { background: #fff4d2; }
+.scint-prisme { background: linear-gradient(135deg, #8fe3ff, #fff, #b9a4ff); }
+.scint-reflet { width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%; background: #fff; }
+@keyframes scint {
+  0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+  45% { opacity: 1; transform: scale(1) rotate(45deg); }
+  62% { opacity: 0; transform: scale(0.4) rotate(70deg); }
+}
+
+/* ── Badge ──────────────────────────────────────────────────────────────── */
+.carte-rang-badge {
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 40px -6px var(--lueur);
+  animation: badge-entree 0.7s calc(var(--atterrissage, 900ms) + 80ms) cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.carte-rang-badge.badge-niveau { animation: badge-entree 0.6s 1s cubic-bezier(0.34, 1.9, 0.64, 1) both; }
+.carte-rang-badge.badge-sortie { animation: badge-sortie 0.38s cubic-bezier(0.4, 0, 1, 1) both; }
+@keyframes badge-entree {
+  from { opacity: 0; transform: translate(-50%, -10%) scale(0.8); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes badge-sortie {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(-50%, -80%) scale(0.92); }
+}
+
+/* ── Le tour : une signature par lettre ─────────────────────────────────── */
+.fete-tour { will-change: transform; animation-duration: var(--duree); animation-delay: var(--prelude); animation-fill-mode: both; }
+.fete-tour .carte-rang-film, .fete-tour .carte-rang-reflet, .fete-tour .scint { display: none; }
+
+/* IMPORTANT : chaque étape d'une même animation écrit EXACTEMENT la même
+   liste de transformations, dans le même ordre (translateY rotateY rotateX
+   rotateZ scale). Sinon le navigateur interpole les matrices et prend le
+   chemin le plus court : les tours complets disparaissent (bug du 12/11). */
+
+/* D — Impact : se soulève, tourne, retombe lourdement. */
+.tour-D { animation-name: tour-d; }
+@keyframes tour-d {
+  0% { transform: translateY(0px) rotateY(0deg) rotateX(0deg) rotateZ(0deg) scale(1, 1); animation-timing-function: cubic-bezier(0.2, 0.8, 0.3, 1); }
+  18% { transform: translateY(-16px) rotateY(-12deg) rotateX(6deg) rotateZ(0deg) scale(1, 1); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+  60% { transform: translateY(-18px) rotateY(330deg) rotateX(-4deg) rotateZ(0deg) scale(1, 1); animation-timing-function: cubic-bezier(0.6, 0, 1, 0.6); }
+  74% { transform: translateY(6px) rotateY(360deg) rotateX(0deg) rotateZ(0deg) scale(1.03, 0.94); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1); }
+  86% { transform: translateY(-3px) rotateY(360deg) rotateX(0deg) rotateZ(0deg) scale(1, 1); animation-timing-function: ease-in-out; }
+  100% { transform: translateY(0px) rotateY(360deg) rotateX(0deg) rotateZ(0deg) scale(1, 1); }
+}
+/* C — Lame : tour vif, coup de fouet. */
+.tour-C { animation-name: tour-c; }
+@keyframes tour-c {
+  0% { transform: translateY(0px) rotateY(0deg) rotateX(0deg) rotateZ(0deg) scale(1, 1); animation-timing-function: cubic-bezier(0.5, 0, 0.7, 0.4); }
+  10% { transform: translateY(0px) rotateY(-22deg) rotateX(0deg) rotateZ(1deg) scale(1, 1); animation-timing-function: cubic-bezier(0.3, 0.6, 0.2, 1); }
+  62% { transform: translateY(0px) rotateY(calc(var(--tours) + 16deg)) rotateX(0deg) rotateZ(-1.5deg) scale(1.03, 1.03); animation-timing-function: cubic-bezier(0.4, 0, 0.3, 1); }
+  80% { transform: translateY(0px) rotateY(calc(var(--tours) - 5deg)) rotateX(0deg) rotateZ(0deg) scale(1, 1); animation-timing-function: ease-in-out; }
+  100% { transform: translateY(0px) rotateY(var(--tours)) rotateX(0deg) rotateZ(0deg) scale(1, 1); }
+}
+/* B — Forge : chauffe immobile, puis tour lourd et lent. */
+.tour-B { animation-name: tour-b; }
+@keyframes tour-b {
+  0% { transform: translateY(0px) rotateY(0deg) rotateX(0deg) rotateZ(0deg) scale(1, 1); animation-timing-function: ease-in-out; }
+  22% { transform: translateY(0px) rotateY(0deg) rotateX(3deg) rotateZ(0deg) scale(1.02, 1.02); animation-timing-function: cubic-bezier(0.55, 0, 0.3, 1); }
+  70% { transform: translateY(0px) rotateY(calc(var(--tours) * 0.96)) rotateX(-7deg) rotateZ(0deg) scale(1.05, 1.05); animation-timing-function: cubic-bezier(0.25, 0, 0.3, 1); }
+  86% { transform: translateY(0px) rotateY(calc(var(--tours) + 6deg)) rotateX(2deg) rotateZ(0deg) scale(1, 1); animation-timing-function: ease-out; }
+  100% { transform: translateY(0px) rotateY(var(--tours)) rotateX(0deg) rotateZ(0deg) scale(1, 1); }
+}
+/* A — Couronne : élan, double tour en s'élevant. */
+.tour-A { animation-name: tour-a; }
+@keyframes tour-a {
+  0% { transform: translateY(0px) rotateY(0deg) rotateX(0deg) rotateZ(0deg) scale(1, 1); animation-timing-function: cubic-bezier(0.33, 0, 0.5, 1); }
+  10% { transform: translateY(0px) rotateY(-16deg) rotateX(4deg) rotateZ(0deg) scale(0.985, 0.985); animation-timing-function: cubic-bezier(0.5, 0, 0.25, 1); }
+  50% { transform: translateY(-4px) rotateY(calc(var(--tours) * 0.55)) rotateX(-8deg) rotateZ(0deg) scale(1.05, 1.05); animation-timing-function: cubic-bezier(0.25, 0, 0.25, 1); }
+  86% { transform: translateY(0px) rotateY(calc(var(--tours) + 7deg)) rotateX(2deg) rotateZ(0deg) scale(1, 1); animation-timing-function: cubic-bezier(0.3, 0, 0.3, 1); }
+  100% { transform: translateY(0px) rotateY(var(--tours)) rotateX(0deg) rotateZ(0deg) scale(1, 1); }
+}
+/* S — Ascension : (après les fissures) triple tour, montée haute. */
+.tour-S { animation-name: tour-s; }
+@keyframes tour-s {
+  0% { transform: translateY(0px) rotateY(0deg) rotateX(0deg) rotateZ(0deg) scale(1, 1); animation-timing-function: cubic-bezier(0.33, 0, 0.5, 1); }
+  12% { transform: translateY(0px) rotateY(-18deg) rotateX(6deg) rotateZ(0deg) scale(0.98, 0.98); animation-timing-function: cubic-bezier(0.5, 0, 0.25, 1); }
+  55% { transform: translateY(-6px) rotateY(calc(var(--tours) * 0.6)) rotateX(-14deg) rotateZ(0deg) scale(1.08, 1.08); animation-timing-function: cubic-bezier(0.25, 0, 0.25, 1); }
+  86% { transform: translateY(0px) rotateY(calc(var(--tours) + 8deg)) rotateX(3deg) rotateZ(0deg) scale(1, 1); animation-timing-function: cubic-bezier(0.3, 0, 0.3, 1); }
+  100% { transform: translateY(0px) rotateY(var(--tours)) rotateX(0deg) rotateZ(0deg) scale(1, 1); }
+}
+/* S : la carte tremble pendant que les fissures se dessinent. */
+.tour-S .carte-rang { animation: tremble var(--prelude) linear both; }
+@keyframes tremble {
+  0%, 100% { transform: translateX(0px) rotate(0deg) scale(1); }
+  20% { transform: translateX(-1px) rotate(-0.3deg) scale(1); }
+  40% { transform: translateX(2px) rotate(0.4deg) scale(1.005); }
+  60% { transform: translateX(-2px) rotate(-0.5deg) scale(1.01); }
+  80% { transform: translateX(2px) rotate(0.3deg) scale(1.015); }
+}
+
+/* Pendant le tour : ni infos, une plaque de métal pleine. Trois minutages
+   selon la signature (la forge chauffe d'abord, l'impact atterrit plus tôt). */
+.fete-tour .carte-rang-info { animation: var(--info-anim) var(--duree) var(--prelude) both; }
+.fx-plaque {
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 3px),
+    linear-gradient(125deg, var(--c3), var(--c2) 45%, var(--c1) 60%, var(--c3));
+  opacity: 0;
+  animation: var(--plaque-anim) var(--duree) var(--prelude) both;
+}
+[data-info="std"] { --info-anim: info-std; --plaque-anim: plaque-std; }
+[data-info="lent"] { --info-anim: info-lent; --plaque-anim: plaque-lent; }
+[data-info="d"] { --info-anim: info-d; --plaque-anim: plaque-d; }
+@keyframes info-std { 0% { opacity: 1; } 7% { opacity: 0; } 82% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes plaque-std { 0% { opacity: 0; } 7% { opacity: 1; } 82% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes info-lent { 0%, 18% { opacity: 1; } 26% { opacity: 0; } 84% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes plaque-lent { 0%, 18% { opacity: 0; } 26% { opacity: 1; } 84% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes info-d { 0%, 10% { opacity: 1; } 18% { opacity: 0; } 72% { opacity: 0; } 86% { opacity: 1; } 100% { opacity: 1; } }
+@keyframes plaque-d { 0%, 10% { opacity: 0; } 18% { opacity: 1; } 72% { opacity: 1; } 86% { opacity: 0; } 100% { opacity: 0; } }
+
+/* ── Effets ─────────────────────────────────────────────────────────────── */
+/* Règle : une animation retardée commence à opacité nulle (sinon elle
+   s'affiche pendant son délai). */
+
+.fx-trait {
+  background: linear-gradient(105deg, transparent 32%, rgba(255,255,255,0.45) 48%, var(--f1) 52%, transparent 68%);
+  transform: translateX(-130%);
+  animation: trait 1.1s var(--atterrissage) cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+@keyframes trait { to { transform: translateX(130%); } }
+
+.fx-aura {
+  inset: -18% !important;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--lueur), transparent);
+  opacity: 0;
+  animation: aura calc(var(--duree) + 700ms) var(--prelude) cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes aura {
+  0% { opacity: 0; transform: scale(0.94); }
+  45% { opacity: 1; transform: scale(1.03); }
+  100% { opacity: 0; transform: scale(1.08); }
+}
+
+.fx-onde { border: 1.5px solid var(--l1); opacity: 0; animation: onde 1.3s var(--atterrissage) cubic-bezier(0.16, 1, 0.3, 1) both; }
+.fx-onde-2 { animation-delay: calc(var(--atterrissage) + 220ms); border-width: 1px; }
+.fx-grande-onde { border: 2px solid var(--l1); opacity: 0; animation: grande-onde 1.8s calc(var(--atterrissage) + 120ms) cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes onde { 0% { opacity: 0; transform: scale(1); } 2% { opacity: 0.9; } 100% { opacity: 0; transform: scale(1.35); } }
+@keyframes grande-onde { 0% { opacity: 0; transform: scale(1); } 2% { opacity: 0.8; } 100% { opacity: 0; transform: scale(2.4); } }
+
+.fx-rayons {
+  width: 190%; aspect-ratio: 1; margin: -95% 0 0 -95%;
+  background: repeating-conic-gradient(from 0deg, var(--lueur) 0deg 5deg, transparent 5deg 20deg);
+  -webkit-mask-image: radial-gradient(circle, #000 15%, transparent 62%);
+  mask-image: radial-gradient(circle, #000 15%, transparent 62%);
+  opacity: 0;
+  animation: rayons calc(var(--duree) + 1300ms) var(--prelude) ease-out both;
+}
+@keyframes rayons { 0% { opacity: 0; transform: rotate(0deg) scale(0.8); } 30% { opacity: 1; } 100% { opacity: 0; transform: rotate(80deg) scale(1.06); } }
+
+/* D : poussière soulevée à l'impact. */
+.fx-poussiere {
+  bottom: 0; left: 50%; border-radius: 50%;
+  background: radial-gradient(circle, rgba(180,186,196,0.7), transparent 70%);
+  opacity: 0;
+  animation: poussiere 0.9s calc(var(--atterrissage) + var(--retard)) cubic-bezier(0.1, 0.8, 0.3, 1) both;
+}
+@keyframes poussiere {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  8% { opacity: 0.8; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.6); }
+}
+
+/* C : gerbe d'étincelles d'acier. */
+.fx-etincelle {
+  left: 0; top: 0; width: 14px; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, #fff, #8fe3ff);
+  opacity: 0;
+  animation: etincelle 0.65s calc(var(--atterrissage) + var(--retard)) cubic-bezier(0.1, 0.7, 0.3, 1) both;
+}
+@keyframes etincelle {
+  0% { opacity: 0; transform: rotate(var(--angle)) translateX(0) scaleX(0.4); }
+  6% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--angle)) translateX(var(--distance)) scaleX(1.4); }
+}
+
+/* B : la carte chauffe, des braises montent. */
+.fx-chaleur {
+  box-shadow: inset 0 0 40px 6px rgba(255,130,60,0.55), 0 0 40px -6px rgba(255,120,50,0.6);
+  opacity: 0;
+  animation: chaleur var(--duree) var(--prelude) ease-in-out both;
+}
+@keyframes chaleur { 0% { opacity: 0; } 20% { opacity: 1; } 40% { opacity: 0.6; } 90% { opacity: 0; } 100% { opacity: 0; } }
+.fx-braise {
+  bottom: 6%; border-radius: 50%;
+  background: radial-gradient(circle, #ffd29a, #ff7a30 60%, transparent 70%);
+  opacity: 0;
+  animation: braise var(--duree-p) var(--retard) cubic-bezier(0.3, 0.5, 0.5, 1) both;
+}
+@keyframes braise {
+  0% { opacity: 0; transform: translate(0, 0) scale(1); }
+  12% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--hauteur)) scale(0.4); }
+}
+
+/* A : étoiles d'or et paillettes. */
+.fx-etoile {
+  margin: -6px 0 0 -6px; background: var(--l1);
+  clip-path: polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);
+  opacity: 0;
+  animation: etoile 1s calc(var(--atterrissage) + var(--retard)) cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes etoile {
+  0% { opacity: 0; transform: scale(0) rotate(0deg); }
+  45% { opacity: 1; transform: scale(1.25) rotate(60deg); }
+  100% { opacity: 0; transform: scale(0.4) rotate(130deg); }
+}
+.fx-eclat-piece {
+  left: 0; top: 0; border-radius: 1px;
+  background: linear-gradient(135deg, var(--l1), var(--l2));
+  opacity: 0;
+  animation: eclat-vol 1.35s calc(var(--atterrissage) + var(--retard)) cubic-bezier(0.12, 0.8, 0.3, 1) both;
+}
+.fx-eclat-piece.fx-clair { background: #fff; }
+.fx-eclat-prisme { background: linear-gradient(135deg, #8fe3ff, #fff, #b9a4ff); }
+@keyframes eclat-vol {
+  0% { opacity: 0; transform: rotate(var(--angle)) translateX(8px) rotate(0deg) scale(1); }
+  2% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--angle)) translateX(var(--distance)) rotate(var(--tour)) scale(0.4); }
+}
+
+/* S : fissures, éclair, spectre, pluie de lumière. */
+.fx-fissures polyline {
+  fill: none; stroke: #fff; stroke-width: 0.6; vector-effect: non-scaling-stroke;
+  stroke-dasharray: 160; stroke-dashoffset: 160;
+  animation: fissure 1.05s cubic-bezier(0.5, 0, 0.9, 0.5) both, fissure-fin 0.35s 1.1s ease-out both;
+}
+@keyframes fissure { to { stroke-dashoffset: 0; } }
+@keyframes fissure-fin { to { opacity: 0; } }
+.fx-eclair {
+  background: radial-gradient(circle at 50% 48%, #fff, var(--f1) 40%, transparent 75%);
+  opacity: 0;
+  animation: eclair 0.8s 1.05s ease-out both;
+}
+@keyframes eclair { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; } }
+.fx-spectre {
+  background: linear-gradient(110deg, transparent 20%, rgba(143,227,255,0.7) 38%, rgba(228,236,243,0.8) 50%, rgba(185,164,255,0.7) 62%, transparent 80%);
+  transform: translateX(-100%);
+  animation: spectre var(--duree) var(--prelude) linear both;
+}
+@keyframes spectre { to { transform: translateX(100%); } }
+.fx-goutte {
+  height: 34px; border-radius: 2px;
+  background: linear-gradient(180deg, transparent, var(--l1));
+  opacity: 0;
+  animation: chute var(--chute) calc(var(--atterrissage) + var(--retard)) cubic-bezier(0.4, 0, 1, 1) both;
+}
+@keyframes chute { 0% { opacity: 0; transform: translateY(-20px); } 15% { opacity: 0.9; } 100% { opacity: 0; transform: translateY(380px); } }
+
+/* ── Niveau (habitudes) ─────────────────────────────────────────────────── */
+.barre-debordement {
+  width: 100%;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, var(--accent), #fff);
+  animation: debordement 1.7s 0.4s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+@keyframes debordement { 0% { transform: scaleX(0); opacity: 1; } 55% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
+.puce-rebond { animation: puce-rebond 0.7s 1.35s cubic-bezier(0.34, 1.9, 0.64, 1) both; }
+@keyframes puce-rebond { 0% { transform: scale(1); } 40% { transform: scale(1.45); } 100% { transform: scale(1); } }
+
+/* Pas de version « animations réduites » : décision de l'utilisateur
+   (12/11/2026, son Windows a les effets d'animation désactivés ; une version
+   sans rotation ressemblait à un bug). */
