@@ -10,7 +10,7 @@ import { trouverEcranDemarrage } from "@/lib/ecransDemarrage";
 //   - mode application (standalone) ou navigateur ;
 //   - thème du système : en thème clair, le fond par défaut d'iOS est blanc ;
 //   - durées du dernier lancement depuis l'icône (mesurées par
-//     MesureLancement, à partir de l'heure notée par /demarrage.html).
+//     MesureLancement, depuis le début de la navigation).
 
 function Ligne({ label, valeur, alerte }) {
   return (

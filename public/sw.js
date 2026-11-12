@@ -8,15 +8,15 @@
 // mises en cache — tes mesures doivent toujours venir du serveur, et une page
 // protégée ne doit pas rester sur l'appareil.
 
-const CACHE = "physiq-statique-v8";
+const CACHE = "physiq-statique-v9";
 
 const PREFIXES_CACHABLES = ["/_next/static/", "/icons/", "/splash/"];
 
-// Page d'entrée de l'app installée (voir scripts/generate-entree.mjs). Elle
-// n'affiche qu'un fond sombre et n'a aucune ressource externe : la mettre en
-// cache suffit à garantir un lancement sans réseau, là où une page Next
-// aurait aussi exigé sa feuille de style et ses scripts.
-const ENTREE = "/demarrage.html";
+// Ancienne page d'entrée de l'app installée. Les icônes déjà posées sur
+// l'écran d'accueil la visent encore : on renvoie aussitôt vers l'accueil,
+// sans réseau. Une redirection ne peint rien, donc plus de flash blanc entre
+// deux pages au lancement (12/11/2026).
+const ENTREES = ["/demarrage.html", "/demarrage"];
 
 function estCachable(url) {
   if (url.origin !== self.location.origin) return false;
@@ -29,7 +29,7 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) => cache.addAll([ENTREE, "/manifest.json", "/icons/icon-192.png"]))
+      .then((cache) => cache.addAll(["/manifest.json", "/icons/icon-192.png"]))
       .catch(() => {})
   );
 });
@@ -49,22 +49,8 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(requete.url);
 
-  // La page d'entrée est servie depuis le cache immédiatement, puis rafraîchie
-  // en arrière-plan : le lancement n'attend jamais le réseau, et la version
-  // suivante sera à jour.
-  if (url.origin === self.location.origin && url.pathname === ENTREE) {
-    event.respondWith(
-      caches.open(CACHE).then(async (cache) => {
-        const enCache = await cache.match(ENTREE);
-        const reseau = fetch(requete)
-          .then((reponse) => {
-            if (reponse.ok && reponse.type === "basic") cache.put(ENTREE, reponse.clone());
-            return reponse;
-          })
-          .catch(() => enCache);
-        return enCache || reseau;
-      })
-    );
+  if (url.origin === self.location.origin && ENTREES.includes(url.pathname)) {
+    event.respondWith(Response.redirect(new URL("/", self.location.origin).href, 302));
     return;
   }
 
