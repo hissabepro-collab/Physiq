@@ -23,11 +23,17 @@ function creerClient() {
         for (let essai = 0; essai < TENTATIVES; essai++) {
           const reste = BUDGET_MS - (Date.now() - debut);
           if (reste <= 0) break;
+          let minuteur;
           try {
-            // On n'attend pas une tentative au-delà du budget restant.
+            // On n'attend pas une tentative au-delà du budget restant. Le
+            // minuteur est annulé dans tous les cas : sinon il rejette plus
+            // tard une promesse que personne n'écoute (erreur non gérée qui
+            // peut arrêter le processus — constaté le 12/11/2026).
             return await Promise.race([
               query(args),
-              new Promise((_, refus) => setTimeout(() => refus(new Error("Timed out: budget de connexion dépassé")), reste)),
+              new Promise((_, refus) => {
+                minuteur = setTimeout(() => refus(new Error("Timed out: budget de connexion dépassé")), reste);
+              }),
             ]);
           } catch (e) {
             const code = e?.code ?? e?.errorCode;
@@ -35,6 +41,8 @@ function creerClient() {
             if (!passagere || Date.now() - debut > BUDGET_MS) throw e;
             derniere = e;
             await new Promise((r) => setTimeout(r, 400 * (essai + 1)));
+          } finally {
+            clearTimeout(minuteur);
           }
         }
         throw derniere ?? new Error("Timed out: budget de connexion dépassé");

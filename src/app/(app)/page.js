@@ -235,6 +235,20 @@ export default async function AccueilPage() {
         )}
 
 
+        <Link href="/coach" className="group block rounded-[22px] lg:col-span-12">
+          <GlareCard className="p-5" tiltIntensity={2}>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <span className="etiquette">Coach</span>
+                <p className="titre mt-1 text-lg">Pose une question sur tes chiffres</p>
+              </div>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/15 text-accent transition group-hover:translate-x-1">
+                →
+              </span>
+            </div>
+          </GlareCard>
+        </Link>
+
         <Link href="/parcours" className="group block rounded-[22px] lg:col-span-12">
           <GlareCard className="p-5" tiltIntensity={2}>
             <div className="flex items-center justify-between gap-4">
