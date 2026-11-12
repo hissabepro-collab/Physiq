@@ -12,8 +12,7 @@
 //     sans descendre sous la plage (trop sec n'est pas un objectif) ;
 //   - « milieu » : l'idéal est dans la plage (équilibre de l'eau).
 // Il en sort un verdict lisible (point fort, dans la norme, à surveiller,
-// attention), une phrase, et une note de qualité 0-100 pour le radar du
-// Parcours, calculée sur l'écart à la plage mesuré en largeurs de plage.
+// attention), une phrase, et une note de qualité 0-100, calculée sur l'écart à la plage mesuré en largeurs de plage.
 
 const INDICATEURS = [
   {
@@ -191,27 +190,4 @@ export function calculerBilan(mesures) {
   const sym = symetrie(derniere);
   if (sym) items.push(sym);
   return items.length >= 3 ? items : null;
-}
-
-/** Axes du radar du Parcours : la note de qualité de chaque indicateur. */
-export function calculerAxesProfil(mesures) {
-  const bilan = calculerBilan(mesures);
-  if (!bilan) return null;
-  const COURT = {
-    smmKg: "Muscle",
-    bfpPct: "Sèche",
-    niveauGraisseViscerale: "Viscéral",
-    rth: "Taille",
-    metabolismeBaseKcal: "Métabolisme",
-    ratioEcwTbw: "Eau",
-    symetrie: "Symétrie",
-  };
-  return bilan.map((b) => ({
-    label: COURT[b.cle] ?? b.label,
-    valeur: b.qualite,
-    valeurReelle: b.valeur,
-    unite: b.unite,
-    plage: b.plage,
-    inverse: b.sens === "moins",
-  }));
 }
