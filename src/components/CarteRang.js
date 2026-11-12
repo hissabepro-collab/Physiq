@@ -25,6 +25,9 @@ import { MATERIAUX, apparenceRang, variablesMateriau } from "@/lib/materiaux";
 // Le passage de niveau (habitudes) a sa propre animation, sans tour : la
 // barre d'XP se remplit, déborde, et le badge rebondit.
 //
+// ANIMATIONS RÉDUITES. Volontairement ignoré (choix de l'utilisateur) : la
+// carte tourne même si le système demande moins d'animations.
+//
 // FLUIDITÉ. Toutes les animations ne touchent que transform et opacity, les
 // deux propriétés que le navigateur anime sans redessiner. Pendant une
 // célébration, le balancement est suspendu et les couches coûteuses (film en
@@ -224,7 +227,6 @@ export default function CarteRang({ rang, jours, xp }) {
   useEffect(() => {
     const carte = carteRef.current;
     if (!carte) return undefined;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
 
     let raf = 0;
     let visible = true;
@@ -807,21 +809,10 @@ export default function CarteRang({ rang, jours, xp }) {
           100% { transform: scale(1); }
         }
 
-        /* « Réduire les animations » (iPhone) ou « Effets d'animation »
-           désactivés (Windows) : pas de rotation ni de mouvement, mais une
-           version douce en fondus, pour que la montée se voie quand même. */
-        @media (prefers-reduced-motion: reduce) {
-          .fete-tour, .fx-eclat, .fx-etoile, .fx-eclat-piece, .fx-onde, .fx-rayons,
-          .fx-fissures polyline, .fx-spectre, .fx-goutte, .barre-debordement, .puce-rebond, .carte-rang-etincelle {
-            animation: none;
-          }
-          .fx-eclat, .fx-etoile, .fx-eclat-piece, .fx-onde, .fx-rayons, .fx-fissures, .fx-spectre, .fx-pluie,
-          .barre-debordement { display: none; }
-          .carte-rang-etincelle { opacity: 0.8; }
-          .carte-rang-badge, .carte-rang-badge.badge-niveau { animation: badge-fondu 0.6s calc(var(--atterrissage, 900ms) + 100ms) ease-out both; }
-          .carte-rang-badge.badge-sortie { animation: badge-fondu 0.3s ease-in reverse both; }
-          @keyframes badge-fondu { from { opacity: 0; } to { opacity: 1; } }
-        }
+        /* Pas de version « animations réduites » : décision de l'utilisateur
+           (12/11/2026). Son Windows a les effets d'animation désactivés, et la
+           version en fondus, sans rotation, ressemblait à un bug. Appli
+           personnelle, mono-utilisateur : la carte tourne toujours. */
       `}</style>
     </div>
   );
