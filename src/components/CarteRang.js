@@ -13,9 +13,12 @@ import { MATERIAUX, apparenceRang, variablesMateriau } from "@/lib/materiaux";
 // --f1/--f2 film, --lueur) : changer de matériau = changer ces variables.
 //
 // INCLINAISON. Au repos la carte se balance doucement ; elle suit la souris,
-// le doigt, ou le gyroscope (iOS, après un toucher). Deux variables CSS, --mx
-// et --my (de -1 à 1), écrites seulement quand elles changent : aucun re-rendu
-// React, aucun recalcul une fois la carte posée.
+// le doigt, ou le gyroscope (iOS, après un toucher). La boucle écrit
+// directement la transformation de quatre éléments (carte, film, reflet,
+// lettre), seulement quand elle change. Surtout PAS de variables CSS : une
+// variable modifiée sur la carte est héritée par tout son contenu, et Safari
+// (WebKit) recalculait alors toute la carte à chaque image — mesuré à 107 ms
+// par image au lieu de 16 dans le moteur de Safari (12/11/2026).
 //
 // CÉLÉBRATION D'UNE MONTÉE DE RANG. Toujours la même base — un tour en 3D
 // modérée qui bouge (élan, rotation, balancement, atterrissage) pendant lequel
@@ -179,6 +182,9 @@ const ETINCELLES = [
 
 export default function CarteRang({ rang, jours, xp }) {
   const carteRef = useRef(null);
+  const filmRef = useRef(null);
+  const refletRef = useRef(null);
+  const lettreRef = useRef(null);
   const cible = useRef({ x: 0, y: 0, actif: false, gyro: false });
   // Pendant une célébration, le balancement s'arrête : une seule animation 3D
   // à la fois.
@@ -251,8 +257,10 @@ export default function CarteRang({ rang, jours, xp }) {
       const nx = x + (tx - x) * vitesse;
       const ny = y + (ty - y) * vitesse;
       if (Math.abs(nx - x) > 0.0005 || Math.abs(ny - y) > 0.0005) {
-        carte.style.setProperty("--mx", nx.toFixed(3));
-        carte.style.setProperty("--my", ny.toFixed(3));
+        carte.style.transform = `rotateY(${(nx * 8).toFixed(2)}deg) rotateX(${(-ny * 8).toFixed(2)}deg)`;
+        if (filmRef.current) filmRef.current.style.transform = `translate3d(${(nx * 12).toFixed(2)}%, ${(ny * 12).toFixed(2)}%, 0)`;
+        if (refletRef.current) refletRef.current.style.transform = `translate3d(${(nx * 15).toFixed(2)}%, ${(ny * 15).toFixed(2)}%, 0)`;
+        if (lettreRef.current) lettreRef.current.style.transform = `translate3d(${(nx * 6).toFixed(1)}px, ${(ny * 6).toFixed(1)}px, 0)`;
       }
       x = nx;
       y = ny;
@@ -377,12 +385,11 @@ export default function CarteRang({ rang, jours, xp }) {
           onTouchMove={(e) => suivre(e.touches[0].clientX, e.touches[0].clientY)}
           onTouchEnd={relacher}
           onClick={activerGyroscope}
-          style={{ "--mx": 0, "--my": 0 }}
         >
           <div className="carte-rang-face relative flex flex-1 flex-col overflow-hidden rounded-[27px] bg-[#06080c] p-5 sm:p-6">
             {finition === "brosse" && <div className="carte-rang-brosse pointer-events-none absolute inset-0" />}
-            <div className="carte-rang-film pointer-events-none absolute inset-0" />
-            <div className="carte-rang-reflet pointer-events-none absolute inset-0" />
+            <div ref={filmRef} className="carte-rang-film pointer-events-none absolute inset-0" />
+            <div ref={refletRef} className="carte-rang-reflet pointer-events-none absolute inset-0" />
 
             {/* Pendant le tour : la face devient une plaque de métal pleine. */}
             {type === "rang" && (
@@ -418,7 +425,7 @@ export default function CarteRang({ rang, jours, xp }) {
 
             <div className="carte-rang-info relative mt-2 flex flex-1 items-center justify-between gap-4">
               <span className="relative">
-                <span className="carte-rang-lettre carte-rang-texte-matiere tabular select-none text-[104px] font-semibold leading-none tracking-[-0.06em] sm:text-[128px]">
+                <span ref={lettreRef} className="carte-rang-lettre carte-rang-texte-matiere tabular select-none text-[104px] font-semibold leading-none tracking-[-0.06em] sm:text-[128px]">
                   {rang ? lettreAffichee : "?"}
                 </span>
                 {rang &&
@@ -562,7 +569,6 @@ export default function CarteRang({ rang, jours, xp }) {
         .carte-rang {
           padding: 1px;
           transform-style: preserve-3d;
-          transform: rotateY(calc(var(--mx) * 8deg)) rotateX(calc(var(--my) * -8deg));
           background: linear-gradient(125deg, var(--c1), var(--c2), var(--c3), var(--c2));
           box-shadow: 0 30px 60px -30px rgba(0,0,0,0.9), 0 0 50px -28px var(--lueur);
           will-change: transform;
@@ -593,28 +599,27 @@ export default function CarteRang({ rang, jours, xp }) {
 
         /* Film et reflet : de grandes couches qui glissent (transform) au lieu
            de dégradés redessinés à chaque image. */
+        /* Couches légères : peu débordantes et sans mode de fusion. Un film
+           2,2 fois plus grand que la carte, en « color-dodge », coûtait à lui
+           seul une bonne part de chaque image dans le moteur de Safari. */
         .carte-rang-film {
-          inset: -60%;
+          inset: -25%;
           background: repeating-linear-gradient(115deg,
-            transparent 0%, var(--f1) 4%, rgba(255,255,255,0.35) 7.5%, var(--f2) 11%, transparent 15%);
-          transform: translate3d(calc(var(--mx) * 14%), calc(var(--my) * 14%), 0);
-          mix-blend-mode: color-dodge;
-          opacity: 0.13;
+            transparent 0%, var(--f1) 6%, rgba(255,255,255,0.4) 11%, var(--f2) 16%, transparent 22%);
+          opacity: 0.07;
         }
-        [data-finition="brosse"] .carte-rang-film { opacity: 0.05; }
-        [data-finition="etincelant"] .carte-rang-film { opacity: 0.2; }
+        [data-finition="brosse"] .carte-rang-film { opacity: 0.03; }
+        [data-finition="etincelant"] .carte-rang-film { opacity: 0.11; }
         .carte-rang-brosse {
           background: repeating-linear-gradient(90deg, rgba(255,255,255,0.022) 0 1px, transparent 1px 3px);
         }
         .carte-rang-reflet {
-          inset: -50%;
-          background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.09), transparent 30%);
-          transform: translate3d(calc(var(--mx) * 22%), calc(var(--my) * 22%), 0);
+          inset: -25%;
+          background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.09), transparent 40%);
         }
         [data-finition="brosse"] .carte-rang-reflet { opacity: 0.4; }
         /* Pas de filtre sur la lettre : recalculé à chaque image d'un
            mouvement 3D, c'était la principale cause de saccades. */
-        .carte-rang-lettre { transform: translate3d(calc(var(--mx) * 6px), calc(var(--my) * 6px), 0); }
         [data-finition="brosse"] .carte-rang-lettre { opacity: 0.82; }
         .carte-rang-etincelle {
           width: 9px; height: 9px; background: #fff;
