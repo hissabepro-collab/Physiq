@@ -54,9 +54,16 @@ const html = `<!DOCTYPE html>
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
 ${ecrans}
-<style>html,body{margin:0;padding:0;height:100%;background-color:${FOND}}</style>
+<style>html,body{margin:0;padding:0;height:100%;background-color:${FOND}}
+/* Si le serveur tarde (base qui se réveille), un point lumineux pulse au
+   centre au bout de 1,2 s : l'écran noir ne ressemble plus à un blocage.
+   Invisible quand l'ouverture est rapide. Aucune ressource externe. */
+.attente{position:fixed;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:#8fe3ff;box-shadow:0 0 14px #8fe3ff;opacity:0;animation:apparait .4s 1.2s ease-out forwards,pulse 1.4s 1.6s ease-in-out infinite}
+@keyframes apparait{to{opacity:.9}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(.55);opacity:.4}}</style>
 </head>
 <body>
+<div class="attente" aria-hidden="true"></div>
 <script>
 // Deux images d'attente avant de naviguer : la première laisse le navigateur
 // peindre le fond sombre, la seconde garantit qu'il est bien à l'écran. Sans

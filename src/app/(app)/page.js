@@ -89,7 +89,7 @@ export default async function AccueilPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-10 pt-[max(env(safe-area-inset-top),20px)] sm:px-8 sm:pt-10">
-      <header className="apparait flex items-end justify-between gap-4">
+      <header className="flex items-end justify-between gap-4">
         <div>
           <div className="text-xs font-medium text-foreground-muted first-letter:uppercase">{aujourdhui}</div>
           <h1 className="titre mt-1 text-[30px] sm:text-[38px]">Salut {prenom}</h1>
@@ -104,11 +104,11 @@ export default async function AccueilPage() {
       </header>
 
       <div className="mt-6 grid grid-cols-1 gap-3 lg:grid-cols-12">
-        <div className="apparait lg:col-span-5">
+        <div className="lg:col-span-5">
           <CarteRang rang={rang} jours={jours} xp={xp} />
         </div>
 
-        <div className="apparait lg:col-span-7" style={{ animationDelay: "60ms" }}>
+        <div className="lg:col-span-7">
           {derniere ? (
             <div className="grid h-full grid-cols-2 gap-3">
               <Link href="/historique" className="block rounded-[22px]">
@@ -173,7 +173,7 @@ export default async function AccueilPage() {
           )}
         </div>
 
-        <div className="apparait lg:col-span-6" style={{ animationDelay: "120ms" }}>
+        <div className="lg:col-span-6">
           <SemaineCard
             libelle={libelleSemaine(semaineActuelle)}
             bilan={bilan}
@@ -183,7 +183,7 @@ export default async function AccueilPage() {
         </div>
 
         {moisEnCours && (
-          <div className="apparait lg:col-span-6" style={{ animationDelay: "160ms" }}>
+          <div className="lg:col-span-6">
             <Link href="/objectifs" className="block h-full rounded-[22px]">
               <MoisCard bilan={moisEnCours} objectifs={OBJECTIFS_DEFAUT} />
             </Link>
