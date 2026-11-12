@@ -180,7 +180,38 @@ const ETINCELLES = [
   { x: "9%", y: "58%", d: "2.2s" },
 ];
 
-export default function CarteRang({ rang, jours, xp }) {
+// Programme une célébration : changement de matière au bon moment, effets,
+// puis retour au calme (le badge reste jusqu'au toucher). Renvoie les
+// minuteurs, à annuler si la carte disparaît entre-temps.
+function programmerFete(message, { lettre, setFete, setRangTransitoire, apresCalme }) {
+  const minuteurs = [];
+  const plus = (ms, f) => minuteurs.push(setTimeout(f, ms));
+  const DEPART = 300;
+  plus(0, () => setFete(null));
+  if (message.type === "rang") {
+    const r = reglagesFete(ORDRE_RANGS.indexOf(message.cible));
+    if (message.avant) plus(0, () => setRangTransitoire(message.avant));
+    plus(DEPART, () => setFete({ ...message, reglages: r }));
+    plus(DEPART + r.bascule, () => setRangTransitoire(message.cible === lettre ? null : message.cible));
+    plus(DEPART + r.fin, () => {
+      setFete((f) => (f ? { ...f, calme: true } : f));
+      if (message.cible !== lettre) setRangTransitoire(null);
+      apresCalme?.();
+    });
+  } else {
+    plus(DEPART, () => setFete(message));
+    plus(DEPART + 2600, () => {
+      setFete((f) => (f ? { ...f, calme: true } : f));
+      apresCalme?.();
+    });
+  }
+  return minuteurs;
+}
+
+// `demo` (page Collection des rangs) : { cible: "B+", cle } rejoue la montée
+// vers ce rang à chaque nouvelle clé, sans rien lire ni écrire dans la mémoire
+// de l'appareil (dernier rang vu), et sans célébration automatique.
+export default function CarteRang({ rang, jours, xp, demo = null }) {
   const carteRef = useRef(null);
   const filmRef = useRef(null);
   const refletRef = useRef(null);
@@ -196,33 +227,31 @@ export default function CarteRang({ rang, jours, xp }) {
   const lettre = rang?.label ?? null;
   const niveau = xp?.niveau ?? null;
 
+  const modeDemo = Boolean(demo);
+  const demoCle = demo?.cle ?? null;
+  const demoCible = demo?.cible ?? null;
+
   useEffect(() => {
+    if (modeDemo) return undefined;
     const message = verdictCelebration(lettre, niveau);
     if (!message) return undefined;
-    const minuteurs = [];
-    const plus = (ms, f) => minuteurs.push(setTimeout(f, ms));
-    const DEPART = 300;
-
-    if (message.type === "rang") {
-      const r = reglagesFete(ORDRE_RANGS.indexOf(message.cible));
-      if (message.avant) plus(0, () => setRangTransitoire(message.avant));
-      plus(DEPART, () => setFete({ ...message, reglages: r }));
-      plus(DEPART + r.bascule, () => setRangTransitoire(message.cible === lettre ? null : message.cible));
-      // Les effets s'arrêtent ; le badge reste jusqu'à ce qu'on le touche.
-      plus(DEPART + r.fin, () => {
-        setFete((f) => (f ? { ...f, calme: true } : f));
-        if (message.cible !== lettre) setRangTransitoire(null);
-        verdictsMontres.add(`${lettre}|${niveau}`);
-      });
-    } else {
-      plus(DEPART, () => setFete(message));
-      plus(DEPART + 2600, () => {
-        setFete((f) => (f ? { ...f, calme: true } : f));
-        verdictsMontres.add(`${lettre}|${niveau}`);
-      });
-    }
+    const minuteurs = programmerFete(message, {
+      lettre,
+      setFete,
+      setRangTransitoire,
+      apresCalme: () => verdictsMontres.add(`${lettre}|${niveau}`),
+    });
     return () => minuteurs.forEach(clearTimeout);
-  }, [lettre, niveau]);
+  }, [lettre, niveau, modeDemo]);
+
+  useEffect(() => {
+    if (!demoCible || demoCle == null) return undefined;
+    const i = ORDRE_RANGS.indexOf(demoCible);
+    const avant = i > 0 ? ORDRE_RANGS[i - 1] : null;
+    const message = { type: "rang", titre: titreMontee(avant, demoCible), valeur: demoCible, cible: demoCible, avant };
+    const minuteurs = programmerFete(message, { lettre: demoCible, setFete, setRangTransitoire });
+    return () => minuteurs.forEach(clearTimeout);
+  }, [demoCle, demoCible]);
 
   const type = fete && !fete.calme ? fete.type : null;
 
@@ -503,13 +532,21 @@ export default function CarteRang({ rang, jours, xp }) {
                 </div>
               )}
 
-              {rang ? (
-                <Link
-                  href="/journal"
-                  className="-mb-2 inline-flex h-11 items-center text-xs font-medium text-foreground-muted transition hover:text-accent"
-                >
-                  Gagner des XP : remplir mon bilan →
-                </Link>
+              {modeDemo ? null : rang ? (
+                <div className="-mb-2 flex items-center justify-between gap-3">
+                  <Link
+                    href="/journal"
+                    className="inline-flex h-11 items-center text-xs font-medium text-foreground-muted transition hover:text-accent"
+                  >
+                    Gagner des XP →
+                  </Link>
+                  <Link
+                    href="/rangs"
+                    className="inline-flex h-11 items-center text-xs font-medium text-foreground-muted transition hover:text-accent"
+                  >
+                    Mes rangs →
+                  </Link>
+                </div>
               ) : (
                 <Link
                   href="/scan"

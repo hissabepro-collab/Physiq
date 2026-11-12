@@ -2,7 +2,7 @@
 // Chaque palier couvre ~3 points ; une barre d'XP montre la progression
 // à l'intérieur du palier courant, même quand la lettre ne change pas.
 
-const PALIERS = [
+export const PALIERS = [
   { label: "D", min: 0, max: 59 },
   { label: "C-", min: 60, max: 62 },
   { label: "C", min: 63, max: 66 },
