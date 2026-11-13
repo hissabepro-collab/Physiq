@@ -53,6 +53,9 @@ export default async function AccueilPage() {
   const [moisEnCours, ...moisPrecedents] = bilansParMois(parSemaine, OBJECTIFS_DEFAUT);
 
   const xp = calculerXp(entreesJournal, mesures.length, OBJECTIFS_DEFAUT, semaineActuelle);
+  // Dimanche ou lundi (heure de Paris) : la tuile « Bilan de la semaine » invite à faire le point.
+  const jourParis = new Intl.DateTimeFormat("fr-FR", { weekday: "long", timeZone: "Europe/Paris" }).format(new Date());
+  const finDeSemaine = jourParis === "dimanche" || jourParis === "lundi";
 
   const derniere = mesures.at(-1);
   const precedente = mesures.at(-2);
@@ -241,6 +244,41 @@ export default async function AccueilPage() {
               <div>
                 <span className="etiquette">Coach</span>
                 <p className="titre mt-1 text-lg">Pose une question sur tes chiffres</p>
+              </div>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/15 text-accent transition group-hover:translate-x-1">
+                →
+              </span>
+            </div>
+          </GlareCard>
+        </Link>
+
+        <Link href="/carnet" className="group block rounded-[22px] lg:col-span-6">
+          <GlareCard className="h-full p-5" tiltIntensity={2}>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <span className="etiquette">Entraînement</span>
+                <p className="titre mt-1 text-lg">Carnet d&apos;entraînement</p>
+                <p className="mt-1 text-xs text-foreground-muted">Tes séances et tes charges, suivies par le coach</p>
+              </div>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/15 text-accent transition group-hover:translate-x-1">
+                →
+              </span>
+            </div>
+          </GlareCard>
+        </Link>
+
+        <Link
+          href={`/coach?mode=semaine&q=${encodeURIComponent("Fais le bilan de ma semaine et donne-moi le cap de la semaine prochaine.")}`}
+          className="group block rounded-[22px] lg:col-span-6"
+        >
+          <GlareCard className="h-full p-5" tiltIntensity={2}>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <span className="etiquette">Coach</span>
+                <p className="titre mt-1 text-lg">Bilan de la semaine</p>
+                <p className="mt-1 text-xs text-foreground-muted">
+                  {finDeSemaine ? "C'est le moment : fais le point avec ton coach" : "Séances, alimentation, sommeil, et le cap à suivre"}
+                </p>
               </div>
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/15 text-accent transition group-hover:translate-x-1">
                 →

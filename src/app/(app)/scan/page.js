@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { IconUpload } from "@/components/icons";
 import MesureForm from "@/components/MesureForm";
 import PageHeader from "@/components/PageHeader";
@@ -75,7 +76,22 @@ export default function ScanPage() {
 
       {resultats.length > 0 && (
         <div className="mt-8 space-y-3">
-          <h2 className="titre text-lg">Résultat de l'import</h2>
+          <h2 className="titre text-lg">Résultat de l&apos;import</h2>
+          {resultats.some((r) => r.ok) && (
+            // Analyse du coach juste après l'import (13/11/2026). Un lien et
+            // non un lancement automatique : on peut d'abord corriger une
+            // valeur mal lue dans le PDF ci-dessous.
+            <Link
+              href={`/coach?mode=scan&q=${encodeURIComponent("Analyse mon dernier scan.")}`}
+              className="flex min-h-12 items-center justify-between gap-3 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-[#06080c]"
+            >
+              <span>
+                Voir l&apos;analyse du coach
+                <span className="block text-xs font-normal opacity-70">Ce qui a bougé, ce qui est fiable, et le cap des 2 prochaines semaines</span>
+              </span>
+              <span aria-hidden="true">→</span>
+            </Link>
+          )}
           {resultats.map((r, i) =>
             r.ok ? (
               <div key={r.mesure.id} className="rounded-xl border border-border-soft bg-background-soft/40 p-4">

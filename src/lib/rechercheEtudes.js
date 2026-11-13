@@ -24,7 +24,19 @@ async function attendreCreneau() {
   if (attente) await new Promise((r) => setTimeout(r, attente));
 }
 
-async function lire(url, type) {
+async function lire(url, type, essai = 0) {
+  try {
+    return await lireUneFois(url, type);
+  } catch (e) {
+    // Refus passager (429, 5xx, délai) : un seul nouvel essai après 1,2 s
+    // (constaté le 13/11/2026 : « la recherche n'a pas abouti » par moments).
+    if (essai >= 1 || !/PubMed (429|5\d\d)|abort/i.test(`${e?.message} ${e?.name}`)) throw e;
+    await new Promise((r) => setTimeout(r, 1200));
+    return lire(url, type, essai + 1);
+  }
+}
+
+async function lireUneFois(url, type) {
   await attendreCreneau();
   const arret = new AbortController();
   const minuteur = setTimeout(() => arret.abort(), DELAI);

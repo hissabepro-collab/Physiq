@@ -46,6 +46,18 @@ const MSG_COUPEE = "La réponse a été coupée (serveur de Google saturé). Rep
 let clientClaude = null;
 let clientGemini = null;
 
+// Photo jointe à la dernière question : envoyée à l'IA avec elle, jamais
+// stockée (ni sur le serveur, ni dans la conversation gardée sur le téléphone).
+const TYPES_IMAGE = new Set(["image/jpeg", "image/png", "image/webp"]);
+const MAX_IMAGE_BASE64 = 3_000_000; // ~2,2 Mo : la page réduit la photo avant envoi (limite Vercel 4,5 Mo par requête)
+
+function imageValide(img) {
+  if (!img || typeof img !== "object") return null;
+  if (!TYPES_IMAGE.has(img.type) || typeof img.donnees !== "string") return null;
+  if (img.donnees.length > MAX_IMAGE_BASE64 || !/^[A-Za-z0-9+/=]+$/.test(img.donnees.slice(0, 200))) return null;
+  return { type: img.type, donnees: img.donnees };
+}
+
 function messagesValides(brut) {
   if (!Array.isArray(brut) || brut.length === 0 || brut.length > MAX_MESSAGES) return null;
   const messages = [];
@@ -57,7 +69,34 @@ function messagesValides(brut) {
     messages.push({ role: m.role, content: texte });
   }
   if (messages.length === 0 || messages[0].role !== "user" || messages.at(-1).role !== "user") return null;
+  const image = imageValide(brut.at(-1)?.image);
+  if (image) messages.at(-1).image = image;
   return messages;
+}
+
+// Questions qui appellent une source : la première étape oblige alors le
+// modèle à chercher (Flash-Lite ne le faisait pas toujours de lui-même).
+const BESOIN_SOURCE =
+  /cr[ée]atine|compl[ée]ment|suppl[ée]ment|whey|cas[ée]ine|caf[ée]ine|vitamine|om[ée]ga|magn[ée]sium|collag[èe]ne|bcaa|glutamine|ashwagandha|r[ée]gime|je[uû]ne|keto|c[ée]tog|[ée]tude|scientifi|prouv[ée]|preuve|actualit|presse|article|tendance|mythe|id[ée]e re[çc]ue|est-ce vrai|c'est vrai|efficace|dangereux/i;
+
+// Modes spéciaux, déclenchés par la page (analyse après un import de scan,
+// bilan de la semaine) : consignes ajoutées au rôle pour cette réponse.
+const CONSIGNES_MODE = {
+  scan: `## Mode : analyse du dernier scan
+Issa vient d'importer un scan. Fais-lui une analyse complète mais lisible sur téléphone :
+1. Les 3 ou 4 indicateurs qui comptent le plus (masse grasse, SMM, eau, score, segments si utile), avec leur valeur, leur plage normale et l'écart avec le scan précédent s'il existe.
+2. Ce qui est fiable et ce qui peut venir des conditions de mesure ou de l'hydratation (eau intra et extracellulaire, ratio). Avec un seul scan, présente-le comme le point de départ, sans tendance.
+3. Le lien avec ses habitudes des deux dernières semaines (séances, alimentation, sommeil, carnet d'entraînement), avec prudence.
+4. Le cap des deux semaines jusqu'au prochain scan : 2 ou 3 actions chiffrées.
+Pas de recherche de sources pour ce mode, sauf si un chiffre l'exige vraiment.`,
+  semaine: `## Mode : bilan de la semaine
+Fais le bilan de la semaine qui se termine (ou en cours) à partir de ses bilans hebdomadaires et de son carnet d'entraînement : séances faites contre l'objectif, progression des charges, jours d'alimentation tenus, sommeil nuit par nuit (hors vendredi et samedi), ressenti et note éventuelle. Compare à la semaine précédente. Termine par le cap de la semaine qui vient : 2 ou 3 actions chiffrées et réalistes. Ton encourageant mais honnête. 8 à 14 lignes. Pas de recherche de sources.`,
+};
+
+function partiesQuestion(m) {
+  const parties = [{ text: m.content }];
+  if (m.image) parties.unshift({ inlineData: { mimeType: m.image.type, data: m.image.donnees } });
+  return parties;
 }
 
 // Chaque fonction écrit la réponse morceau par morceau via `ecrire`, et
@@ -127,18 +166,29 @@ const MAX_RECHERCHES = 2;
 // l'outil. Renvoie { ok } quand la réponse est partie, { relais: true }
 // quand le modèle est saturé ou muet AVANT d'avoir rien produit (on passe
 // alors au modèle suivant), sinon { erreur }.
-async function essaiGemini(modele, { systeme, messages, ecrire, signal }) {
+async function essaiGemini(modele, { systeme, messages, ecrire, signal, forcerRecherche = false, suite = null }) {
   const arretEssai = new AbortController();
   const surArret = () => arretEssai.abort();
   signal.addEventListener("abort", surArret);
   let minuteur = null;
   let aEcrit = false;
   let aCherche = false;
+  // Texte déjà envoyé : sert à faire reprendre la suite par un autre modèle
+  // si celui-ci tombe en pleine réponse.
+  let texteEcrit = suite ?? "";
   // Liens réellement renvoyés par les recherches de cette réponse : seuls
   // ceux-là peuvent apparaître dans le texte (voir lib/filtreLiens).
   const autorises = new Set();
-  const filtre = creerFiltreLiens(autorises, ecrire);
-  const contenu = messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] }));
+  const filtre = creerFiltreLiens(autorises, (t) => {
+    texteEcrit += t;
+    ecrire(t);
+  });
+  const contenu = messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: m.role === "user" ? partiesQuestion(m) : [{ text: m.content }] }));
+  if (suite) {
+    // Reprise : le modèle voit le début déjà affiché et continue sans le répéter.
+    contenu.push({ role: "model", parts: [{ text: suite }] });
+    contenu.push({ role: "user", parts: [{ text: "Ta réponse a été coupée. Continue exactement là où elle s'arrête, sans répéter ni réintroduire ce qui précède, et sans le signaler." }] });
+  }
   try {
     for (let tour = 0; tour <= MAX_RECHERCHES; tour++) {
       // Délai de premier morceau : mesuré le 13/11/2026, un modèle saturé de
@@ -157,7 +207,14 @@ async function essaiGemini(modele, { systeme, messages, ecrire, signal }) {
           // Au dernier tour, plus de recherche possible : il doit rédiger avec
           // ce qu'il a trouvé (constaté le 13/11/2026 : sinon il enchaîne les
           // recherches et ne répond jamais).
-          toolConfig: { functionCallingConfig: { mode: tour < MAX_RECHERCHES ? FunctionCallingConfigMode.AUTO : FunctionCallingConfigMode.NONE } },
+          toolConfig: {
+            functionCallingConfig:
+              suite || tour >= MAX_RECHERCHES
+                ? { mode: FunctionCallingConfigMode.NONE }
+                : tour === 0 && forcerRecherche
+                  ? { mode: FunctionCallingConfigMode.ANY, allowedFunctionNames: ["rechercher_etudes", "rechercher_presse"] }
+                  : { mode: FunctionCallingConfigMode.AUTO },
+          },
           abortSignal: arretEssai.signal,
         },
       });
@@ -246,7 +303,7 @@ async function essaiGemini(modele, { systeme, messages, ecrire, signal }) {
     // Google répond 400 (et non 401) quand la clé est invalide.
     if (statut === 401 || statut === 403 || (statut === 400 && /api[ _-]?key/i.test(e?.message ?? ""))) return { erreur: MSG_CLE };
     if (!aEcrit && (muet || statut === 429 || statut === 503 || statut === 500 || statut === 404)) return { relais: true };
-    if (aEcrit) return { erreur: MSG_COUPEE };
+    if (aEcrit) return { coupee: true, texte: texteEcrit };
     return { erreur: aCherche && (muet || statut === 429 || statut === 503) ? MSG_SURCHARGE : MSG_ECHEC };
   } finally {
     if (minuteur) clearTimeout(minuteur);
@@ -256,13 +313,19 @@ async function essaiGemini(modele, { systeme, messages, ecrire, signal }) {
 
 async function repondreGemini(params) {
   if (!clientGemini) clientGemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  let suite = null;
   for (const modele of MODELES_GEMINI) {
-    const r = await essaiGemini(modele, params);
+    const r = await essaiGemini(modele, { ...params, suite, forcerRecherche: params.forcerRecherche && !suite });
     if (r.ok) return null;
     if (r.erreur) return r.erreur;
     if (params.signal.aborted) return null;
+    // Coupée en pleine réponse : le modèle suivant reprend la suite.
+    if (r.coupee) {
+      console.log(`[coach] réponse coupée sur ${modele}, reprise par le modèle suivant`);
+      suite = r.texte;
+    }
   }
-  return MSG_SURCHARGE;
+  return suite ? MSG_COUPEE : MSG_SURCHARGE;
 }
 
 async function repondreClaude({ systeme, messages, ecrire, signal }) {
@@ -277,7 +340,11 @@ async function repondreClaude({ systeme, messages, ecrire, signal }) {
         output_config: { effort: "medium" },
         cache_control: { type: "ephemeral" },
         system: systeme,
-        messages,
+        messages: messages.map((m) =>
+          m.image
+            ? { role: m.role, content: [{ type: "image", source: { type: "base64", media_type: m.image.type, data: m.image.donnees } }, { type: "text", text: m.content }] }
+            : { role: m.role, content: m.content }
+        ),
       },
       { signal }
     );
@@ -317,7 +384,10 @@ export async function POST(request) {
   const messages = messagesValides(corps?.messages);
   if (!messages) return Response.json({ erreur: "requete-invalide" }, { status: 400 });
 
-  const systeme = `${ROLE}\n\nDonnées d'Issa, lues dans l'app à l'instant :\n\n${await contexteP}`;
+  const mode = CONSIGNES_MODE[corps?.mode] ? corps.mode : null;
+  const derniere = messages.at(-1);
+  const forcerRecherche = !mode && !derniere.image && BESOIN_SOURCE.test(derniere.content);
+  const systeme = `${ROLE}${mode ? `\n\n${CONSIGNES_MODE[mode]}` : ""}\n\nDonnées d'Issa, lues dans l'app à l'instant :\n\n${await contexteP}`;
   const repondre = fournisseur === "gemini" ? repondreGemini : repondreClaude;
   const arret = new AbortController();
   const encodeur = new TextEncoder();
@@ -326,7 +396,7 @@ export async function POST(request) {
     async start(controleur) {
       const ecrire = (t) => controleur.enqueue(encodeur.encode(t));
       try {
-        const erreur = await repondre({ systeme, messages, ecrire, signal: arret.signal });
+        const erreur = await repondre({ systeme, messages, ecrire, signal: arret.signal, forcerRecherche });
         if (erreur) ecrire(`\n\n⚠︎ ${erreur}`);
       } finally {
         try {

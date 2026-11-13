@@ -7,6 +7,7 @@
 
 import { prisma } from "@/lib/db";
 import { lireNotes } from "@/lib/coachMemoire";
+import { progressionParExercice, tendance, texteSerie } from "@/lib/carnet";
 import { calculerRang } from "@/lib/rang";
 import { calculerXp } from "@/lib/xp";
 import { calculerBilan } from "@/lib/profilStats";
@@ -81,13 +82,15 @@ function blocScan(m, index) {
 }
 
 export async function construireContexte() {
-  const [mesures, profil, entrees, objectifs, mensuels, notes] = await Promise.all([
+  const [mesures, profil, entrees, objectifs, mensuels, notes, seances] = await Promise.all([
     prisma.mesure.findMany({ orderBy: { dateScan: "asc" } }),
     prisma.profil.findUnique({ where: { id: 1 } }),
     prisma.journalEntry.findMany({ where: { semaineIso: { not: null } }, orderBy: { semaineIso: "asc" } }),
     prisma.objectif.findMany({ where: { actif: true }, orderBy: { createdAt: "asc" } }),
     prisma.objectifMensuel.findMany({ orderBy: { nature: "asc" } }),
     lireNotes(),
+    // Carnet : 8 dernières semaines, assez pour lire une progression.
+    prisma.seanceMuscu.findMany({ where: { date: { gte: new Date(Date.now() - 56 * 864e5) } }, orderBy: { date: "asc" } }),
   ]);
 
   const parties = [];
@@ -132,6 +135,9 @@ export async function construireContexte() {
     if (poids) {
       const g = (k) => Math.round(poids * k);
       reperes.push(`- protéines en recomposition (1,6 à 2,2 g/kg) : ${g(1.6)} à ${g(2.2)} g par jour (2 g/kg = ${g(2)} g)`);
+      // Cible par repas : Flash-Lite additionne mal (plan à 162 g pour une
+      // cible de 182 g, 13/11/2026) ; viser un nombre par prise est plus sûr.
+      reperes.push(`- pour un plan de repas à ${g(2)} g : 4 prises d'environ ${Math.round(g(2) / 4)} g chacune (ou 5 prises d'environ ${Math.round(g(2) / 5)} g)`);
       reperes.push(`- eau (30 à 40 ml/kg) : ${nombre(Math.round(poids * 0.03 * 10) / 10)} à ${nombre(Math.round(poids * 0.04 * 10) / 10)} L par jour`);
     }
     if (derniere.metabolismeBaseKcal) {
@@ -183,6 +189,30 @@ export async function construireContexte() {
     }
   }
   parties.push(hab.join("\n"));
+
+  // Carnet d'entraînement : séances détaillées et progression par exercice.
+  const carnet = ["## Carnet d'entraînement (8 dernières semaines)"];
+  if (seances.length === 0) {
+    carnet.push("Aucune séance détaillée enregistrée : tu ne connais pas ses exercices ni ses charges. S'il demande un programme ou une progression, invite-le à noter ses séances dans le Carnet (accueil, « Carnet d'entraînement »).");
+  } else {
+    carnet.push(`${seances.length} séance(s) détaillée(s). Les plus récentes :`);
+    for (const s of seances.slice(-6)) {
+      const detail = s.exercices.map((ex) => `${ex.nom} ${ex.series.map(texteSerie).join(", ")}`).join(" ; ");
+      carnet.push(`- ${date(s.date)}${s.titre ? ` (${s.titre})` : ""} : ${detail}${s.note ? `. Note : « ${s.note.slice(0, 200)} »` : ""}`);
+    }
+    const progressions = progressionParExercice(seances).filter((p) => p.points.length >= 1);
+    if (progressions.length) {
+      carnet.push("Progression par exercice (1RM estimé par la formule d'Epley, ou répétitions au poids du corps) :");
+      for (const p of progressions.slice(0, 15)) {
+        const t = tendance(p.points);
+        const dernier = p.points.at(-1);
+        const meilleur = dernier.unRm != null ? `meilleure série récente ${texteSerie(dernier.meilleureSerie)}, 1RM estimé ${nombre(Math.round(dernier.unRm))} kg` : `jusqu'à ${dernier.repsMax} répétitions`;
+        const sens = t ? (t.ecartPct != null ? `, ${t.sens} (${t.ecartPct > 0 ? "+" : ""}${nombre(t.ecartPct)} % sur ${p.points.length} séances)` : `, ${t.sens} (${t.ecartReps > 0 ? "+" : ""}${t.ecartReps} reps)`) : ", une seule séance";
+        carnet.push(`- ${p.nom} : ${meilleur}${sens}`);
+      }
+    }
+  }
+  parties.push(carnet.join("\n"));
 
   const xp = calculerXp(entrees, mesures.length, OBJECTIFS_DEFAUT, actuelle);
   parties.push(`## Progression dans l'app\nNiveau ${xp.niveau}, ${xp.total} XP au total (${xp.habitudes} XP d'habitudes, ${xp.scans} XP de scans).`);

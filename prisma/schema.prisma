@@ -136,3 +136,18 @@ model CoachNote {
 
   @@index([createdAt])
 }
+
+// Carnet d'entraînement : une ligne par séance de musculation, avec le
+// détail des exercices et des séries. Lu par le coach (progression des
+// charges, stagnation, volume) et par la page /carnet.
+// exercices : [{ nom: "Développé couché", series: [{ reps: 8, charge: 80 }] }]
+model SeanceMuscu {
+  id        String   @id @default(cuid())
+  date      DateTime
+  titre     String?
+  exercices Json
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([date])
+}
