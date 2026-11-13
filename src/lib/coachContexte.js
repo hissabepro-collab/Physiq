@@ -115,6 +115,28 @@ export async function construireContexte() {
     }
     parties.push([...entete, ...mesures.map(blocScan)].join("\n\n"));
 
+    // Repères calculés par l'app : le modèle rapide se trompe dans les calculs
+    // (constaté le 13/11/2026 : « 1,6 à 2 g/kg, soit 145 à 160 g » pour 91 kg).
+    const reperes = [];
+    const poids = derniere.poidsKg;
+    if (poids) {
+      const g = (k) => Math.round(poids * k);
+      reperes.push(`- protéines en recomposition (1,6 à 2,2 g/kg) : ${g(1.6)} à ${g(2.2)} g par jour (2 g/kg = ${g(2)} g)`);
+      reperes.push(`- eau (30 à 40 ml/kg) : ${nombre(Math.round(poids * 0.03 * 10) / 10)} à ${nombre(Math.round(poids * 0.04 * 10) / 10)} L par jour`);
+    }
+    if (derniere.metabolismeBaseKcal) {
+      const mb = derniere.metabolismeBaseKcal;
+      const bas = Math.round((mb * 1.5) / 10) * 10;
+      const haut = Math.round((mb * 1.7) / 10) * 10;
+      reperes.push(`- dépense quotidienne estimée (métabolisme de base × 1,5 à 1,7, activité modérée à soutenue) : ${bas} à ${haut} kcal ; estimation, à ajuster selon l'évolution du poids`);
+      reperes.push(`- apport pour un déficit modéré (300 à 500 kcal) : environ ${bas - 500} à ${haut - 300} kcal par jour`);
+    }
+    if (derniere.masseGrasseKg != null && poids && derniere.bfpPct != null) {
+      const maigre = poids - derniere.masseGrasseKg;
+      reperes.push(`- poids correspondant à 15 % de masse grasse à masse maigre égale : ${nombre(Math.round((maigre / 0.85) * 10) / 10)} kg ; à 13 % : ${nombre(Math.round((maigre / 0.87) * 10) / 10)} kg`);
+    }
+    if (reperes.length) parties.push(`## Repères calculés par l'app (à utiliser tels quels, ne pas recalculer)\n${reperes.join("\n")}`);
+
     const bilan = calculerBilan(mesures);
     if (bilan) {
       const lignes = bilan.map(

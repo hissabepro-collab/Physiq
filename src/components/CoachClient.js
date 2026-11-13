@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import PageHeader from "@/components/PageHeader";
+import { MARQUEUR_RECHERCHE } from "@/lib/coachMarqueur";
 
 // Coach IA. La conversation reste sur le téléphone (localStorage) ; le
 // serveur ne la stocke pas. Chaque question part avec l'historique et le
@@ -16,10 +17,21 @@ const SUGGESTIONS = [
 ];
 
 // Mise en forme légère, sans HTML injecté : **gras**, listes « - », paragraphes.
+// Liens Markdown [texte](https://…) : seuls les liens https sont rendus
+// cliquables (le serveur ne laisse passer que ceux des recherches réelles).
 function enLigne(texte) {
-  return texte.split(/(\*\*[^*]+\*\*)/g).map((p, i) =>
-    p.startsWith("**") && p.endsWith("**") && p.length > 4 ? <strong key={i}>{p.slice(2, -2)}</strong> : p
-  );
+  return texte.split(/(\*\*[^*]+\*\*|\[[^\]\n]+\]\(https:\/\/[^)\s]+\))/g).map((p, i) => {
+    if (p.startsWith("**") && p.endsWith("**") && p.length > 4) return <strong key={i}>{enLigne(p.slice(2, -2))}</strong>;
+    const lien = p.match(/^\[([^\]\n]+)\]\((https:\/\/[^)\s]+)\)$/);
+    if (lien) {
+      return (
+        <a key={i} href={lien[2]} target="_blank" rel="noopener noreferrer" className="text-accent underline underline-offset-2">
+          {lien[1]}
+        </a>
+      );
+    }
+    return p;
+  });
 }
 
 function Texte({ texte }) {
@@ -46,6 +58,7 @@ export default function CoachClient({ service = "l'IA" }) {
   const [saisie, setSaisie] = useState("");
   const [enCours, setEnCours] = useState(false);
   const [inactif, setInactif] = useState(false);
+  const [recherche, setRecherche] = useState(false);
   const finRef = useRef(null);
   const charge = useRef(false);
 
@@ -102,6 +115,13 @@ export default function CoachClient({ service = "l'IA" }) {
         const { done, value } = await lecteur.read();
         if (done) break;
         reponse += decodeur.decode(value, { stream: true });
+        // Pendant une recherche d'études, le serveur envoie un marqueur : on
+        // l'enlève du texte et on affiche l'état tant qu'aucun mot n'arrive.
+        if (reponse.includes(MARQUEUR_RECHERCHE)) {
+          reponse = reponse.split(MARQUEUR_RECHERCHE).join("");
+          setRecherche(true);
+        }
+        if (reponse.trim()) setRecherche(false);
         setMessages([...historique, { role: "assistant", content: reponse }]);
       }
       if (!reponse.trim()) throw new Error("vide");
@@ -109,6 +129,7 @@ export default function CoachClient({ service = "l'IA" }) {
       setMessages([...historique, { role: "assistant", content: "⚠︎ Le coach n'a pas pu répondre. Vérifie ta connexion et réessaie." }]);
     } finally {
       setEnCours(false);
+      setRecherche(false);
     }
   }
 
@@ -171,7 +192,13 @@ export default function CoachClient({ service = "l'IA" }) {
             </div>
           ) : (
             <div key={i} className="verre max-w-[92%] rounded-2xl rounded-bl-md px-4 py-3 text-sm leading-relaxed">
-              {m.content ? <Texte texte={m.content} /> : <span className="coach-attente" aria-label="Le coach réfléchit">●●●</span>}
+              {m.content ? (
+                <Texte texte={m.content} />
+              ) : recherche && i === messages.length - 1 ? (
+                <span className="coach-attente text-xs">Recherche de sources (études, presse)…</span>
+              ) : (
+                <span className="coach-attente" aria-label="Le coach réfléchit">●●●</span>
+              )}
             </div>
           )
         )}

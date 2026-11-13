@@ -16,6 +16,9 @@ export default async function CoachPage() {
   const fournisseur = fournisseurCoach();
   if (fournisseur) return <CoachClient service={fournisseur === "gemini" ? "Gemini (Google)" : "Claude (Anthropic)"} />;
   const contexte = await construireContexte();
-  const dossier = `${ROLE}\n\nJe suis Issa. Voici mes données, exportées de mon app Physiq à l'instant :\n\n${contexte}`;
+  // Les outils de recherche n'existent que dans l'app : on retire cette
+  // partie des consignes copiées vers Claude.
+  const consignes = ROLE.replace(/## Recherche de sources[\s\S]*?(?=\n## Limites)/, "");
+  const dossier = `${consignes}\n\nJe suis Issa. Voici mes données, exportées de mon app Physiq à l'instant :\n\n${contexte}`;
   return <CoachGratuit dossier={dossier} />;
 }

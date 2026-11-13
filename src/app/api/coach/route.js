@@ -1,8 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { GoogleGenAI, ApiError as GeminiApiError, ThinkingLevel } from "@google/genai";
+import { GoogleGenAI, ApiError as GeminiApiError, ThinkingLevel, FunctionCallingConfigMode } from "@google/genai";
 import { construireContexte } from "@/lib/coachContexte";
 import { ROLE } from "@/lib/coachRole";
 import { fournisseurCoach } from "@/lib/coachFournisseur";
+import { rechercherEtudes } from "@/lib/rechercheEtudes";
+import { rechercherPresse } from "@/lib/recherchePresse";
+import { MARQUEUR_RECHERCHE } from "@/lib/coachMarqueur";
+import { creerFiltreLiens } from "@/lib/filtreLiens";
 
 // Coach IA (chantier 2). Protégé par la session comme toutes les routes
 // /api (voir src/proxy.js). La conversation est gardée sur le téléphone ;
@@ -20,12 +24,13 @@ import { fournisseurCoach } from "@/lib/coachFournisseur";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-// Ordre de préférence (offre gratuite), mesuré le 13/11/2026 avec le vrai
-// dossier : 3.6 Flash en réflexion minimale écrit son premier mot en 0,8 à
-// 1,7 s (6 s en réflexion basse) pour une qualité équivalente ; 3.5
-// Flash-Lite (0,6 s) prend le relais s'il est saturé. 3.8 Flash est écarté :
-// saturé sur l'offre gratuite, et il refuse la réflexion minimale (400).
-const MODELES_GEMINI = ["gemini-3.6-flash", "gemini-3.5-flash-lite"];
+// Ordre de préférence (offre gratuite), mesuré le 13/11/2026.
+// Limites gratuites du compte (AI Studio, « Limite de débit ») : 3.5
+// Flash-Lite 15/min et 500/jour ; 3.6 Flash et 3.8 Flash seulement 5/min et
+// 20/jour. Une question avec recherche consomme 2 à 3 requêtes : Flash-Lite
+// est donc le modèle principal (et le plus rapide : 1er mot ~0,6 s), les
+// deux autres servent de relais quand il est saturé.
+const MODELES_GEMINI = ["gemini-3.5-flash-lite", "gemini-3.6-flash", "gemini-3.8-flash"];
 const DELAI_PREMIER_MORCEAU = 8000;
 const MODELE_CLAUDE = "claude-opus-5-5";
 const MAX_MESSAGES = 40;
@@ -56,58 +61,163 @@ function messagesValides(brut) {
 // Chaque fonction écrit la réponse morceau par morceau via `ecrire`, et
 // renvoie un texte d'erreur à afficher en cas d'échec (ou null).
 
-// Une tentative sur un modèle Gemini. Renvoie { ok } quand la réponse est
-// partie, { relais: true } quand le modèle est saturé ou muet AVANT d'avoir
-// écrit quoi que ce soit (on passe alors au suivant), sinon { erreur }.
+// Outils proposés au modèle : études scientifiques (PubMed) et presse
+// (Google Actualités). Gratuits, sans clé ; seuls des termes de recherche
+// généraux en sortent, jamais les données de l'utilisateur.
+const OUTILS = {
+  rechercher_etudes: {
+    executer: rechercherEtudes,
+    cle: "etudes",
+    declaration: {
+      name: "rechercher_etudes",
+      description:
+        "Cherche des études scientifiques publiées (PubMed, 10 dernières années, méta-analyses et revues en priorité) et renvoie titre, année, revue, type, résumé et lien. Pour une recommandation chiffrée, l'effet d'un complément, d'un régime ou d'une méthode d'entraînement.",
+      parametersJsonSchema: {
+        type: "object",
+        properties: {
+          requete: { type: "string", description: "Termes de recherche en anglais, scientifiques, sans aucune donnée personnelle. Ex. : creatine supplementation lean mass resistance training" },
+        },
+        required: ["requete"],
+      },
+    },
+  },
+  rechercher_presse: {
+    executer: rechercherPresse,
+    cle: "articles",
+    declaration: {
+      name: "rechercher_presse",
+      description:
+        "Cherche des articles de presse récents (Google Actualités, 2 dernières années, en français) et renvoie titre, média, date et lien. Pour l'actualité, une tendance, un produit, une idée reçue dont on parle, ou pour compléter une étude par un article grand public. Seul le titre est fourni, pas le contenu.",
+      parametersJsonSchema: {
+        type: "object",
+        properties: {
+          requete: { type: "string", description: "Termes de recherche en français, généraux, sans aucune donnée personnelle. Ex. : créatine perte de gras" },
+        },
+        required: ["requete"],
+      },
+    },
+  },
+};
+const DECLARATIONS = Object.values(OUTILS).map((o) => o.declaration);
+const MAX_RECHERCHES = 2;
+
+// Une tentative sur un modèle Gemini, avec au plus MAX_RECHERCHES appels à
+// l'outil. Renvoie { ok } quand la réponse est partie, { relais: true }
+// quand le modèle est saturé ou muet AVANT d'avoir rien produit (on passe
+// alors au modèle suivant), sinon { erreur }.
 async function essaiGemini(modele, { systeme, messages, ecrire, signal }) {
   const arretEssai = new AbortController();
   const surArret = () => arretEssai.abort();
   signal.addEventListener("abort", surArret);
-  // Délai de premier morceau : mesuré le 13/11/2026, un modèle saturé de
-  // l'offre gratuite peut mettre plus d'une minute avant de refuser.
-  let minuteur = setTimeout(() => arretEssai.abort(), DELAI_PREMIER_MORCEAU);
+  let minuteur = null;
   let aEcrit = false;
+  let aCherche = false;
+  // Liens réellement renvoyés par les recherches de cette réponse : seuls
+  // ceux-là peuvent apparaître dans le texte (voir lib/filtreLiens).
+  const autorises = new Set();
+  const filtre = creerFiltreLiens(autorises, ecrire);
+  const contenu = messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] }));
   try {
-    const flux = await clientGemini.models.generateContentStream({
-      model: modele,
-      contents: messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
-      // Réflexion minimale : le dossier est déjà préparé, une longue
-      // réflexion ne fait que retarder le premier mot (voir MODELES_GEMINI).
-      config: { systemInstruction: systeme, maxOutputTokens: MAX_SORTIE, thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL }, abortSignal: arretEssai.signal },
-    });
-    let usage = null;
-    let fin = null;
-    for await (const morceau of flux) {
-      if (morceau.text) {
-        if (!aEcrit) {
+    for (let tour = 0; tour <= MAX_RECHERCHES; tour++) {
+      // Délai de premier morceau : mesuré le 13/11/2026, un modèle saturé de
+      // l'offre gratuite peut mettre plus d'une minute avant de refuser.
+      minuteur = setTimeout(() => arretEssai.abort(), DELAI_PREMIER_MORCEAU);
+      const flux = await clientGemini.models.generateContentStream({
+        model: modele,
+        contents: contenu,
+        // Réflexion minimale : le dossier est déjà préparé, une longue
+        // réflexion ne fait que retarder le premier mot (voir MODELES_GEMINI).
+        config: {
+          systemInstruction: systeme,
+          maxOutputTokens: MAX_SORTIE,
+          thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
+          tools: [{ functionDeclarations: DECLARATIONS }],
+          // Au dernier tour, plus de recherche possible : il doit rédiger avec
+          // ce qu'il a trouvé (constaté le 13/11/2026 : sinon il enchaîne les
+          // recherches et ne répond jamais).
+          toolConfig: { functionCallingConfig: { mode: tour < MAX_RECHERCHES ? FunctionCallingConfigMode.AUTO : FunctionCallingConfigMode.NONE } },
+          abortSignal: arretEssai.signal,
+        },
+      });
+      let usage = null;
+      let fin = null;
+      const partiesModele = [];
+      const appels = [];
+      for await (const morceau of flux) {
+        const parties = morceau.candidates?.[0]?.content?.parts ?? [];
+        if (parties.length && minuteur) {
           clearTimeout(minuteur);
           minuteur = null;
         }
-        aEcrit = true;
-        ecrire(morceau.text);
+        // On garde les parties telles quelles (signatures de réflexion
+        // comprises) : Gemini 3 les exige quand on lui renvoie un appel d'outil.
+        partiesModele.push(...parties);
+        for (const p of parties) {
+          if (p.functionCall) appels.push(p.functionCall);
+          else if (p.text && !p.thought) {
+            aEcrit = true;
+            filtre.ecrire(p.text);
+          }
+        }
+        if (morceau.usageMetadata) usage = morceau.usageMetadata;
+        const raison = morceau.candidates?.[0]?.finishReason;
+        if (raison) fin = raison;
       }
-      if (morceau.usageMetadata) usage = morceau.usageMetadata;
-      const raison = morceau.candidates?.[0]?.finishReason;
-      if (raison) fin = raison;
+      if (minuteur) {
+        clearTimeout(minuteur);
+        minuteur = null;
+      }
+      console.log(
+        `[coach] ${modele} tour=${tour} entree=${usage?.promptTokenCount ?? "?"} sortie=${usage?.candidatesTokenCount ?? "?"} reflexion=${usage?.thoughtsTokenCount ?? 0} appels=${appels.length} fin=${fin ?? "?"}`
+      );
+      if (fin === "SAFETY" || fin === "PROHIBITED_CONTENT" || fin === "BLOCKLIST") {
+        return { erreur: "Je ne peux pas répondre à cette question. Reformule-la, ou pose-la à un professionnel de santé." };
+      }
+      filtre.vider();
+      if (appels.length === 0) {
+        if (fin === "MAX_TOKENS") ecrire("…");
+        if (!aEcrit) return aCherche ? { erreur: MSG_ECHEC } : { relais: true };
+        return { ok: true };
+      }
+      // Le modèle demande une recherche : on l'exécute et on lui renvoie les
+      // études, puis il rédige sa réponse au tour suivant.
+      aCherche = true;
+      ecrire(MARQUEUR_RECHERCHE);
+      contenu.push({ role: "model", parts: partiesModele });
+      const reponses = [];
+      // Les recherches demandées en même temps partent en parallèle.
+      const resultats = await Promise.all(
+        appels.slice(0, 3).map(async (appel) => {
+          const outil = OUTILS[appel.name];
+          if (!outil) return { erreur: "Outil inconnu." };
+          try {
+            const liste = await outil.executer(appel.args?.requete);
+            console.log(`[coach] ${appel.name} « ${String(appel.args?.requete ?? "").slice(0, 80)} » : ${liste.length} résultat(s)`);
+            for (const r of liste) if (r.lien) autorises.add(r.lien);
+            return { [outil.cle]: liste, nombre: liste.length };
+          } catch (e) {
+            console.error(`[coach] échec ${appel.name} :`, e?.message);
+            return { erreur: "Recherche indisponible pour le moment. Réponds sans cette source, et précise en une phrase que la recherche n'a pas abouti." };
+          }
+        })
+      );
+      appels.slice(0, 3).forEach((appel, k) => reponses.push({ functionResponse: { id: appel.id, name: appel.name, response: resultats[k] } }));
+      // Dernier tour : consigne explicite en plus du mode NONE, que le modèle
+      // n'a pas toujours respecté seul (13/11/2026).
+      if (tour + 1 >= MAX_RECHERCHES) reponses.push({ text: "Plus de recherche possible : rédige maintenant ta réponse avec les sources déjà trouvées (ou sans source si rien n'est pertinent)." });
+      contenu.push({ role: "user", parts: reponses });
     }
-    console.log(
-      `[coach] ${modele} entree=${usage?.promptTokenCount ?? "?"} sortie=${usage?.candidatesTokenCount ?? "?"} reflexion=${usage?.thoughtsTokenCount ?? 0} fin=${fin ?? "?"}`
-    );
-    if (fin === "SAFETY" || fin === "PROHIBITED_CONTENT" || fin === "BLOCKLIST") {
-      return { erreur: "Je ne peux pas répondre à cette question. Reformule-la, ou pose-la à un professionnel de santé." };
-    }
-    if (fin === "MAX_TOKENS") ecrire("…");
-    if (!aEcrit) return { relais: true };
-    return { ok: true };
+    return aEcrit ? { ok: true } : { erreur: MSG_ECHEC };
   } catch (e) {
+    filtre.vider();
     if (signal.aborted) return { ok: true };
     const statut = e instanceof GeminiApiError ? e.status : null;
     const muet = arretEssai.signal.aborted;
     console.error(`[coach] échec ${modele} :`, muet ? "délai dépassé" : (statut ?? e?.name));
     // Google répond 400 (et non 401) quand la clé est invalide.
     if (statut === 401 || statut === 403 || (statut === 400 && /api[ _-]?key/i.test(e?.message ?? ""))) return { erreur: MSG_CLE };
-    if (!aEcrit && (muet || statut === 429 || statut === 503 || statut === 500 || statut === 404)) return { relais: true };
-    return { erreur: MSG_ECHEC };
+    if (!aEcrit && !aCherche && (muet || statut === 429 || statut === 503 || statut === 500 || statut === 404)) return { relais: true };
+    return { erreur: aCherche && !aEcrit && (muet || statut === 429 || statut === 503) ? MSG_SURCHARGE : MSG_ECHEC };
   } finally {
     if (minuteur) clearTimeout(minuteur);
     signal.removeEventListener("abort", surArret);
