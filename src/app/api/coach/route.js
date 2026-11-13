@@ -40,6 +40,7 @@ const MAX_SORTIE = 8000;
 const MSG_SURCHARGE = "Le coach est surchargé pour le moment (offre gratuite de Google). Réessaie dans une minute.";
 const MSG_CLE = "La clé du coach n'est pas valide. Vérifie-la dans les réglages Vercel.";
 const MSG_ECHEC = "Le coach n'a pas pu répondre. Réessaie.";
+const MSG_COUPEE = "La réponse a été coupée (serveur de Google saturé). Repose ta question.";
 
 let clientClaude = null;
 let clientGemini = null;
@@ -217,7 +218,8 @@ async function essaiGemini(modele, { systeme, messages, ecrire, signal }) {
     // Google répond 400 (et non 401) quand la clé est invalide.
     if (statut === 401 || statut === 403 || (statut === 400 && /api[ _-]?key/i.test(e?.message ?? ""))) return { erreur: MSG_CLE };
     if (!aEcrit && !aCherche && (muet || statut === 429 || statut === 503 || statut === 500 || statut === 404)) return { relais: true };
-    return { erreur: aCherche && !aEcrit && (muet || statut === 429 || statut === 503) ? MSG_SURCHARGE : MSG_ECHEC };
+    if (aEcrit) return { erreur: MSG_COUPEE };
+    return { erreur: aCherche && (muet || statut === 429 || statut === 503) ? MSG_SURCHARGE : MSG_ECHEC };
   } finally {
     if (minuteur) clearTimeout(minuteur);
     signal.removeEventListener("abort", surArret);

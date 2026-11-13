@@ -11,9 +11,11 @@ import { MARQUEUR_RECHERCHE } from "@/lib/coachMarqueur";
 const CLE = "physiq-coach";
 const SUGGESTIONS = [
   "Que disent mes derniers chiffres ?",
-  "Que changer cette semaine ?",
+  "Fais-moi une journée type de repas avec assez de protéines",
+  "Propose-moi une séance haut du corps",
+  "Quels muscles travaillent au développé couché, et pourquoi ?",
   "Mon sommeil freine-t-il mes résultats ?",
-  "Comment passer au rang suivant ?",
+  "La créatine m'aiderait ? Donne-moi des études",
 ];
 
 // Mise en forme légère, sans HTML injecté : **gras**, listes « - », paragraphes.
@@ -145,7 +147,7 @@ export default function CoachClient({ service = "l'IA" }) {
       <PageHeader
         kicker="Coach"
         title="Ton coach"
-        subtitle="Il lit tes scans, tes bilans et tes objectifs pour te répondre."
+        subtitle="Nutritionniste, coach muscu et prof d'anatomie : il lit tes scans, tes bilans et tes objectifs."
         action={
           !vide && (
             <button
