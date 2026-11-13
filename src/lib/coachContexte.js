@@ -6,6 +6,7 @@
 // du début de la requête et divise le coût des questions suivantes.
 
 import { prisma } from "@/lib/db";
+import { lireNotes } from "@/lib/coachMemoire";
 import { calculerRang } from "@/lib/rang";
 import { calculerXp } from "@/lib/xp";
 import { calculerBilan } from "@/lib/profilStats";
@@ -80,12 +81,13 @@ function blocScan(m, index) {
 }
 
 export async function construireContexte() {
-  const [mesures, profil, entrees, objectifs, mensuels] = await Promise.all([
+  const [mesures, profil, entrees, objectifs, mensuels, notes] = await Promise.all([
     prisma.mesure.findMany({ orderBy: { dateScan: "asc" } }),
     prisma.profil.findUnique({ where: { id: 1 } }),
     prisma.journalEntry.findMany({ where: { semaineIso: { not: null } }, orderBy: { semaineIso: "asc" } }),
     prisma.objectif.findMany({ where: { actif: true }, orderBy: { createdAt: "asc" } }),
     prisma.objectifMensuel.findMany({ orderBy: { nature: "asc" } }),
+    lireNotes(),
   ]);
 
   const parties = [];
@@ -99,6 +101,14 @@ export async function construireContexte() {
   const a = age(profil?.dateNaissance);
   if (a != null) p.push(`âge : ${a} ans`);
   parties.push(`## Profil\n${p.join(", ")}.`);
+
+  // Mémoire du coach : en tête, car elle peut changer toute la réponse
+  // (blessure, préférence, style demandé).
+  parties.push(
+    notes.length
+      ? `## Ce qu'Issa t'a demandé de retenir (mémoire du coach, à respecter)\n${notes.map((n) => `- ${n.texte} (noté le ${date(n.createdAt)})`).join("\n")}`
+      : "## Ce qu'Issa t'a demandé de retenir (mémoire du coach)\nRien pour l'instant."
+  );
 
   // Scans
   if (mesures.length === 0) {

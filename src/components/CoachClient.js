@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import PageHeader from "@/components/PageHeader";
 import { MARQUEUR_RECHERCHE } from "@/lib/coachMarqueur";
+import MemoireCoach from "@/components/MemoireCoach";
 
 // Coach IA. La conversation reste sur le téléphone (localStorage) ; le
 // serveur ne la stocke pas. Chaque question part avec l'historique et le
@@ -61,6 +62,8 @@ export default function CoachClient({ service = "l'IA" }) {
   const [enCours, setEnCours] = useState(false);
   const [inactif, setInactif] = useState(false);
   const [recherche, setRecherche] = useState(false);
+  // Compteur de réponses terminées : la mémoire se relit après chacune.
+  const [reponses, setReponses] = useState(0);
   const finRef = useRef(null);
   const charge = useRef(false);
 
@@ -132,6 +135,7 @@ export default function CoachClient({ service = "l'IA" }) {
     } finally {
       setEnCours(false);
       setRecherche(false);
+      setReponses((n) => n + 1);
     }
   }
 
@@ -238,8 +242,10 @@ export default function CoachClient({ service = "l'IA" }) {
         </button>
       </form>
       <p className="mt-3 text-[11px] text-foreground-muted">
-        Pour répondre, tes chiffres sont envoyés à {service}. La conversation reste sur ce téléphone. Pas un avis médical.
+        Pour répondre, tes chiffres sont envoyés à {service}. La conversation reste sur ce téléphone ; seules les notes
+        « Ce que le coach retient » sont gardées sur ton compte. Pas un avis médical.
       </p>
+      <MemoireCoach version={reponses} />
       <style>{`.coach-attente{letter-spacing:.2em;opacity:.5;animation:coach-pulse 1.2s ease-in-out infinite}@keyframes coach-pulse{50%{opacity:.15}}`}</style>
     </div>
   );

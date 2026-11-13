@@ -123,3 +123,16 @@ model Profil {
   dateNaissance  DateTime?
   motDePasseHash String?
 }
+
+// Mémoire du coach IA : ce que l'utilisateur lui a dit de durable
+// (préférences, contraintes, blessures, horaires, corrections de style).
+// Ajoutée par le coach lui-même (outil « memoriser ») ou à la main depuis la
+// page Coach ; relue à chaque question. L'utilisateur peut tout supprimer.
+model CoachNote {
+  id        String   @id @default(cuid())
+  texte     String
+  source    String   @default("coach") // "coach" | "utilisateur"
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

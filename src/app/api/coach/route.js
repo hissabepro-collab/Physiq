@@ -7,6 +7,7 @@ import { rechercherEtudes } from "@/lib/rechercheEtudes";
 import { rechercherPresse } from "@/lib/recherchePresse";
 import { MARQUEUR_RECHERCHE } from "@/lib/coachMarqueur";
 import { creerFiltreLiens } from "@/lib/filtreLiens";
+import { ajouterNote } from "@/lib/coachMemoire";
 
 // Coach IA (chantier 2). Protégé par la session comme toutes les routes
 // /api (voir src/proxy.js). La conversation est gardée sur le téléphone ;
@@ -98,6 +99,26 @@ const OUTILS = {
       },
     },
   },
+  memoriser: {
+    // Pas une recherche : écrit une note dans la mémoire du coach (base).
+    memoire: true,
+    executer: async (args) => {
+      const r = await ajouterNote(args?.note, "coach");
+      return r.erreur ? { erreur: r.erreur } : { enregistre: r.note.texte, dejaConnu: Boolean(r.deja) };
+    },
+    declaration: {
+      name: "memoriser",
+      description:
+        "Enregistre dans ta mémoire permanente une information durable sur Issa, que tu relis à chaque question : préférence, contrainte, blessure ou gêne, horaires, matériel disponible, goûts alimentaires, objectif personnel, ou consigne sur ta façon de répondre. Pas pour une donnée passagère ni pour ce qui est déjà dans son dossier.",
+      parametersJsonSchema: {
+        type: "object",
+        properties: {
+          note: { type: "string", description: "Une phrase courte et autonome, à la 3e personne. Ex. : « S'entraîne le soir vers 19 h, en salle. » ; « Veut des réponses plus courtes. »" },
+        },
+        required: ["note"],
+      },
+    },
+  },
 };
 const DECLARATIONS = Object.values(OUTILS).map((o) => o.declaration);
 const MAX_RECHERCHES = 2;
@@ -177,13 +198,15 @@ async function essaiGemini(modele, { systeme, messages, ecrire, signal }) {
       filtre.vider();
       if (appels.length === 0) {
         if (fin === "MAX_TOKENS") ecrire("…");
-        if (!aEcrit) return aCherche ? { erreur: MSG_ECHEC } : { relais: true };
+        // Rien d'écrit (même après une recherche ou une note) : le modèle
+        // suivant reprend la question ; la mémoire ignore les doublons.
+        if (!aEcrit) return { relais: true };
         return { ok: true };
       }
       // Le modèle demande une recherche : on l'exécute et on lui renvoie les
       // études, puis il rédige sa réponse au tour suivant.
       aCherche = true;
-      ecrire(MARQUEUR_RECHERCHE);
+      if (appels.some((a) => !OUTILS[a.name]?.memoire)) ecrire(MARQUEUR_RECHERCHE);
       contenu.push({ role: "model", parts: partiesModele });
       const reponses = [];
       // Les recherches demandées en même temps partent en parallèle.
@@ -192,6 +215,11 @@ async function essaiGemini(modele, { systeme, messages, ecrire, signal }) {
           const outil = OUTILS[appel.name];
           if (!outil) return { erreur: "Outil inconnu." };
           try {
+            if (outil.memoire) {
+              const r = await outil.executer(appel.args);
+              console.log(`[coach] memoriser : ${r.erreur ? "refus" : r.dejaConnu ? "déjà connu" : "note ajoutée"}`);
+              return r;
+            }
             const liste = await outil.executer(appel.args?.requete);
             console.log(`[coach] ${appel.name} « ${String(appel.args?.requete ?? "").slice(0, 80)} » : ${liste.length} résultat(s)`);
             for (const r of liste) if (r.lien) autorises.add(r.lien);
@@ -217,7 +245,7 @@ async function essaiGemini(modele, { systeme, messages, ecrire, signal }) {
     console.error(`[coach] échec ${modele} :`, muet ? "délai dépassé" : (statut ?? e?.name));
     // Google répond 400 (et non 401) quand la clé est invalide.
     if (statut === 401 || statut === 403 || (statut === 400 && /api[ _-]?key/i.test(e?.message ?? ""))) return { erreur: MSG_CLE };
-    if (!aEcrit && !aCherche && (muet || statut === 429 || statut === 503 || statut === 500 || statut === 404)) return { relais: true };
+    if (!aEcrit && (muet || statut === 429 || statut === 503 || statut === 500 || statut === 404)) return { relais: true };
     if (aEcrit) return { erreur: MSG_COUPEE };
     return { erreur: aCherche && (muet || statut === 429 || statut === 503) ? MSG_SURCHARGE : MSG_ECHEC };
   } finally {
