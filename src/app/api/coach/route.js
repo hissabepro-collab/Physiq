@@ -20,10 +20,13 @@ import { fournisseurCoach } from "@/lib/coachFournisseur";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-// Ordre de préférence (offre gratuite) : si le premier est saturé, on passe
-// au suivant sans que l'utilisateur le voie.
-const MODELES_GEMINI = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"];
-const DELAI_PREMIER_MORCEAU = 12000;
+// Ordre de préférence (offre gratuite), mesuré le 13/11/2026 avec le vrai
+// dossier : 3.6 Flash en réflexion minimale écrit son premier mot en 0,8 à
+// 1,7 s (6 s en réflexion basse) pour une qualité équivalente ; 3.5
+// Flash-Lite (0,6 s) prend le relais s'il est saturé. 3.8 Flash est écarté :
+// saturé sur l'offre gratuite, et il refuse la réflexion minimale (400).
+const MODELES_GEMINI = ["gemini-3.6-flash", "gemini-3.5-flash-lite"];
+const DELAI_PREMIER_MORCEAU = 8000;
 const MODELE_CLAUDE = "claude-opus-5-5";
 const MAX_MESSAGES = 40;
 const MAX_CARACTERES = 4000;
@@ -68,10 +71,9 @@ async function essaiGemini(modele, { systeme, messages, ecrire, signal }) {
     const flux = await clientGemini.models.generateContentStream({
       model: modele,
       contents: messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
-      // Réflexion « basse » : sans elle, Gemini réfléchit ~1 300 jetons et
-      // n'écrit qu'après 10 s (mesuré le 13/11/2026) ; pour un coach qui lit
-      // un résumé déjà préparé, c'est inutile.
-      config: { systemInstruction: systeme, maxOutputTokens: MAX_SORTIE, thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }, abortSignal: arretEssai.signal },
+      // Réflexion minimale : le dossier est déjà préparé, une longue
+      // réflexion ne fait que retarder le premier mot (voir MODELES_GEMINI).
+      config: { systemInstruction: systeme, maxOutputTokens: MAX_SORTIE, thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL }, abortSignal: arretEssai.signal },
     });
     let usage = null;
     let fin = null;
@@ -162,6 +164,9 @@ async function repondreClaude({ systeme, messages, ecrire, signal }) {
 export async function POST(request) {
   const fournisseur = fournisseurCoach();
   if (!fournisseur) return Response.json({ erreur: "coach-inactif" }, { status: 503 });
+  // Lecture de la base lancée tout de suite, en parallèle de la question.
+  const contexteP = construireContexte();
+  contexteP.catch(() => {});
 
   let corps;
   try {
@@ -172,7 +177,7 @@ export async function POST(request) {
   const messages = messagesValides(corps?.messages);
   if (!messages) return Response.json({ erreur: "requete-invalide" }, { status: 400 });
 
-  const systeme = `${ROLE}\n\nDonnées d'Issa, lues dans l'app à l'instant :\n\n${await construireContexte()}`;
+  const systeme = `${ROLE}\n\nDonnées d'Issa, lues dans l'app à l'instant :\n\n${await contexteP}`;
   const repondre = fournisseur === "gemini" ? repondreGemini : repondreClaude;
   const arret = new AbortController();
   const encodeur = new TextEncoder();
