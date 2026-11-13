@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { GoogleGenAI, ApiError as GeminiApiError } from "@google/genai";
+import { GoogleGenAI, ApiError as GeminiApiError, ThinkingLevel } from "@google/genai";
 import { construireContexte } from "@/lib/coachContexte";
 import { ROLE } from "@/lib/coachRole";
 import { fournisseurCoach } from "@/lib/coachFournisseur";
@@ -20,13 +20,16 @@ import { fournisseurCoach } from "@/lib/coachFournisseur";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const MODELE_GEMINI = "gemini-3.8-flash";
+// Ordre de préférence (offre gratuite) : si le premier est saturé, on passe
+// au suivant sans que l'utilisateur le voie.
+const MODELES_GEMINI = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"];
+const DELAI_PREMIER_MORCEAU = 12000;
 const MODELE_CLAUDE = "claude-opus-5-5";
 const MAX_MESSAGES = 40;
 const MAX_CARACTERES = 4000;
 const MAX_SORTIE = 8000;
 
-const MSG_SURCHARGE = "Le coach est surchargé pour le moment (limite de l'offre gratuite). Réessaie dans une minute.";
+const MSG_SURCHARGE = "Le coach est surchargé pour le moment (offre gratuite de Google). Réessaie dans une minute.";
 const MSG_CLE = "La clé du coach n'est pas valide. Vérifie-la dans les réglages Vercel.";
 const MSG_ECHEC = "Le coach n'a pas pu répondre. Réessaie.";
 
@@ -50,39 +53,74 @@ function messagesValides(brut) {
 // Chaque fonction écrit la réponse morceau par morceau via `ecrire`, et
 // renvoie un texte d'erreur à afficher en cas d'échec (ou null).
 
-async function repondreGemini({ systeme, messages, ecrire, signal }) {
-  if (!clientGemini) clientGemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// Une tentative sur un modèle Gemini. Renvoie { ok } quand la réponse est
+// partie, { relais: true } quand le modèle est saturé ou muet AVANT d'avoir
+// écrit quoi que ce soit (on passe alors au suivant), sinon { erreur }.
+async function essaiGemini(modele, { systeme, messages, ecrire, signal }) {
+  const arretEssai = new AbortController();
+  const surArret = () => arretEssai.abort();
+  signal.addEventListener("abort", surArret);
+  // Délai de premier morceau : mesuré le 13/11/2026, un modèle saturé de
+  // l'offre gratuite peut mettre plus d'une minute avant de refuser.
+  let minuteur = setTimeout(() => arretEssai.abort(), DELAI_PREMIER_MORCEAU);
+  let aEcrit = false;
   try {
     const flux = await clientGemini.models.generateContentStream({
-      model: MODELE_GEMINI,
+      model: modele,
       contents: messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
-      config: { systemInstruction: systeme, maxOutputTokens: MAX_SORTIE, abortSignal: signal },
+      // Réflexion « basse » : sans elle, Gemini réfléchit ~1 300 jetons et
+      // n'écrit qu'après 10 s (mesuré le 13/11/2026) ; pour un coach qui lit
+      // un résumé déjà préparé, c'est inutile.
+      config: { systemInstruction: systeme, maxOutputTokens: MAX_SORTIE, thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }, abortSignal: arretEssai.signal },
     });
     let usage = null;
     let fin = null;
     for await (const morceau of flux) {
-      if (morceau.text) ecrire(morceau.text);
+      if (morceau.text) {
+        if (!aEcrit) {
+          clearTimeout(minuteur);
+          minuteur = null;
+        }
+        aEcrit = true;
+        ecrire(morceau.text);
+      }
       if (morceau.usageMetadata) usage = morceau.usageMetadata;
       const raison = morceau.candidates?.[0]?.finishReason;
       if (raison) fin = raison;
     }
     console.log(
-      `[coach] ${MODELE_GEMINI} entree=${usage?.promptTokenCount ?? "?"} sortie=${usage?.candidatesTokenCount ?? "?"} reflexion=${usage?.thoughtsTokenCount ?? 0} fin=${fin ?? "?"}`
+      `[coach] ${modele} entree=${usage?.promptTokenCount ?? "?"} sortie=${usage?.candidatesTokenCount ?? "?"} reflexion=${usage?.thoughtsTokenCount ?? 0} fin=${fin ?? "?"}`
     );
     if (fin === "SAFETY" || fin === "PROHIBITED_CONTENT" || fin === "BLOCKLIST") {
-      return "Je ne peux pas répondre à cette question. Reformule-la, ou pose-la à un professionnel de santé.";
+      return { erreur: "Je ne peux pas répondre à cette question. Reformule-la, ou pose-la à un professionnel de santé." };
     }
     if (fin === "MAX_TOKENS") ecrire("…");
-    return null;
+    if (!aEcrit) return { relais: true };
+    return { ok: true };
   } catch (e) {
-    if (signal.aborted) return null;
+    if (signal.aborted) return { ok: true };
     const statut = e instanceof GeminiApiError ? e.status : null;
-    console.error("[coach] échec Gemini :", statut ?? e?.name);
-    if (statut === 429 || statut === 503 || statut === 500) return MSG_SURCHARGE;
+    const muet = arretEssai.signal.aborted;
+    console.error(`[coach] échec ${modele} :`, muet ? "délai dépassé" : (statut ?? e?.name));
     // Google répond 400 (et non 401) quand la clé est invalide.
-    if (statut === 401 || statut === 403 || (statut === 400 && /api[ _-]?key/i.test(e?.message ?? ""))) return MSG_CLE;
-    return MSG_ECHEC;
+    if (statut === 401 || statut === 403 || (statut === 400 && /api[ _-]?key/i.test(e?.message ?? ""))) return { erreur: MSG_CLE };
+    if (!aEcrit && (muet || statut === 429 || statut === 503 || statut === 500 || statut === 404)) return { relais: true };
+    return { erreur: MSG_ECHEC };
+  } finally {
+    if (minuteur) clearTimeout(minuteur);
+    signal.removeEventListener("abort", surArret);
   }
+}
+
+async function repondreGemini(params) {
+  if (!clientGemini) clientGemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  for (const modele of MODELES_GEMINI) {
+    const r = await essaiGemini(modele, params);
+    if (r.ok) return null;
+    if (r.erreur) return r.erreur;
+    if (params.signal.aborted) return null;
+  }
+  return MSG_SURCHARGE;
 }
 
 async function repondreClaude({ systeme, messages, ecrire, signal }) {
