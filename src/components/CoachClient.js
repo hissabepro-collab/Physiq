@@ -41,7 +41,7 @@ function Texte({ texte }) {
   return <>{blocs}</>;
 }
 
-export default function CoachClient() {
+export default function CoachClient({ service = "l'IA" }) {
   const [messages, setMessages] = useState([]);
   const [saisie, setSaisie] = useState("");
   const [enCours, setEnCours] = useState(false);
@@ -141,7 +141,7 @@ export default function CoachClient() {
 
       {inactif && (
         <div className="mt-6 rounded-2xl border border-coral/40 bg-coral/10 p-4 text-sm">
-          Le coach n&apos;est pas encore activé : il manque la clé <strong>ANTHROPIC_API_KEY</strong> dans les réglages Vercel.
+          Le coach n&apos;est pas encore activé : il manque la clé <strong>GEMINI_API_KEY</strong> dans les réglages Vercel.
         </div>
       )}
 
@@ -209,7 +209,7 @@ export default function CoachClient() {
         </button>
       </form>
       <p className="mt-3 text-[11px] text-foreground-muted">
-        Pour répondre, tes chiffres sont envoyés à Claude (Anthropic). La conversation reste sur ce téléphone. Pas un avis médical.
+        Pour répondre, tes chiffres sont envoyés à {service}. La conversation reste sur ce téléphone. Pas un avis médical.
       </p>
       <style>{`.coach-attente{letter-spacing:.2em;opacity:.5;animation:coach-pulse 1.2s ease-in-out infinite}@keyframes coach-pulse{50%{opacity:.15}}`}</style>
     </div>
